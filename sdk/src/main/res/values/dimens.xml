@@ -3,4 +3,5 @@
     <dimen name="normal_padding">8dp</dimen>
     <dimen name="big_padding">16dp</dimen>
     <dimen name="header_text">18sp</dimen>
+    <dimen name="elevation">3dp</dimen>
 </resources>

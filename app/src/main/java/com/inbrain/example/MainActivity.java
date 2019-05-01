@@ -13,7 +13,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        InBrain.init("external-web-client", "l3!9hrl*olsdfliw#4uJO*f^j4ow8");
+        InBrain.init(this, "external-web-client", "l3!9hrl*olsdfliw#4uJO*f^j4ow8");
         InBrain.setAppUserId("1234-1234-1234-0000");
     }
 
