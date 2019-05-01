@@ -1,5 +1,6 @@
 package com.inbrain.sdk.ui;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -40,6 +41,7 @@ public class SurveysActivity extends Activity {
         context.startActivity(intent);
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,7 +90,9 @@ public class SurveysActivity extends Activity {
                             "'device_id':'" + deviceId + "'," +
                             "'app_uid':'" + appUserId + "'" +
                             "});";
-                    Log.i(Constants.LOG_TAG, "URL: " + newUrl);
+                    if (BuildConfig.DEBUG) {
+                        Log.i(Constants.LOG_TAG, "URL: " + newUrl);
+                    }
                     webView.loadUrl(newUrl);
                 }
             }
@@ -99,4 +103,10 @@ public class SurveysActivity extends Activity {
     public void onExitClick(View view) {
         finish();
     }
+
+    @Override
+    public void onBackPressed() {
+        // ignore because we don't have agreed navigation in web view and we don't want to leave immediately
+    }
+
 }
