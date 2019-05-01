@@ -2,18 +2,26 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 28
+    signingConfigs {
+        release {
+            storeFile file('../keystore/release.keystore')
+            storePassword '123456'
+            keyAlias 'release'
+            keyPassword '123456'
+        }
+    }
     defaultConfig {
         applicationId "com.inbrain.sdk.example"
         minSdkVersion 16
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }
