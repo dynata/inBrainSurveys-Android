@@ -10,7 +10,7 @@ import com.inbrain.sdk.ui.SurveysActivity;
 
 import java.util.UUID;
 
-public abstract class InBrain {
+public class InBrain {
 
     private static final String PREFERENCES = "SharedPreferences_inBrain25930";
     private static final String PREFERENCE_DEVICE_ID = "529826892";
