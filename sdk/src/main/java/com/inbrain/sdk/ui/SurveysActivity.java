@@ -78,7 +78,6 @@ public class SurveysActivity extends Activity {
                 WebView.setWebContentsDebuggingEnabled(true);
             }
         }
-        webView.setInitialScale(1);
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
