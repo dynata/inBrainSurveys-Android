@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.webkit.ConsoleMessage;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -17,6 +18,10 @@ import android.webkit.WebViewClient;
 import com.inbrain.sdk.BuildConfig;
 import com.inbrain.sdk.Constants;
 import com.inbrain.sdk.R;
+
+import static com.inbrain.sdk.Constants.INTERFACE_NAME;
+import static com.inbrain.sdk.Constants.JS_LOG_TAG;
+import static com.inbrain.sdk.Constants.LOG_TAG;
 
 public class SurveysActivity extends Activity {
 
@@ -70,7 +75,7 @@ public class SurveysActivity extends Activity {
             webView.setWebChromeClient(new WebChromeClient() {
                 @Override
                 public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-                    Log.i(Constants.LOG_TAG, consoleMessage.message());
+                    Log.i(LOG_TAG, consoleMessage.message());
                     return true;
                 }
             });
@@ -90,12 +95,17 @@ public class SurveysActivity extends Activity {
                             "'app_uid':'" + appUserId + "'" +
                             "});";
                     if (BuildConfig.DEBUG) {
-                        Log.i(Constants.LOG_TAG, "URL: " + newUrl);
+                        Log.i(LOG_TAG, "URL: " + newUrl);
                     }
                     webView.loadUrl(newUrl);
                 }
             }
         });
+        webView.addJavascriptInterface(new SurveyJavaScriptInterface(), INTERFACE_NAME);
+
+        webView.clearCache(true); // not sure if it is needed to clear cache
+        webView.clearHistory();
+
         webView.loadUrl(Constants.CONFIGURATION_URL);
     }
 
@@ -106,6 +116,23 @@ public class SurveysActivity extends Activity {
     @Override
     public void onBackPressed() {
         // ignore because we don't have agreed navigation in web view and we don't want to leave immediately
+    }
+
+    private class SurveyJavaScriptInterface {
+        @JavascriptInterface
+        public void surveyOpened() {
+            if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "surveyOpened");
+        }
+
+        @JavascriptInterface
+        public void surveyClosed() {
+            if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "surveyClosed");
+        }
+
+        @JavascriptInterface
+        public void toggleNativeButtons(boolean toggle) {
+            if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "toggle " + toggle);
+        }
     }
 
 }

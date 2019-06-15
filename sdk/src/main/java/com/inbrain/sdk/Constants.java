@@ -8,4 +8,7 @@ public class Constants {
 
     public static final String LOG_TAG = "InBrainSDK";
 
+    public static final String INTERFACE_NAME = "androidInterface";
+
+    public static final String JS_LOG_TAG = LOG_TAG + " JS";
 }
