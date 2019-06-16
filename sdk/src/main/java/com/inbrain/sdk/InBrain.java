@@ -6,21 +6,22 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.inbrain.sdk.ui.SurveysActivity;
+import com.inbrain.sdk.callback.InBrainCallback;
 
 import java.util.UUID;
 
 public class InBrain {
-
     private static final String PREFERENCES = "SharedPreferences_inBrain25930";
     private static final String PREFERENCE_DEVICE_ID = "529826892";
     private static final String PREFERENCE_APP_USER_ID = "378294761";
+
+    public static Context appContext = null;
+    static InBrainCallback callback;
 
     private static String clientId = null;
     private static String clientSecret = null;
     private static String appUserId = null;
     private static String deviceId = null;
-    private static Context appContext = null;
 
     private InBrain() {
     }
@@ -29,10 +30,12 @@ public class InBrain {
         return context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
     }
 
-    public static void init(Context context, String clientId, String clientSecret) {
+    public static void init(Context context, String clientId, String clientSecret,
+                            InBrainCallback callback) {
         InBrain.appContext = context.getApplicationContext();
         InBrain.clientId = clientId;
         InBrain.clientSecret = clientSecret;
+        InBrain.callback = callback;
         SharedPreferences preferences = getPreferences(appContext);
         if (preferences.contains(PREFERENCE_DEVICE_ID)) {
             InBrain.deviceId = preferences.getString(PREFERENCE_DEVICE_ID, null);
@@ -64,5 +67,4 @@ public class InBrain {
         }
         SurveysActivity.start(context, clientId, clientSecret, appUserId, deviceId);
     }
-
 }
