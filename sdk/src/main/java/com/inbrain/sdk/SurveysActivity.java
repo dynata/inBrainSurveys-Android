@@ -1,8 +1,10 @@
-package com.inbrain.sdk.ui;
+package com.inbrain.sdk;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
@@ -15,10 +17,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.inbrain.sdk.BuildConfig;
-import com.inbrain.sdk.Constants;
-import com.inbrain.sdk.R;
-
+import static com.inbrain.sdk.Constants.DOMAIN;
 import static com.inbrain.sdk.Constants.INTERFACE_NAME;
 import static com.inbrain.sdk.Constants.JS_LOG_TAG;
 import static com.inbrain.sdk.Constants.LOG_TAG;
@@ -31,11 +30,14 @@ public class SurveysActivity extends Activity {
     private static final String EXTRA_DEVICE_ID = "97497286";
 
     private WebView webView;
+    private View backView;
 
     private String clientId;
     private String clientSecret;
     private String appUserId;
     private String deviceId;
+
+    private boolean surveyActive;
 
     public static void start(Context context, String clientId, String clientSecret, String appUserId, String deviceId) {
         Intent intent = new Intent(context, SurveysActivity.class);
@@ -46,7 +48,7 @@ public class SurveysActivity extends Activity {
         context.startActivity(intent);
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +70,15 @@ public class SurveysActivity extends Activity {
         deviceId = getIntent().getStringExtra(EXTRA_DEVICE_ID);
 
         webView = findViewById(R.id.web_view);
+        backView = findViewById(R.id.backIv);
+
+        backView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (surveyActive) showAbortSurveyDialog(); else finish();
+            }
+        });
+
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         webView.getSettings().setDomStorageEnabled(true);
@@ -109,8 +120,27 @@ public class SurveysActivity extends Activity {
         webView.loadUrl(Constants.CONFIGURATION_URL);
     }
 
-    public void onExitClick(View view) {
-        finish();
+    private void onBackButtonModeChanged(boolean surveyActive) {
+        if (this.surveyActive == surveyActive) return;
+        this.surveyActive = surveyActive;
+    }
+
+    private void showAbortSurveyDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.dont_abandon_the_survey_title)
+                .setMessage(getString(R.string.dont_abandon_the_survey_message))
+                .setPositiveButton(R.string.abort_survey, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        navigateBackToSurveys();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void navigateBackToSurveys() {
+        webView.loadUrl(DOMAIN);
     }
 
     @Override
@@ -118,21 +148,29 @@ public class SurveysActivity extends Activity {
         // ignore because we don't have agreed navigation in web view and we don't want to leave immediately
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        InBrain.callback.onAdClosed();
+    }
+
     private class SurveyJavaScriptInterface {
         @JavascriptInterface
         public void surveyOpened() {
             if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "surveyOpened");
+            onBackButtonModeChanged(true);
         }
 
         @JavascriptInterface
         public void surveyClosed() {
             if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "surveyClosed");
+            onBackButtonModeChanged(false);
         }
 
         @JavascriptInterface
         public void toggleNativeButtons(boolean toggle) {
-            if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "toggle " + toggle);
+            if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "toggleNativeButtons:" + toggle);
+            onBackButtonModeChanged(toggle);
         }
     }
-
 }
