@@ -20,7 +20,7 @@ import static com.inbrain.sdk.Constants.GRANT_TYPE_CLIENT_CREDENTIALS;
 import static com.inbrain.sdk.Constants.TOKEN_SCOPE;
 import static com.inbrain.sdk.Constants.TOKEN_URL;
 
-public class TokenPostRequest extends AsyncTask<String, Void, String> {
+public class TokenPostRequest extends AsyncTask<Void, Void, String> {
     private final AsyncResponse callback;
     private final String clientId;
     private final String clientSecret;
@@ -37,7 +37,7 @@ public class TokenPostRequest extends AsyncTask<String, Void, String> {
     }
 
     @Override
-    protected String doInBackground(String... params) {
+    protected String doInBackground(Void... voids) {
         String urlParameters = String.format("client_id=%s&client_secret=%s&scope=%s&grant_type=%s",
                 clientId, clientSecret, TOKEN_SCOPE, GRANT_TYPE_CLIENT_CREDENTIALS);
 

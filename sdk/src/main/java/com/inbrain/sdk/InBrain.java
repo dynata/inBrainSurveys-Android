@@ -7,6 +7,10 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.inbrain.sdk.callback.InBrainCallback;
+import com.inbrain.sdk.callback.RewardsCallback;
+import com.inbrain.sdk.callback.TokenCallback;
+import com.inbrain.sdk.executor.RewardsExecutor;
+import com.inbrain.sdk.executor.TokenExecutor;
 
 import java.util.UUID;
 
@@ -67,4 +71,34 @@ public class InBrain {
         }
         SurveysActivity.start(context, clientId, clientSecret, appUserId, deviceId);
     }
+
+    public static void getRewards(final RewardsCallback callback) {
+        TokenExecutor executor = new TokenExecutor(clientId, clientSecret);
+        executor.getToken(new TokenCallback() {
+            @Override
+            public void onGetToken(String token) {
+                RewardsExecutor rewardsExecutor = new RewardsExecutor();
+                rewardsExecutor.getRewards(token, callback, appUserId, deviceId);
+            }
+
+            @Override
+            public void onFailToLoadToken(Throwable t) {
+                callback.onFailToLoadRewards(t);
+            }
+        });
+    }
+
+//    public static void confirmRewards(final List<String> rewardsIds, final ConfirmRewardsCallback callback) {
+//        apiProvider.getToken(clientId, clientSecret, new TokenCallback() {
+//            @Override
+//            public void onGetToken(String token) {
+//                apiProvider.confirmRewards(token, callback, rewardsIds);
+//            }
+//
+//            @Override
+//            public void onFailToLoadToken(Throwable t) {
+//                callback.onFailToConfirmRewards(t);
+//            }
+//        });
+//    }
 }
