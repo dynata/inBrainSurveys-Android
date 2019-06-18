@@ -1,6 +1,6 @@
-package com.inbrain.sdk.callback;
+package com.inbrain.sdk;
 
-public interface TokenCallback {
+interface TokenCallback {
     void onGetToken(String token);
     void onFailToLoadToken(Throwable t);
 }

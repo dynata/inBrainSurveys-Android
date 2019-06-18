@@ -1,14 +1,11 @@
-package com.inbrain.sdk.executor;
+package com.inbrain.sdk;
 
 import android.util.Log;
 
-import com.inbrain.sdk.Constants;
-import com.inbrain.sdk.api.AuthorizedGetRequest;
-import com.inbrain.sdk.callback.AsyncResponse;
-import com.inbrain.sdk.callback.RewardsCallback;
+import com.inbrain.sdk.callback.GetRewardsCallback;
 
-public class RewardsExecutor {
-    public void getRewards(String token, final RewardsCallback callback, String appUserId, String deviceId) {
+class RewardsExecutor {
+    void getRewards(String token, final GetRewardsCallback callback, String appUserId, String deviceId) {
         String rewardsUrl = String.format("%s%s/%s/%s", Constants.BASE_URL, Constants.REWARDS, appUserId, deviceId);
         AuthorizedGetRequest getRewardsRequest = new AuthorizedGetRequest(new AsyncResponse() {
             @Override
@@ -26,7 +23,7 @@ public class RewardsExecutor {
         getRewardsRequest.execute(rewardsUrl, token);
     }
 
-    private void onGotRewardsData(RewardsCallback callback, String output) {
+    private void onGotRewardsData(GetRewardsCallback callback, String output) {
         Log.d("RewardsExecutor", "Result is:" + output);
     }
 }

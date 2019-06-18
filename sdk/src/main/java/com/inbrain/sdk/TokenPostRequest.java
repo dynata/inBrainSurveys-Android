@@ -1,9 +1,7 @@
-package com.inbrain.sdk.api;
+package com.inbrain.sdk;
 
 import android.os.AsyncTask;
 import android.text.TextUtils;
-
-import com.inbrain.sdk.callback.AsyncResponse;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -20,12 +18,12 @@ import static com.inbrain.sdk.Constants.GRANT_TYPE_CLIENT_CREDENTIALS;
 import static com.inbrain.sdk.Constants.TOKEN_SCOPE;
 import static com.inbrain.sdk.Constants.TOKEN_URL;
 
-public class TokenPostRequest extends AsyncTask<Void, Void, String> {
+class TokenPostRequest extends AsyncTask<Void, Void, String> {
     private final AsyncResponse callback;
     private final String clientId;
     private final String clientSecret;
 
-    public TokenPostRequest(AsyncResponse callback, String clientId, String clientSecret) {
+    TokenPostRequest(AsyncResponse callback, String clientId, String clientSecret) {
         this.callback = callback;
         this.clientId = clientId;
         this.clientSecret = clientSecret;

@@ -30,7 +30,6 @@ public class SurveysActivity extends Activity {
     private static final String EXTRA_DEVICE_ID = "97497286";
 
     private WebView webView;
-    private View backView;
 
     private String clientId;
     private String clientSecret;
@@ -70,7 +69,7 @@ public class SurveysActivity extends Activity {
         deviceId = getIntent().getStringExtra(EXTRA_DEVICE_ID);
 
         webView = findViewById(R.id.web_view);
-        backView = findViewById(R.id.backIv);
+        View backView = findViewById(R.id.backIv);
 
         backView.setOnClickListener(new View.OnClickListener() {
             @Override

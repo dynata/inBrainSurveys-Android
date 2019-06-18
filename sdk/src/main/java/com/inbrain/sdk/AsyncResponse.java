@@ -1,6 +1,6 @@
-package com.inbrain.sdk.callback;
+package com.inbrain.sdk;
 
-public interface AsyncResponse {
+interface AsyncResponse {
     void processFinish(String output);
     void onError(Exception ex);
 }

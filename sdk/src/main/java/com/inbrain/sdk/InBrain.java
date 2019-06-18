@@ -6,11 +6,8 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.inbrain.sdk.callback.GetRewardsCallback;
 import com.inbrain.sdk.callback.InBrainCallback;
-import com.inbrain.sdk.callback.RewardsCallback;
-import com.inbrain.sdk.callback.TokenCallback;
-import com.inbrain.sdk.executor.RewardsExecutor;
-import com.inbrain.sdk.executor.TokenExecutor;
 
 import java.util.UUID;
 
@@ -19,7 +16,7 @@ public class InBrain {
     private static final String PREFERENCE_DEVICE_ID = "529826892";
     private static final String PREFERENCE_APP_USER_ID = "378294761";
 
-    public static Context appContext = null;
+    private static Context appContext = null;
     static InBrainCallback callback;
 
     private static String clientId = null;
@@ -72,7 +69,7 @@ public class InBrain {
         SurveysActivity.start(context, clientId, clientSecret, appUserId, deviceId);
     }
 
-    public static void getRewards(final RewardsCallback callback) {
+    public static void getRewards(final GetRewardsCallback callback) {
         TokenExecutor executor = new TokenExecutor(clientId, clientSecret);
         executor.getToken(new TokenCallback() {
             @Override

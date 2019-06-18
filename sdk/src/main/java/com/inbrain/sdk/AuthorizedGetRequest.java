@@ -1,9 +1,7 @@
-package com.inbrain.sdk.api;
+package com.inbrain.sdk;
 
 import android.os.AsyncTask;
 import android.text.TextUtils;
-
-import com.inbrain.sdk.callback.AsyncResponse;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -11,7 +9,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
+class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
     private final AsyncResponse callback;
 
     public AuthorizedGetRequest(AsyncResponse callback) {
