@@ -74,7 +74,8 @@ public class SurveysActivity extends Activity {
         backView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (surveyActive) showAbortSurveyDialog(); else finish();
+                if (surveyActive) showAbortSurveyDialog();
+                else finish();
             }
         });
 
@@ -149,6 +150,9 @@ public class SurveysActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        webView.removeJavascriptInterface(INTERFACE_NAME);
+        webView.setWebViewClient(null);
+        webView = null;
         super.onDestroy();
         InBrain.callback.onAdClosed();
     }
