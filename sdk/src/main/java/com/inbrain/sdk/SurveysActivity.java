@@ -152,7 +152,10 @@ public class SurveysActivity extends Activity {
     protected void onDestroy() {
         webView.removeJavascriptInterface(INTERFACE_NAME);
         webView.setWebViewClient(null);
-        webView = null;
+        webView.clearView();
+        webView.freeMemory();
+        webView.removeAllViews();
+        webView.destroy();
         super.onDestroy();
         InBrain.callback.onAdClosed();
     }

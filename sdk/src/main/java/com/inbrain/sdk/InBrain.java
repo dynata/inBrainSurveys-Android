@@ -8,17 +8,18 @@ import android.util.Log;
 
 import com.inbrain.sdk.callback.GetRewardsCallback;
 import com.inbrain.sdk.callback.InBrainCallback;
+import com.inbrain.sdk.callback.ReceivedRewardsListener;
+import com.inbrain.sdk.model.Reward;
 
+import java.util.List;
 import java.util.UUID;
 
 public class InBrain {
     private static final String PREFERENCES = "SharedPreferences_inBrain25930";
     private static final String PREFERENCE_DEVICE_ID = "529826892";
     private static final String PREFERENCE_APP_USER_ID = "378294761";
-
-    private static Context appContext = null;
     static InBrainCallback callback;
-
+    private static Context appContext = null;
     private static String clientId = null;
     private static String clientSecret = null;
     private static String appUserId = null;
@@ -75,7 +76,22 @@ public class InBrain {
             @Override
             public void onGetToken(String token) {
                 RewardsExecutor rewardsExecutor = new RewardsExecutor();
-                rewardsExecutor.getRewards(token, callback, appUserId, deviceId);
+                rewardsExecutor.getRewards(token, new RequestRewardsCallback() {
+                    @Override
+                    public void onGetRewards(List<Reward> rewards) {
+                        callback.onGetRewards(rewards, new ReceivedRewardsListener() {
+                            @Override
+                            public void confirmRewardsReceived(List<Reward> rewards) {
+                                confirmRewards(rewards);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onFailToLoadRewards(Throwable t) {
+                        callback.onFailToLoadRewards(t);
+                    }
+                }, appUserId, deviceId);
             }
 
             @Override
@@ -98,4 +114,8 @@ public class InBrain {
 //            }
 //        });
 //    }
+
+    private static void confirmRewards(List<Reward> rewards){
+
+    }
 }

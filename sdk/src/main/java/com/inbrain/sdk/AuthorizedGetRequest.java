@@ -30,7 +30,7 @@ class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
             URL obj = new URL(urlString);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
             con.setRequestMethod("GET");
-            con.setRequestProperty("Authorization", token);
+            con.setRequestProperty("Authorization", "Bearer " + token);
             int responseCode = con.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) { // connection ok
                 BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));

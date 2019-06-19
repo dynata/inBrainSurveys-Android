@@ -2,10 +2,17 @@ package com.inbrain.sdk;
 
 import android.util.Log;
 
-import com.inbrain.sdk.callback.GetRewardsCallback;
+import com.inbrain.sdk.model.Reward;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 class RewardsExecutor {
-    void getRewards(String token, final GetRewardsCallback callback, String appUserId, String deviceId) {
+    void getRewards(String token, final RequestRewardsCallback callback, String appUserId, String deviceId) {
         String rewardsUrl = String.format("%s%s/%s/%s", Constants.BASE_URL, Constants.REWARDS, appUserId, deviceId);
         AuthorizedGetRequest getRewardsRequest = new AuthorizedGetRequest(new AsyncResponse() {
             @Override
@@ -18,12 +25,31 @@ class RewardsExecutor {
                 callback.onFailToLoadRewards(ex);
             }
         });
-        Log.d("RewardsExecutor", "token is:" + token);
-        Log.d("RewardsExecutor", "rewardsUrl is:" + rewardsUrl);
+        if (BuildConfig.DEBUG) Log.d("RewardsExecutor", "token is:" + token);
+        if (BuildConfig.DEBUG) Log.d("RewardsExecutor", "rewardsUrl is:" + rewardsUrl);
         getRewardsRequest.execute(rewardsUrl, token);
     }
 
-    private void onGotRewardsData(GetRewardsCallback callback, String output) {
-        Log.d("RewardsExecutor", "Result is:" + output);
+    private void onGotRewardsData(RequestRewardsCallback callback, String data) {
+        try {
+            List<Reward> rewards = parseRewards(data);
+            callback.onGetRewards(rewards);
+        } catch (JSONException e) {
+            callback.onFailToLoadRewards(e);
+        }
+    }
+
+    private List<Reward> parseRewards(String data) throws JSONException {
+        List<Reward> rewards = new ArrayList<>();
+        JSONArray jsonarray = new JSONArray(data);
+        for (int i = 0; i < jsonarray.length(); i++) {
+            JSONObject jsonobject = jsonarray.getJSONObject(i);
+            long transactionId = jsonobject.getLong("transactionId");
+            double amount = jsonobject.getDouble("amount");
+            String currency = jsonobject.getString("currency");
+            int transactionType = jsonobject.getInt("transactionType");
+            rewards.add(new Reward(transactionId, amount, currency, transactionType));
+        }
+        return rewards;
     }
 }
