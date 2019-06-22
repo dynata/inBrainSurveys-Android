@@ -1,8 +1,7 @@
 package com.inbrain.sdk;
 
 import android.os.AsyncTask;
-
-import org.json.JSONObject;
+import android.text.TextUtils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -11,29 +10,15 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
-import java.util.Iterator;
 
 import javax.net.ssl.HttpsURLConnection;
 
 class AuthorizedPostRequest extends AsyncTask<String, Void, String> {
-    private static String encodeParams(JSONObject params) throws Exception {
-        StringBuilder result = new StringBuilder();
-        boolean first = true;
-        Iterator<String> itr = params.keys();
-        while (itr.hasNext()) {
-            String key = itr.next();
-            Object value = params.get(key);
-            if (first)
-                first = false;
-            else
-                result.append("&");
+    private static final String ERROR = "412error752";
+    private final AsyncResponse callback;
 
-            result.append(URLEncoder.encode(key, "UTF-8"));
-            result.append("=");
-            result.append(URLEncoder.encode(value.toString(), "UTF-8"));
-        }
-        return result.toString();
+    AuthorizedPostRequest(AsyncResponse callback) {
+        this.callback = callback;
     }
 
     @Override
@@ -43,29 +28,31 @@ class AuthorizedPostRequest extends AsyncTask<String, Void, String> {
 
     @Override
     protected String doInBackground(String... params) {
-        String urlString = params[0]; // URL to call
-        String auth = params[1]; //auth to get
+        String urlString = params[0];
+        String token = params[1];
         String postDataParams = params[2];
         OutputStream out = null;
         try {
             URL url = new URL(urlString);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setReadTimeout(20000);
-            conn.setConnectTimeout(20000);
-            conn.setRequestMethod("POST");
-            conn.setDoInput(true);
-            conn.setDoOutput(true);
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setReadTimeout(20000);
+            con.setConnectTimeout(20000);
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Authorization", "Bearer " + token);
+            con.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+            con.setDoInput(true);
+            con.setDoOutput(true);
 
-            OutputStream os = conn.getOutputStream();
+            OutputStream os = con.getOutputStream();
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
-            // writer.write(encodeParams(postDataParams));
+            writer.write(postDataParams);
             writer.flush();
             writer.close();
             os.close();
 
-            int responseCode = conn.getResponseCode();
+            int responseCode = con.getResponseCode();
             if (responseCode == HttpsURLConnection.HTTP_OK) {
-                BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 StringBuffer sb = new StringBuffer("");
                 String line = "";
                 while ((line = in.readLine()) != null) {
@@ -75,9 +62,17 @@ class AuthorizedPostRequest extends AsyncTask<String, Void, String> {
                 in.close();
                 return sb.toString();
             }
-            return null;
+            callback.onError(new IllegalStateException(con.getResponseMessage()));
+            return ERROR;
         } catch (Exception ex) {
-            return "";
+            callback.onError(ex);
+            return ERROR;
         }
+    }
+
+    @Override
+    protected void onPostExecute(String s) {
+        super.onPostExecute(s);
+        if (!s.equals(ERROR)) callback.processFinish(s);
     }
 }

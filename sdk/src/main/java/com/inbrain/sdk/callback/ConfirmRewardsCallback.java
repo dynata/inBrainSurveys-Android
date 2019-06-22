@@ -1,6 +1,6 @@
-package com.inbrain.sdk;
+package com.inbrain.sdk.callback;
 
-interface ConfirmRewardsCallback {
+public interface ConfirmRewardsCallback {
     void onSuccessfullyConfirmRewards();
     void onFailToConfirmRewards(Throwable t);
 }

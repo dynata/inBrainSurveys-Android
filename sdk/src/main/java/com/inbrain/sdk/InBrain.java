@@ -6,11 +6,13 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.inbrain.sdk.callback.ConfirmRewardsCallback;
 import com.inbrain.sdk.callback.GetRewardsCallback;
 import com.inbrain.sdk.callback.InBrainCallback;
 import com.inbrain.sdk.callback.ReceivedRewardsListener;
 import com.inbrain.sdk.model.Reward;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -72,11 +74,11 @@ public class InBrain {
 
     public static void getRewards(final GetRewardsCallback callback) {
         TokenExecutor executor = new TokenExecutor(clientId, clientSecret);
-        executor.getToken(new TokenCallback() {
+        executor.getToken(new TokenExecutor.TokenCallback() {
             @Override
             public void onGetToken(String token) {
                 RewardsExecutor rewardsExecutor = new RewardsExecutor();
-                rewardsExecutor.getRewards(token, new RequestRewardsCallback() {
+                rewardsExecutor.getRewards(token, new RewardsExecutor.RequestRewardsCallback() {
                     @Override
                     public void onGetRewards(List<Reward> rewards) {
                         callback.onGetRewards(rewards, new ReceivedRewardsListener() {
@@ -101,21 +103,58 @@ public class InBrain {
         });
     }
 
-//    public static void confirmRewards(final List<String> rewardsIds, final ConfirmRewardsCallback callback) {
-//        apiProvider.getToken(clientId, clientSecret, new TokenCallback() {
-//            @Override
-//            public void onGetToken(String token) {
-//                apiProvider.confirmRewards(token, callback, rewardsIds);
-//            }
-//
-//            @Override
-//            public void onFailToLoadToken(Throwable t) {
-//                callback.onFailToConfirmRewards(t);
-//            }
-//        });
-//    }
+    public static void confirmRewards(final List<Reward> rewards, final ConfirmRewardsCallback callback) {
+        List<Long> rewardsIds = getRewardsIds(rewards);
+        confirmRewardsById(rewardsIds, callback);
+    }
 
-    private static void confirmRewards(List<Reward> rewards){
+    private static void confirmRewards(List<Reward> rewards) {
+        List<Long> rewardsIds = getRewardsIds(rewards);
+        confirmRewardsById(rewardsIds, null);
+    }
 
+    private static List<Long> getRewardsIds(List<Reward> rewards) {
+        List<Long> rewardsIds = new ArrayList<>(rewards.size());
+        for (Reward reward : rewards) rewardsIds.add(reward.transactionId);
+        return rewardsIds;
+    }
+
+    private static void confirmRewardsById(final List<Long> rewardsIds, final ConfirmRewardsCallback callback) {
+        List<Long> failedToConfirmRewards = getFailedToConfirmRewardsIds();
+        if (failedToConfirmRewards != null) {
+            rewardsIds.addAll(failedToConfirmRewards);
+        }
+        TokenExecutor executor = new TokenExecutor(clientId, clientSecret);
+        executor.getToken(new TokenExecutor.TokenCallback() {
+            @Override
+            public void onGetToken(String token) {
+                ConfirmRewardsExecutor confirmRewardsExecutor = new ConfirmRewardsExecutor();
+                confirmRewardsExecutor.confirmRewards(token, rewardsIds, new ConfirmRewardsExecutor.ConfirmRewardsCallback() {
+                    @Override
+                    public void onSuccessfullyConfirmedRewards() {
+                        if (callback != null) callback.onSuccessfullyConfirmRewards();
+                    }
+
+                    @Override
+                    public void onFailToConfirmRewards(Throwable t) {
+                        if (callback != null) callback.onFailToConfirmRewards(t);
+                        saveFailedToConfirmRewards(rewardsIds);
+                    }
+                }, appUserId, deviceId);
+            }
+
+            @Override
+            public void onFailToLoadToken(Throwable t) {
+                callback.onFailToConfirmRewards(t);
+            }
+        });
+    }
+
+    private static void saveFailedToConfirmRewards(List<Long> rewardsIds) {
+
+    }
+
+    private static List<Long> getFailedToConfirmRewardsIds() {
+        return null;
     }
 }

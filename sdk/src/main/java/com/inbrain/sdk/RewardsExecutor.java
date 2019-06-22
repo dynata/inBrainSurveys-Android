@@ -12,8 +12,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 class RewardsExecutor {
+    private String getRewardsUrl(String appUserId, String deviceId) {
+        return String.format("%s%s/%s/%s", Constants.BASE_URL, Constants.REWARDS, appUserId, deviceId);
+    }
+
     void getRewards(String token, final RequestRewardsCallback callback, String appUserId, String deviceId) {
-        String rewardsUrl = String.format("%s%s/%s/%s", Constants.BASE_URL, Constants.REWARDS, appUserId, deviceId);
+        String rewardsUrl = getRewardsUrl(appUserId, deviceId);
         AuthorizedGetRequest getRewardsRequest = new AuthorizedGetRequest(new AsyncResponse() {
             @Override
             public void processFinish(String output) {
@@ -51,5 +55,11 @@ class RewardsExecutor {
             rewards.add(new Reward(transactionId, amount, currency, transactionType));
         }
         return rewards;
+    }
+
+    public interface RequestRewardsCallback {
+        void onGetRewards(List<Reward> rewards);
+
+        void onFailToLoadRewards(Throwable t);
     }
 }

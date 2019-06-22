@@ -1,7 +1,6 @@
 package com.inbrain.sdk;
 
 import android.os.AsyncTask;
-import android.text.TextUtils;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -10,9 +9,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
+    private static final String ERROR = "412error752";
     private final AsyncResponse callback;
 
-    public AuthorizedGetRequest(AsyncResponse callback) {
+    AuthorizedGetRequest(AsyncResponse callback) {
         this.callback = callback;
     }
 
@@ -43,17 +43,17 @@ class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
                 return response.toString();
             } else {
                 callback.onError(new IllegalStateException(con.getResponseMessage()));
-                return "";
+                return ERROR;
             }
         } catch (Exception ex) {
             callback.onError(ex);
-            return "";
+            return ERROR;
         }
     }
 
     @Override
     protected void onPostExecute(String s) {
         super.onPostExecute(s);
-        if (!TextUtils.isEmpty(s)) callback.processFinish(s);
+        if (!s.equals(ERROR)) callback.processFinish(s);
     }
 }

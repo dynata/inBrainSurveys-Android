@@ -32,4 +32,9 @@ class TokenExecutor {
         }, clientId, clientSecret);
         tokenRequest.execute();
     }
+
+    interface TokenCallback {
+        void onGetToken(String token);
+        void onFailToLoadToken(Throwable t);
+    }
 }
