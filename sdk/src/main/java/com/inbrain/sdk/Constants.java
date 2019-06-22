@@ -23,5 +23,7 @@ class Constants {
 
     static final String REWARDS = "rewards";
 
-    public static final String CONFIRM_TRANSACTIONS = "confirm-transactions";
+    static final String CONFIRM_TRANSACTIONS = "confirm-transactions";
+
+    static final int REQUEST_TIMEOUT_MS = 10000;
 }

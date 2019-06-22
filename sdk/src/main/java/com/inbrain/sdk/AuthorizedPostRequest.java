@@ -13,6 +13,8 @@ import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import static com.inbrain.sdk.Constants.REQUEST_TIMEOUT_MS;
+
 class AuthorizedPostRequest extends AsyncTask<String, Void, String> {
     private static final String ERROR = "412error752";
     private final AsyncResponse callback;
@@ -31,12 +33,11 @@ class AuthorizedPostRequest extends AsyncTask<String, Void, String> {
         String urlString = params[0];
         String token = params[1];
         String postDataParams = params[2];
-        OutputStream out = null;
         try {
             URL url = new URL(urlString);
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setReadTimeout(20000);
-            con.setConnectTimeout(20000);
+            con.setReadTimeout(REQUEST_TIMEOUT_MS);
+            con.setConnectTimeout(REQUEST_TIMEOUT_MS);
             con.setRequestMethod("POST");
             con.setRequestProperty("Authorization", "Bearer " + token);
             con.setRequestProperty("Content-Type", "application/json; charset=utf-8");

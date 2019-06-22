@@ -4,9 +4,10 @@ import android.os.AsyncTask;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import static com.inbrain.sdk.Constants.REQUEST_TIMEOUT_MS;
 
 class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
     private static final String ERROR = "412error752";
@@ -25,10 +26,11 @@ class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
     protected String doInBackground(String... params) {
         String urlString = params[0];
         String token = params[1];
-        OutputStream out = null;
         try {
             URL obj = new URL(urlString);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+            con.setReadTimeout(REQUEST_TIMEOUT_MS);
+            con.setConnectTimeout(REQUEST_TIMEOUT_MS);
             con.setRequestMethod("GET");
             con.setRequestProperty("Authorization", "Bearer " + token);
             int responseCode = con.getResponseCode();
