@@ -13,19 +13,23 @@ import com.inbrain.sdk.callback.ReceivedRewardsListener;
 import com.inbrain.sdk.model.Reward;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public class InBrain {
     private static final String PREFERENCES = "SharedPreferences_inBrain25930";
     private static final String PREFERENCE_DEVICE_ID = "529826892";
     private static final String PREFERENCE_APP_USER_ID = "378294761";
+    private static final String PREFERENCE_FAILED_REWARDS = "372131_f4lied";
     static InBrainCallback callback;
     private static Context appContext = null;
     private static String clientId = null;
     private static String clientSecret = null;
     private static String appUserId = null;
     private static String deviceId = null;
+    private static SharedPreferences preferences;
 
     private InBrain() {
     }
@@ -40,7 +44,7 @@ public class InBrain {
         InBrain.clientId = clientId;
         InBrain.clientSecret = clientSecret;
         InBrain.callback = callback;
-        SharedPreferences preferences = getPreferences(appContext);
+        preferences = getPreferences(appContext);
         if (preferences.contains(PREFERENCE_DEVICE_ID)) {
             InBrain.deviceId = preferences.getString(PREFERENCE_DEVICE_ID, null);
         }
@@ -104,22 +108,22 @@ public class InBrain {
     }
 
     public static void confirmRewards(final List<Reward> rewards, final ConfirmRewardsCallback callback) {
-        List<Long> rewardsIds = getRewardsIds(rewards);
+        Set<Long> rewardsIds = getRewardsIds(rewards);
         confirmRewardsById(rewardsIds, callback);
     }
 
     private static void confirmRewards(List<Reward> rewards) {
-        List<Long> rewardsIds = getRewardsIds(rewards);
+        Set<Long> rewardsIds = getRewardsIds(rewards);
         confirmRewardsById(rewardsIds, null);
     }
 
-    private static List<Long> getRewardsIds(List<Reward> rewards) {
-        List<Long> rewardsIds = new ArrayList<>(rewards.size());
+    private static Set<Long> getRewardsIds(List<Reward> rewards) {
+        Set<Long> rewardsIds = new HashSet<>(rewards.size());
         for (Reward reward : rewards) rewardsIds.add(reward.transactionId);
         return rewardsIds;
     }
 
-    private static void confirmRewardsById(final List<Long> rewardsIds, final ConfirmRewardsCallback callback) {
+    private static void confirmRewardsById(final Set<Long> rewardsIds, final ConfirmRewardsCallback callback) {
         List<Long> failedToConfirmRewards = getFailedToConfirmRewardsIds();
         if (failedToConfirmRewards != null) {
             rewardsIds.addAll(failedToConfirmRewards);
@@ -133,6 +137,7 @@ public class InBrain {
                     @Override
                     public void onSuccessfullyConfirmedRewards() {
                         if (callback != null) callback.onSuccessfullyConfirmRewards();
+                        saveFailedToConfirmRewards(null);
                     }
 
                     @Override
@@ -150,11 +155,30 @@ public class InBrain {
         });
     }
 
-    private static void saveFailedToConfirmRewards(List<Long> rewardsIds) {
-
+    private static void saveFailedToConfirmRewards(Set<Long> rewardsIds) {
+        if (rewardsIds == null) {
+            preferences.edit()
+                    .putStringSet(PREFERENCE_FAILED_REWARDS, null)
+                    .apply();
+            return;
+        }
+        Set<String> set = new HashSet<>();
+        for (Long id : rewardsIds) set.add(id.toString());
+        preferences.edit()
+                .putStringSet(PREFERENCE_FAILED_REWARDS, set)
+                .apply();
     }
 
     private static List<Long> getFailedToConfirmRewardsIds() {
-        return null;
+        Set<String> set = preferences.getStringSet(PREFERENCE_FAILED_REWARDS, null);
+        if (set == null) return null;
+        List<Long> ids = new ArrayList<>(set.size());
+        for (String stringNumber : set) {
+            try {
+                ids.add(Long.parseLong(stringNumber));
+            } catch (Exception ignored) {
+            }
+        }
+        return ids;
     }
 }

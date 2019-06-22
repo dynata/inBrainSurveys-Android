@@ -4,10 +4,10 @@ import android.util.Log;
 
 import org.json.JSONArray;
 
-import java.util.List;
+import java.util.Set;
 
 class ConfirmRewardsExecutor {
-    void confirmRewards(String token, List<Long> rewardsIds, final ConfirmRewardsCallback callback, String appUserId, String deviceId) {
+    void confirmRewards(String token, Set<Long> rewardsIds, final ConfirmRewardsCallback callback, String appUserId, String deviceId) {
         String rewardsUrl = getConfirmRewardsUrl(appUserId, deviceId);
         String rewardsBody = getConfirmRewardsBody(rewardsIds);
         AuthorizedPostRequest confirmTransactionsRequest = new AuthorizedPostRequest(new AsyncResponse() {
@@ -30,7 +30,7 @@ class ConfirmRewardsExecutor {
         return String.format("%s%s/%s/%s", Constants.BASE_URL, Constants.CONFIRM_TRANSACTIONS, appUserId, deviceId);
     }
 
-    private String getConfirmRewardsBody(List<Long> rewardsIds) {
+    private String getConfirmRewardsBody(Set<Long> rewardsIds) {
         JSONArray array = new JSONArray();
         for (Long id : rewardsIds) array.put(id);
         return array.toString();
