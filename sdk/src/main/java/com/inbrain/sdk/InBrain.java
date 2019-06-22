@@ -14,6 +14,7 @@ import com.inbrain.sdk.model.Reward;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -30,6 +31,9 @@ public class InBrain {
     private static String appUserId = null;
     private static String deviceId = null;
     private static SharedPreferences preferences;
+
+    private static Set<Long> confirmedRewards;
+    private static Set<Reward> lastReceivedRewards;
 
     private InBrain() {
     }
@@ -61,6 +65,8 @@ public class InBrain {
             InBrain.deviceId = UUID.randomUUID().toString();
         }
         preferences.edit().putString(PREFERENCE_DEVICE_ID, InBrain.deviceId).apply();
+        confirmedRewards = new HashSet<>();
+        lastReceivedRewards = new HashSet<>();
     }
 
     public static void setAppUserId(String id) {
@@ -73,19 +79,24 @@ public class InBrain {
             Log.e(Constants.LOG_TAG, "Please first call init() method with client id and client secret.");
             return;
         }
+        if (callback == null) {
+            Log.e(Constants.LOG_TAG, "Please first call init() method with callback.");
+            return;
+        }
         SurveysActivity.start(context, clientId, clientSecret, appUserId, deviceId);
     }
 
     public static void getRewards(final GetRewardsCallback callback) {
-        TokenExecutor executor = new TokenExecutor(clientId, clientSecret);
-        executor.getToken(new TokenExecutor.TokenCallback() {
+        if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "External get rewards");
+        getToken(new TokenExecutor.TokenCallback() {
             @Override
             public void onGetToken(String token) {
                 RewardsExecutor rewardsExecutor = new RewardsExecutor();
                 rewardsExecutor.getRewards(token, new RewardsExecutor.RequestRewardsCallback() {
                     @Override
                     public void onGetRewards(List<Reward> rewards) {
-                        callback.onGetRewards(rewards, new ReceivedRewardsListener() {
+                        lastReceivedRewards = new HashSet<>(rewards);
+                        onNewRewardsReceived(rewards, callback, new ReceivedRewardsListener() {
                             @Override
                             public void confirmRewardsReceived(List<Reward> rewards) {
                                 confirmRewards(rewards);
@@ -105,6 +116,81 @@ public class InBrain {
                 callback.onFailToLoadRewards(t);
             }
         });
+    }
+
+    static void getRewards() {
+        if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "Get rewards");
+        getToken(new TokenExecutor.TokenCallback() {
+            @Override
+            public void onGetToken(String token) {
+                RewardsExecutor rewardsExecutor = new RewardsExecutor();
+                rewardsExecutor.getRewards(token, new RewardsExecutor.RequestRewardsCallback() {
+                    @Override
+                    public void onGetRewards(List<Reward> rewards) {
+                        Set<Reward> newRewards = new HashSet<>(rewards);
+                        if (checkRewardsAreSame(newRewards)) {
+                            if (BuildConfig.DEBUG) Log.w(Constants.LOG_TAG, "Rewards are same");
+                            return;
+                        }
+                        lastReceivedRewards = newRewards;
+                        onNewRewardsReceived(rewards, null, new ReceivedRewardsListener() {
+                            @Override
+                            public void confirmRewardsReceived(List<Reward> rewards) {
+                                confirmRewards(rewards);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onFailToLoadRewards(Throwable t) {
+                        if (BuildConfig.DEBUG) {
+                            Log.e(Constants.LOG_TAG, "Failed to load rewards:" + t);
+                        }
+                    }
+                }, appUserId, deviceId);
+            }
+
+            @Override
+            public void onFailToLoadToken(Throwable t) {
+                if (BuildConfig.DEBUG) Log.e(Constants.LOG_TAG, "Failed to load token:" + t);
+            }
+        });
+    }
+
+    private static boolean checkRewardsAreSame(Set<Reward> newRewards) {
+        boolean firstContainsAll = lastReceivedRewards.containsAll(newRewards);
+        boolean secondContainsAll = newRewards.containsAll(lastReceivedRewards);
+        return firstContainsAll && secondContainsAll;
+    }
+
+    private static void onNewRewardsReceived(List<Reward> rewards,
+                                             GetRewardsCallback externalCallback,
+                                             ReceivedRewardsListener receivedRewardsListener) {
+        Iterator<Reward> iterator = rewards.iterator();
+        while (iterator.hasNext()) {
+            Reward reward = iterator.next();
+            for (Long rewardId : confirmedRewards) {
+                if (reward.transactionId == rewardId) {
+                    if (BuildConfig.DEBUG) {
+                        Log.w(Constants.LOG_TAG, "New reward has been already confirmed");
+                    }
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
+        if (!rewards.isEmpty()) {
+            if (externalCallback != null) {
+                externalCallback.onGetRewards(rewards, receivedRewardsListener); // notify by request
+            } else {
+                InBrain.callback.onRewardReceived(rewards, receivedRewardsListener); // notify by subscription
+            }
+        }
+    }
+
+    private static void getToken(TokenExecutor.TokenCallback tokenCallback) {
+        TokenExecutor executor = new TokenExecutor(clientId, clientSecret);
+        executor.getToken(tokenCallback);
     }
 
     public static void confirmRewards(final List<Reward> rewards, final ConfirmRewardsCallback callback) {
@@ -137,6 +223,7 @@ public class InBrain {
                     @Override
                     public void onSuccessfullyConfirmedRewards() {
                         if (callback != null) callback.onSuccessfullyConfirmRewards();
+                        confirmedRewards.addAll(rewardsIds);
                         saveFailedToConfirmRewards(null);
                     }
 
@@ -150,7 +237,7 @@ public class InBrain {
 
             @Override
             public void onFailToLoadToken(Throwable t) {
-                callback.onFailToConfirmRewards(t);
+                if (callback != null) callback.onFailToConfirmRewards(t);
             }
         });
     }

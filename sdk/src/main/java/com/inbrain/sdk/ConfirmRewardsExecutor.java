@@ -38,7 +38,6 @@ class ConfirmRewardsExecutor {
 
     public interface ConfirmRewardsCallback {
         void onSuccessfullyConfirmedRewards();
-
         void onFailToConfirmRewards(Throwable t);
     }
 }

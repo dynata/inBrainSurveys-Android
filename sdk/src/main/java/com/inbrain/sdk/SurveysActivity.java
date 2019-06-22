@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.webkit.ConsoleMessage;
@@ -23,11 +24,11 @@ import static com.inbrain.sdk.Constants.JS_LOG_TAG;
 import static com.inbrain.sdk.Constants.LOG_TAG;
 
 public class SurveysActivity extends Activity {
-
     private static final String EXTRA_CLIENT_ID = "368234109";
     private static final String EXTRA_CLIENT_SECRET = "6388991";
     private static final String EXTRA_APP_USER_ID = "29678234";
     private static final String EXTRA_DEVICE_ID = "97497286";
+    private static final int UPDATE_REWARDS_DELAY_MS = 10000;
 
     private WebView webView;
 
@@ -74,8 +75,7 @@ public class SurveysActivity extends Activity {
         backView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (surveyActive) showAbortSurveyDialog();
-                else finish();
+                if (surveyActive) showAbortSurveyDialog(); else finish();
             }
         });
 
@@ -118,6 +118,8 @@ public class SurveysActivity extends Activity {
         webView.clearHistory();
 
         webView.loadUrl(Constants.CONFIGURATION_URL);
+
+        updateRewards(false);
     }
 
     private void onBackButtonModeChanged(boolean surveyActive) {
@@ -143,6 +145,19 @@ public class SurveysActivity extends Activity {
         webView.loadUrl(DOMAIN);
     }
 
+    private void updateRewards(boolean withDelay) {
+        if (withDelay) {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    InBrain.getRewards();
+                }
+            }, UPDATE_REWARDS_DELAY_MS);
+        } else {
+            InBrain.getRewards();
+        }
+    }
+
     @Override
     public void onBackPressed() {
         // ignore because we don't have agreed navigation in web view and we don't want to leave immediately
@@ -150,6 +165,7 @@ public class SurveysActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        updateRewards(true);
         webView.removeJavascriptInterface(INTERFACE_NAME);
         webView.setWebViewClient(null);
         webView.clearView();
@@ -171,6 +187,7 @@ public class SurveysActivity extends Activity {
         public void surveyClosed() {
             if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "surveyClosed");
             onBackButtonModeChanged(false);
+            updateRewards(true);
         }
 
         @JavascriptInterface
