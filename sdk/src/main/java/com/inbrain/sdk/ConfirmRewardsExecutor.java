@@ -23,6 +23,7 @@ class ConfirmRewardsExecutor {
         });
         if (BuildConfig.DEBUG) Log.d("RewardsExecutor", "token is:" + token);
         if (BuildConfig.DEBUG) Log.d("RewardsExecutor", "rewardsUrl is:" + rewardsUrl);
+        if (BuildConfig.DEBUG) Log.d("RewardsExecutor", "rewardsBody is:" + rewardsBody);
         confirmTransactionsRequest.execute(rewardsUrl, token, rewardsBody);
     }
 
