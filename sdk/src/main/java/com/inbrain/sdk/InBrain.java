@@ -74,6 +74,11 @@ public class InBrain {
         getPreferences(appContext).edit().putString(PREFERENCE_APP_USER_ID, InBrain.appUserId).apply();
     }
 
+    /**
+     * Starts Ad Screen
+     *
+     * @param context
+     */
     public static void showSurveys(Context context) {
         if (TextUtils.isEmpty(clientId) || TextUtils.isEmpty(clientSecret)) {
             Log.e(Constants.LOG_TAG, "Please first call init() method with client id and client secret.");
@@ -86,6 +91,11 @@ public class InBrain {
         SurveysActivity.start(context, clientId, clientSecret, appUserId, deviceId);
     }
 
+    /**
+     * Requests rewards manually. It's not recommended to use this method, you need to subscribe to Ad Events listener
+     *
+     * @see InBrainCallback
+     */
     public static void getRewards(final GetRewardsCallback callback) {
         if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "External get rewards");
         getToken(new TokenExecutor.TokenCallback() {
@@ -193,6 +203,11 @@ public class InBrain {
         executor.getToken(tokenCallback);
     }
 
+    /**
+     * Confirms rewards manually
+     * @param rewards list of rewards which need to be confirmed
+     * @param callback callback which notifies you about result of confirm request
+     */
     public static void confirmRewards(final List<Reward> rewards, final ConfirmRewardsCallback callback) {
         Set<Long> rewardsIds = getRewardsIds(rewards);
         confirmRewardsById(rewardsIds, callback);
