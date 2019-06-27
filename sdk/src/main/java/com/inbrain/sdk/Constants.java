@@ -1,7 +1,7 @@
 package com.inbrain.sdk;
 
 class Constants {
-    static final String DOMAIN = "https://inbrainwebview-staging.azureedge.net";
+    static final String DOMAIN = "https://www.surveyb.in";
 
     static final String CONFIGURATION_URL = DOMAIN + "/configuration";
 
@@ -11,11 +11,9 @@ class Constants {
 
     static final String JS_LOG_TAG = LOG_TAG + " JS";
 
-    static final String BASE_URL = " https://inbrain-api-staging.azurewebsites.net/api/v1/external-surveys/";
-    //public static final String BASE_URL = " https://inbrain-api.azurewebsites.net/api/v1/external-surveys/"; // PRODUCTION
+    static final String BASE_URL = "https://api.surveyb.in/api/v1/external-surveys/";
 
-    static final String TOKEN_URL = "https://inbrain-auth-staging.azurewebsites.net/connect/token";
-    //public static final String TOKEN_URL = "https://inbrain-auth.azurewebsites.net/connect/token"; // PRODUCTION
+    static final String TOKEN_URL = "https://auth.surveyb.in/connect/token";
 
     static final String TOKEN_SCOPE = "inbrain-api:integration";
 
