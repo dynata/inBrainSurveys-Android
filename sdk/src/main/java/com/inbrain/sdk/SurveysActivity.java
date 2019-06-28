@@ -100,10 +100,10 @@ public class SurveysActivity extends Activity {
                 if (url.equals(Constants.CONFIGURATION_URL)) {
                     String newUrl = "javascript:" +
                             "setConfiguration({" +
-                            "'client_id':'" + clientId + "'," +
-                            "'client_secret':'" + clientSecret + "'," +
-                            "'device_id':'" + deviceId + "'," +
-                            "'app_uid':'" + appUserId + "'" +
+                            "\"client_id\":\"" + clientId + "\"," +
+                            "\"client_secret\":\"" + clientSecret + "\"," +
+                            "\"device_id\":\"" + deviceId + "\"," +
+                            "\"app_uid\":\"" + appUserId + "\"" +
                             "});";
                     if (BuildConfig.DEBUG) {
                         Log.i(LOG_TAG, "URL: " + newUrl);
