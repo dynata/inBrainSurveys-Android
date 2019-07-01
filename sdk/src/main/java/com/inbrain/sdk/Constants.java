@@ -23,5 +23,5 @@ class Constants {
 
     static final String CONFIRM_TRANSACTIONS = "confirm-transactions";
 
-    static final int REQUEST_TIMEOUT_MS = 10000;
+    static final int REQUEST_TIMEOUT_MS = 30000;
 }

@@ -38,6 +38,7 @@ public class SurveysActivity extends Activity {
     private String deviceId;
 
     private boolean surveyActive;
+    private Handler updateRewardsHandler = new Handler();
 
     public static void start(Context context, String clientId, String clientSecret, String appUserId, String deviceId) {
         Intent intent = new Intent(context, SurveysActivity.class);
@@ -70,12 +71,13 @@ public class SurveysActivity extends Activity {
         deviceId = getIntent().getStringExtra(EXTRA_DEVICE_ID);
 
         webView = findViewById(R.id.web_view);
-        View backView = findViewById(R.id.backIv);
+        View backView = findViewById(R.id.back_image);
 
         backView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (surveyActive) showAbortSurveyDialog(); else finish();
+                if (surveyActive) showAbortSurveyDialog();
+                else finish();
             }
         });
 
@@ -114,7 +116,6 @@ public class SurveysActivity extends Activity {
         });
         webView.addJavascriptInterface(new SurveyJavaScriptInterface(), INTERFACE_NAME);
 
-        webView.clearCache(true); // not sure if it is needed to clear cache
         webView.clearHistory();
 
         webView.loadUrl(Constants.CONFIGURATION_URL);
@@ -122,7 +123,7 @@ public class SurveysActivity extends Activity {
         updateRewards(false);
     }
 
-    private void onBackButtonModeChanged(boolean surveyActive) {
+    private void setSurveyActive(boolean surveyActive) {
         if (this.surveyActive == surveyActive) return;
         this.surveyActive = surveyActive;
     }
@@ -147,14 +148,14 @@ public class SurveysActivity extends Activity {
 
     private void updateRewards(boolean withDelay) {
         if (withDelay) {
-            new Handler().postDelayed(new Runnable() {
+            updateRewardsHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    InBrain.getRewards();
+                    InBrain.getInstance().getRewards();
                 }
             }, UPDATE_REWARDS_DELAY_MS);
         } else {
-            InBrain.getRewards();
+            InBrain.getInstance().getRewards();
         }
     }
 
@@ -173,27 +174,27 @@ public class SurveysActivity extends Activity {
         webView.removeAllViews();
         webView.destroy();
         super.onDestroy();
-        InBrain.callback.onAdClosed();
+        InBrain.getInstance().onAdClosed();
     }
 
     private class SurveyJavaScriptInterface {
         @JavascriptInterface
         public void surveyOpened() {
             if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "surveyOpened");
-            onBackButtonModeChanged(true);
+            setSurveyActive(true);
         }
 
         @JavascriptInterface
         public void surveyClosed() {
             if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "surveyClosed");
-            onBackButtonModeChanged(false);
+            setSurveyActive(false);
             updateRewards(true);
         }
 
         @JavascriptInterface
         public void toggleNativeButtons(boolean toggle) {
             if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "toggleNativeButtons:" + toggle);
-            onBackButtonModeChanged(toggle);
+            setSurveyActive(toggle);
         }
     }
 }

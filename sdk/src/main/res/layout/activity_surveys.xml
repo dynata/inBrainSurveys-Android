@@ -15,7 +15,7 @@
         tools:targetApi="lollipop">
 
         <ImageView
-            android:id="@+id/backIv"
+            android:id="@+id/back_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?android:selectableItemBackground"

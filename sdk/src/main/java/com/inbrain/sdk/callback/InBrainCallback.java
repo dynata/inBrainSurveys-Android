@@ -14,11 +14,12 @@ public interface InBrainCallback {
     void onAdClosed();
 
     /**
+     * /**
      * Notifies your application about new rewards.
      * You need to confirm receipt after processing rewards in your application.
      *
-     * @param rewards  new rewards
-     * @param callback callback which is need to be called after processing rewards to confirm them.
+     * @param rewards new rewards
+     * @return handle rewards by user, in case false will be handled by user
      */
-    void onRewardReceived(List<Reward> rewards, ReceivedRewardsListener callback);
+    boolean handleRewards(List<Reward> rewards);
 }

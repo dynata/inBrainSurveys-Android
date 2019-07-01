@@ -1,6 +1,7 @@
 package com.inbrain.sdk;
 
 import android.os.AsyncTask;
+import android.text.TextUtils;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -10,7 +11,6 @@ import java.net.URL;
 import static com.inbrain.sdk.Constants.REQUEST_TIMEOUT_MS;
 
 class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
-    private static final String ERROR = "412error752";
     private final AsyncResponse callback;
 
     AuthorizedGetRequest(AsyncResponse callback) {
@@ -45,17 +45,17 @@ class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
                 return response.toString();
             } else {
                 callback.onError(new IllegalStateException(con.getResponseMessage()));
-                return ERROR;
+                return null;
             }
         } catch (Exception ex) {
             callback.onError(ex);
-            return ERROR;
+            return null;
         }
     }
 
     @Override
     protected void onPostExecute(String s) {
         super.onPostExecute(s);
-        if (!s.equals(ERROR)) callback.processFinish(s);
+        if (!TextUtils.isEmpty(s)) callback.processFinish(s);
     }
 }

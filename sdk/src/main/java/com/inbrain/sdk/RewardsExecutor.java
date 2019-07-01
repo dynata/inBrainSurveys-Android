@@ -52,7 +52,7 @@ class RewardsExecutor {
             double amount = jsonobject.getDouble("amount");
             String currency = jsonobject.getString("currency");
             int transactionType = jsonobject.getInt("transactionType");
-            rewards.add(new Reward(transactionId, amount, currency, transactionType));
+            rewards.add(new Reward(transactionId, (float) amount, currency, transactionType));
         }
         return rewards;
     }

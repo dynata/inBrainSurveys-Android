@@ -5,6 +5,11 @@ import com.inbrain.sdk.model.Reward;
 import java.util.List;
 
 public interface GetRewardsCallback {
-    void onGetRewards(List<Reward> rewards, ReceivedRewardsListener confirmRewardsCallback);
+    /**
+     * @param rewards
+     * @return handle rewards by user, in case false will be handled by user
+     */
+    boolean handleRewards(List<Reward> rewards);
+
     void onFailToLoadRewards(Throwable t);
 }

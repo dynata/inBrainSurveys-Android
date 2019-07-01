@@ -13,12 +13,12 @@ class ConfirmRewardsExecutor {
         AuthorizedPostRequest confirmTransactionsRequest = new AuthorizedPostRequest(new AsyncResponse() {
             @Override
             public void processFinish(String output) {
-                callback.onSuccessfullyConfirmedRewards();
+                callback.onSuccess();
             }
 
             @Override
             public void onError(Exception ex) {
-                callback.onFailToConfirmRewards(ex);
+                callback.onFailed(ex);
             }
         });
         if (BuildConfig.DEBUG) Log.d("RewardsExecutor", "token is:" + token);
@@ -38,7 +38,7 @@ class ConfirmRewardsExecutor {
     }
 
     public interface ConfirmRewardsCallback {
-        void onSuccessfullyConfirmedRewards();
-        void onFailToConfirmRewards(Throwable t);
+        void onSuccess();
+        void onFailed(Throwable t);
     }
 }

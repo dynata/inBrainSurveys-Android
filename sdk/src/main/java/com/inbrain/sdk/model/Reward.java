@@ -1,14 +1,16 @@
 package com.inbrain.sdk.model;
 
+import android.text.TextUtils;
+
 public class Reward {
     public long transactionId;
     public float amount;
     public String currency;
     public int transactionType;
 
-    public Reward(long transactionId, double amount, String currency, int transactionType) {
+    public Reward(long transactionId, float amount, String currency, int transactionType) {
         this.transactionId = transactionId;
-        this.amount = (float) amount;
+        this.amount = amount;
         this.currency = currency;
         this.transactionType = transactionType;
     }
@@ -19,7 +21,7 @@ public class Reward {
             Reward reward = (Reward) obj;
             return reward.transactionId == transactionId &&
                     reward.amount == amount &&
-                    reward.currency.equals(currency) &&
+                    TextUtils.equals(reward.currency, currency) &&
                     reward.transactionType == transactionType;
         } else {
             return false;
@@ -28,6 +30,6 @@ public class Reward {
 
     @Override
     public int hashCode() {
-        return Long.valueOf(transactionId).hashCode();
+        return (int) transactionId;
     }
 }
