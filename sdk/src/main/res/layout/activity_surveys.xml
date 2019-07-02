@@ -8,29 +8,29 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
         android:background="@color/background"
-        tools:ignore="UseCompoundDrawables"
         android:elevation="@dimen/elevation"
+        android:gravity="center_vertical"
+        tools:ignore="UseCompoundDrawables"
         tools:targetApi="lollipop">
 
         <ImageView
+            android:id="@+id/back_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?android:selectableItemBackground"
-            android:contentDescription="@string/go_back"
-            android:src="@drawable/ic_back"
-            android:padding="@dimen/big_padding"
-            android:focusable="true"
             android:clickable="true"
-            android:onClick="onExitClick" />
+            android:contentDescription="@string/go_back"
+            android:focusable="true"
+            android:padding="@dimen/big_padding"
+            android:src="@drawable/ic_back" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/header_text"
+            android:text="@string/inbrain_surveys"
             android:textColor="@color/main_text"
-            android:text="@string/inbrain_surveys"/>
+            android:textSize="@dimen/header_text" />
 
     </LinearLayout>
 
