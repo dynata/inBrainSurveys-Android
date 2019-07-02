@@ -110,14 +110,14 @@ public class InBrain {
 
                     @Override
                     public void onFailToLoadRewards(Throwable t) {
-                        callback.onFailToLoadRewards(t);
+                        callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
                     }
                 }, appUserId, deviceId);
             }
 
             @Override
             public void onFailToLoadToken(Throwable t) {
-                callback.onFailToLoadRewards(t);
+                callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
             }
         });
     }

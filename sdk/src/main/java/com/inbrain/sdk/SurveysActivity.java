@@ -124,7 +124,6 @@ public class SurveysActivity extends Activity {
     }
 
     private void setSurveyActive(boolean surveyActive) {
-        if (this.surveyActive == surveyActive) return;
         this.surveyActive = surveyActive;
     }
 
