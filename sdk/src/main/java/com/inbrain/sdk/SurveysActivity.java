@@ -31,6 +31,8 @@ public class SurveysActivity extends Activity {
     private static final int UPDATE_REWARDS_DELAY_MS = 10000;
 
     private WebView webView;
+    private View backImageView;
+    private View toolbarTextView;
 
     private String clientId;
     private String clientSecret;
@@ -55,6 +57,9 @@ public class SurveysActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_surveys);
 
+        backImageView = findViewById(R.id.back_image);
+        toolbarTextView = findViewById(R.id.toolbar_title_text);
+
         getWindow().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.background)));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             int flags = getWindow().getDecorView().getSystemUiVisibility();
@@ -71,9 +76,8 @@ public class SurveysActivity extends Activity {
         deviceId = getIntent().getStringExtra(EXTRA_DEVICE_ID);
 
         webView = findViewById(R.id.web_view);
-        View backView = findViewById(R.id.back_image);
 
-        backView.setOnClickListener(new View.OnClickListener() {
+        backImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (surveyActive) showAbortSurveyDialog();
@@ -123,8 +127,25 @@ public class SurveysActivity extends Activity {
         updateRewards(false);
     }
 
-    private void setSurveyActive(boolean surveyActive) {
+    private void setSurveyActive(final boolean surveyActive) {
         this.surveyActive = surveyActive;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (surveyActive) setToolbarVisible(true);
+                toolbarTextView.setVisibility(surveyActive ? View.GONE : View.VISIBLE);
+            }
+        });
+    }
+
+    private void setToolbarVisible(final boolean visible) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                backImageView.setVisibility(visible ? View.VISIBLE : View.GONE);
+                toolbarTextView.setVisibility(visible ? View.VISIBLE : View.GONE);
+            }
+        });
     }
 
     private void showAbortSurveyDialog() {
@@ -191,9 +212,10 @@ public class SurveysActivity extends Activity {
         }
 
         @JavascriptInterface
-        public void toggleNativeButtons(boolean toggle) {
+        public void toggleNativeButtons(String toggle) {
+            boolean visible = Boolean.parseBoolean(toggle);
             if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "toggleNativeButtons:" + toggle);
-            setSurveyActive(toggle);
+            setToolbarVisible(visible);
         }
     }
 }
