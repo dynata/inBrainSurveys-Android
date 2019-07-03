@@ -1,8 +1,8 @@
 <resources>
     <string name="inbrain_surveys">inBrain Surveys</string>
     <string name="go_back">Go back</string>
-    <string name="dont_abandon_the_survey_title">Leave survey</string>
-    <string name="dont_abandon_the_survey_message">If you leave now you will lose the progress you made in this survey. Are you sure?</string>
-    <string name="abort_survey">Leave</string>
-    <string name="cancel">Back</string>
+    <string name="dont_abandon_the_survey_title">Are you sure you want to Quit?</string>
+    <string name="dont_abandon_the_survey_message">Abandonment of this survey will terminate your progress and you will not receive your reward.</string>
+    <string name="abort_survey">Abandon Survey and Forfeit Reward</string>
+    <string name="cancel">Continue Survey</string>
 </resources>
