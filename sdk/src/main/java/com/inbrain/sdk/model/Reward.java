@@ -17,15 +17,14 @@ public class Reward {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Reward) {
-            Reward reward = (Reward) obj;
-            return reward.transactionId == transactionId &&
-                    reward.amount == amount &&
-                    TextUtils.equals(reward.currency, currency) &&
-                    reward.transactionType == transactionType;
-        } else {
+        if (!(obj instanceof Reward))
             return false;
-        }
+
+        Reward reward = (Reward) obj;
+        return reward.transactionId == transactionId &&
+                reward.amount == amount &&
+                TextUtils.equals(reward.currency, currency) &&
+                reward.transactionType == transactionType;
     }
 
     @Override

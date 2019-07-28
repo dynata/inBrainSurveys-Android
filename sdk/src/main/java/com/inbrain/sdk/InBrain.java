@@ -1,5 +1,6 @@
 package com.inbrain.sdk;
 
+import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.provider.Settings;
@@ -28,7 +29,6 @@ public class InBrain {
     private Set<Long> confirmedRewardsIds = new HashSet<>();
     private Set<Reward> lastReceivedRewards = new HashSet<>();
 
-    private Context appContext = null;
     private String clientId = null;
     private String clientSecret = null;
     private InBrainCallback callback;
@@ -47,13 +47,12 @@ public class InBrain {
         return instance;
     }
 
-    public void init(Context context, String clientId, String clientSecret,
+    public void init(Application application, String clientId, String clientSecret,
                      InBrainCallback callback) {
-        appContext = context.getApplicationContext();
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.callback = callback;
-        preferences = getPreferences(appContext);
+        preferences = getPreferences(application.getApplicationContext());
         if (preferences.contains(PREFERENCE_DEVICE_ID)) {
             deviceId = preferences.getString(PREFERENCE_DEVICE_ID, null);
         }
@@ -72,21 +71,26 @@ public class InBrain {
         preferences.edit().putString(PREFERENCE_DEVICE_ID, deviceId).apply();
     }
 
+    private void requireInit() {
+        if (TextUtils.isEmpty(clientId) || TextUtils.isEmpty(clientSecret)) {
+            Log.e(Constants.LOG_TAG, "Please first call init() method!");
+            throw new IllegalStateException();
+        }
+    }
+
     public void setAppUserId(String id) {
+        requireInit();
         appUserId = id;
-        getPreferences(appContext).edit().putString(PREFERENCE_APP_USER_ID, appUserId).apply();
+        preferences.edit().putString(PREFERENCE_APP_USER_ID, appUserId).apply();
     }
 
     /**
-     * Starts Ad Screen
+     * Opens survey wall
      *
      * @param context
      */
     public void showSurveys(Context context) {
-        if (TextUtils.isEmpty(clientId) || TextUtils.isEmpty(clientSecret) || callback == null) {
-            Log.e(Constants.LOG_TAG, "Please first call init() method with client id, client secret and callback.");
-            return;
-        }
+        requireInit();
         SurveysActivity.start(context, clientId, clientSecret, appUserId, deviceId);
     }
 
@@ -96,6 +100,7 @@ public class InBrain {
      * @see InBrainCallback
      */
     public void getRewards(final GetRewardsCallback callback) {
+        requireInit();
         if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "External get rewards");
         getToken(new TokenExecutor.TokenCallback() {
             @Override
@@ -110,6 +115,10 @@ public class InBrain {
 
                     @Override
                     public void onFailToLoadRewards(Throwable t) {
+                        if (BuildConfig.DEBUG) {
+                            Log.e(Constants.LOG_TAG, "Failed to load rewards");
+                            t.printStackTrace();
+                        }
                         callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
                     }
                 }, appUserId, deviceId);
@@ -117,12 +126,20 @@ public class InBrain {
 
             @Override
             public void onFailToLoadToken(Throwable t) {
+                if (BuildConfig.DEBUG) {
+                    Log.e(Constants.LOG_TAG, "Failed to load token");
+                    t.printStackTrace();
+                }
                 callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
             }
         });
     }
 
-    void getRewards() {
+    /**
+     * Requests rewards manually. Returns result through global callback set in init().
+     */
+    public void getRewards() {
+        requireInit();
         if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "Get rewards");
         getToken(new TokenExecutor.TokenCallback() {
             @Override
@@ -143,7 +160,8 @@ public class InBrain {
                     @Override
                     public void onFailToLoadRewards(Throwable t) {
                         if (BuildConfig.DEBUG) {
-                            Log.e(Constants.LOG_TAG, "Failed to load rewards:" + t);
+                            Log.e(Constants.LOG_TAG, "Failed to load rewards");
+                            t.printStackTrace();
                         }
                     }
                 }, appUserId, deviceId);
@@ -151,7 +169,10 @@ public class InBrain {
 
             @Override
             public void onFailToLoadToken(Throwable t) {
-                if (BuildConfig.DEBUG) Log.e(Constants.LOG_TAG, "Failed to load token:" + t);
+                if (BuildConfig.DEBUG) {
+                    Log.e(Constants.LOG_TAG, "Failed to load token");
+                    t.printStackTrace();
+                }
             }
         });
     }
@@ -180,7 +201,7 @@ public class InBrain {
         if (!rewards.isEmpty()) {
             if (externalCallback != null) {
                 return externalCallback.handleRewards(rewards); // notify by request
-            } else {
+            } else if (callback != null) {
                 return callback.handleRewards(rewards); // notify by subscription
             }
         }
@@ -193,15 +214,14 @@ public class InBrain {
     }
 
     /**
-     * Confirms rewards manually
+     * Confirms rewards manually.
      *
      * @param rewards list of rewards which need to be confirmed
-     * @return success of confirmed rewards result
      */
-    public boolean confirmRewards(final List<Reward> rewards) {
+    public void confirmRewards(final List<Reward> rewards) {
+        requireInit();
         Set<Long> rewardsIds = getRewardsIds(rewards);
         confirmRewardsById(rewardsIds);
-        return !rewardsIds.isEmpty();
     }
 
     private Set<Long> getRewardsIds(List<Reward> rewards) {
@@ -283,7 +303,9 @@ public class InBrain {
         return context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
     }
 
-    void onAdClosed() {
-        if (callback != null) callback.onAdClosed();
+    void onClosed() {
+        if (callback != null) {
+            callback.onClosed();
+        }
     }
 }

@@ -63,11 +63,10 @@ class TokenPostRequest extends AsyncTask<Void, Void, String> {
             if (responseCode == HttpsURLConnection.HTTP_OK) {
 
                 BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                StringBuffer sb = new StringBuffer("");
-                String line = "";
+                StringBuilder sb = new StringBuilder();
+                String line;
                 while ((line = in.readLine()) != null) {
                     sb.append(line);
-                    break;
                 }
                 in.close();
                 return sb.toString();
@@ -75,6 +74,9 @@ class TokenPostRequest extends AsyncTask<Void, Void, String> {
             callback.onError(new IllegalStateException(conn.getResponseMessage()));
             return "";
         } catch (Exception ex) {
+            if (BuildConfig.DEBUG) {
+                ex.printStackTrace();
+            }
             callback.onError(ex);
             return "";
         }
