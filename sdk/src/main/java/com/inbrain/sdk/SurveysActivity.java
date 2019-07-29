@@ -163,6 +163,7 @@ public class SurveysActivity extends Activity {
     }
 
     private void navigateBackToSurveys() {
+        setSurveyActive(false);
         webView.loadUrl(DOMAIN);
     }
 
