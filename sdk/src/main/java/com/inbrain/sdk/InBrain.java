@@ -11,7 +11,6 @@ import com.inbrain.sdk.callback.GetRewardsCallback;
 import com.inbrain.sdk.callback.InBrainCallback;
 import com.inbrain.sdk.model.Reward;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -22,7 +21,7 @@ public class InBrain {
     private static final String PREFERENCES = "SharedPreferences_inBrain25930";
     private static final String PREFERENCE_DEVICE_ID = "529826892";
     private static final String PREFERENCE_APP_USER_ID = "378294761";
-    private static final String PREFERENCE_FAILED_REWARDS = "372131_f4lied";
+    private static final String PREFERENCE_PENDING_REWARDS = "372131_f4lied";
 
     private static InBrain instance;
 
@@ -233,24 +232,25 @@ public class InBrain {
         return rewardsIds;
     }
 
-    private void confirmRewardsById(final Set<Long> rewardsIds) {
-        List<Long> failedToConfirmRewards = getFailedToConfirmRewardsIds();
-        if (failedToConfirmRewards != null) {
-            rewardsIds.addAll(failedToConfirmRewards);
-        }
+    private void confirmRewardsById(final Set<Long> rewardIds) {
+        final Set<Long> pendingRewardIds = getPendingRewardIds();
+        pendingRewardIds.addAll(rewardIds);
+        savePendingRewards(pendingRewardIds);
         TokenExecutor executor = new TokenExecutor(clientId, clientSecret);
         executor.getToken(new TokenExecutor.TokenCallback() {
             @Override
             public void onGetToken(String token) {
                 ConfirmRewardsExecutor confirmRewardsExecutor = new ConfirmRewardsExecutor();
-                confirmRewardsExecutor.confirmRewards(token, rewardsIds, new ConfirmRewardsExecutor.ConfirmRewardsCallback() {
+                confirmRewardsExecutor.confirmRewards(token, pendingRewardIds, new ConfirmRewardsExecutor.ConfirmRewardsCallback() {
                     @Override
                     public void onSuccess() {
                         if (BuildConfig.DEBUG) {
                             Log.d(Constants.LOG_TAG, "Successfully confirmed rewards");
                         }
-                        confirmedRewardsIds.addAll(rewardsIds);
-                        saveFailedToConfirmRewards(null);
+                        confirmedRewardsIds.addAll(pendingRewardIds);
+                        Set<Long> newPendingRewardIds = getPendingRewardIds(); // It might have changed
+                        newPendingRewardIds.removeAll(pendingRewardIds);
+                        savePendingRewards(newPendingRewardIds);
                     }
 
                     @Override
@@ -258,7 +258,6 @@ public class InBrain {
                         if (BuildConfig.DEBUG) {
                             Log.e(Constants.LOG_TAG, "On failed to confirm rewards:" + t);
                         }
-                        saveFailedToConfirmRewards(rewardsIds);
                     }
                 }, appUserId, deviceId);
             }
@@ -272,28 +271,29 @@ public class InBrain {
         });
     }
 
-    private void saveFailedToConfirmRewards(Set<Long> rewardsIds) {
+    private void savePendingRewards(Set<Long> rewardsIds) {
         if (rewardsIds == null) {
             preferences.edit()
-                    .putStringSet(PREFERENCE_FAILED_REWARDS, null)
+                    .putStringSet(PREFERENCE_PENDING_REWARDS, null)
                     .apply();
             return;
         }
         Set<String> set = new HashSet<>();
         for (Long id : rewardsIds) set.add(id.toString());
         preferences.edit()
-                .putStringSet(PREFERENCE_FAILED_REWARDS, set)
+                .putStringSet(PREFERENCE_PENDING_REWARDS, set)
                 .apply();
     }
 
-    private List<Long> getFailedToConfirmRewardsIds() {
-        Set<String> set = preferences.getStringSet(PREFERENCE_FAILED_REWARDS, null);
-        if (set == null) return null;
-        List<Long> ids = new ArrayList<>(set.size());
-        for (String stringNumber : set) {
-            try {
-                ids.add(Long.parseLong(stringNumber));
-            } catch (Exception ignored) {
+    private Set<Long> getPendingRewardIds() {
+        Set<String> set = preferences.getStringSet(PREFERENCE_PENDING_REWARDS, null);
+        Set<Long> ids = new HashSet<>();
+        if (set != null) {
+            for (String stringNumber : set) {
+                try {
+                    ids.add(Long.parseLong(stringNumber));
+                } catch (Exception ignored) {
+                }
             }
         }
         return ids;

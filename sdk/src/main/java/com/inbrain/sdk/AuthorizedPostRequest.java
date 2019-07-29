@@ -1,7 +1,6 @@
 package com.inbrain.sdk;
 
 import android.os.AsyncTask;
-import android.text.TextUtils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -17,6 +16,8 @@ import static com.inbrain.sdk.Constants.REQUEST_TIMEOUT_MS;
 
 class AuthorizedPostRequest extends AsyncTask<String, Void, String> {
     private final AsyncResponse callback;
+    private boolean success = false;
+    private Exception exception;
 
     AuthorizedPostRequest(AsyncResponse callback) {
         this.callback = callback;
@@ -53,19 +54,21 @@ class AuthorizedPostRequest extends AsyncTask<String, Void, String> {
             int responseCode = con.getResponseCode();
             if (responseCode == HttpsURLConnection.HTTP_OK) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-                StringBuffer sb = new StringBuffer("");
-                String line = "";
+                StringBuilder sb = new StringBuilder();
+                String line;
                 while ((line = in.readLine()) != null) {
                     sb.append(line);
-                    break;
                 }
                 in.close();
+                success = true;
                 return sb.toString();
             }
-            callback.onError(new IllegalStateException(con.getResponseMessage()));
-            return null;
+            return con.getResponseMessage();
         } catch (Exception ex) {
-            callback.onError(ex);
+            exception = ex;
+            if (BuildConfig.DEBUG) {
+                ex.printStackTrace();
+            }
             return null;
         }
     }
@@ -73,6 +76,10 @@ class AuthorizedPostRequest extends AsyncTask<String, Void, String> {
     @Override
     protected void onPostExecute(String s) {
         super.onPostExecute(s);
-        if (!TextUtils.isEmpty(s)) callback.processFinish(s);
+        if (success) {
+            callback.processFinish(s);
+        } else {
+            callback.onError(exception);
+        }
     }
 }
