@@ -1,6 +1,5 @@
 package com.inbrain.sdk;
 
-import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.provider.Settings;
@@ -11,6 +10,7 @@ import com.inbrain.sdk.callback.GetRewardsCallback;
 import com.inbrain.sdk.callback.InBrainCallback;
 import com.inbrain.sdk.model.Reward;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -30,10 +30,11 @@ public class InBrain {
 
     private String clientId = null;
     private String clientSecret = null;
-    private InBrainCallback callback;
+    private List<InBrainCallback> callbacksList = new ArrayList<>();
     private String appUserId = null;
     private String deviceId = null;
     private SharedPreferences preferences;
+    private String token;
 
 
     private InBrain() {
@@ -46,12 +47,10 @@ public class InBrain {
         return instance;
     }
 
-    public void init(Application application, String clientId, String clientSecret,
-                     InBrainCallback callback) {
+    public void init(Context context, String clientId, String clientSecret) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
-        this.callback = callback;
-        preferences = getPreferences(application.getApplicationContext());
+        preferences = getPreferences(context);
         if (preferences.contains(PREFERENCE_DEVICE_ID)) {
             deviceId = preferences.getString(PREFERENCE_DEVICE_ID, null);
         }
@@ -81,6 +80,15 @@ public class InBrain {
         requireInit();
         appUserId = id;
         preferences.edit().putString(PREFERENCE_APP_USER_ID, appUserId).apply();
+        token = null;
+    }
+
+    public void addCallback(InBrainCallback callback) {
+        callbacksList.add(callback);
+    }
+
+    public void removeCallback(InBrainCallback callback) {
+        callbacksList.remove(callback);
     }
 
     /**
@@ -101,79 +109,154 @@ public class InBrain {
     public void getRewards(final GetRewardsCallback callback) {
         requireInit();
         if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "External get rewards");
-        getToken(new TokenExecutor.TokenCallback() {
-            @Override
-            public void onGetToken(String token) {
-                RewardsExecutor rewardsExecutor = new RewardsExecutor();
-                rewardsExecutor.getRewards(token, new RewardsExecutor.RequestRewardsCallback() {
-                    @Override
-                    public void onGetRewards(List<Reward> rewards) {
-                        lastReceivedRewards = new HashSet<>(rewards);
-                        if (onNewRewardsReceived(rewards, callback)) confirmRewards(rewards);
-                    }
+        if (TextUtils.isEmpty(token)) {
+            refreshToken(new TokenExecutor.TokenCallback() {
+                @Override
+                public void onGetToken(String token) {
+                    requestRewardsWithTokenUpdate(callback, false);
+                }
 
-                    @Override
-                    public void onFailToLoadRewards(Throwable t) {
-                        if (BuildConfig.DEBUG) {
-                            Log.e(Constants.LOG_TAG, "Failed to load rewards");
-                            t.printStackTrace();
-                        }
-                        callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
+                @Override
+                public void onFailToLoadToken(Throwable t) {
+                    if (BuildConfig.DEBUG) {
+                        Log.e(Constants.LOG_TAG, "Failed to load token");
+                        t.printStackTrace();
                     }
-                }, appUserId, deviceId);
+                    callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
+                }
+            });
+        } else {
+            requestRewardsWithTokenUpdate(callback, true);
+        }
+    }
+
+    private void requestRewardsWithTokenUpdate(final GetRewardsCallback callback, final boolean updateToken) {
+        RewardsExecutor rewardsExecutor = new RewardsExecutor();
+        rewardsExecutor.getRewards(token, new RewardsExecutor.RequestRewardsCallback() {
+            @Override
+            public void onGetRewards(List<Reward> rewards) {
+                onGetRewardsSuccess(callback, rewards);
             }
 
             @Override
-            public void onFailToLoadToken(Throwable t) {
+            public void onFailToLoadRewards(Throwable t) {
                 if (BuildConfig.DEBUG) {
-                    Log.e(Constants.LOG_TAG, "Failed to load token");
+                    Log.e(Constants.LOG_TAG, "Failed to load rewards");
                     t.printStackTrace();
                 }
-                callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
+                if (t instanceof TokenExpiredException) {
+                    if (BuildConfig.DEBUG) {
+                        Log.e(Constants.LOG_TAG, "Token expired");
+                    }
+                    if (updateToken) {
+                        refreshToken(new TokenExecutor.TokenCallback() {
+                            @Override
+                            public void onGetToken(String token) {
+                                requestRewardsWithTokenUpdate(callback, false);
+                            }
+
+                            @Override
+                            public void onFailToLoadToken(Throwable t) {
+                                if (BuildConfig.DEBUG) {
+                                    Log.e(Constants.LOG_TAG, "Failed to load token");
+                                    t.printStackTrace();
+                                }
+                                callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
+                            }
+                        });
+                    } else {
+                        callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
+                    }
+                } else {
+                    callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
+                }
             }
-        });
+        }, appUserId, deviceId);
+    }
+
+    private void onGetRewardsSuccess(GetRewardsCallback callback, List<Reward> rewards) {
+        lastReceivedRewards = new HashSet<>(rewards);
+        if (onNewRewardsReceived(rewards, callback)) confirmRewards(rewards);
     }
 
     /**
-     * Requests rewards manually. Returns result through global callback set in init().
+     * Requests rewards manually. Returns result through global callback set in setListener().
      */
     public void getRewards() {
         requireInit();
         if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "Get rewards");
-        getToken(new TokenExecutor.TokenCallback() {
-            @Override
-            public void onGetToken(String token) {
-                RewardsExecutor rewardsExecutor = new RewardsExecutor();
-                rewardsExecutor.getRewards(token, new RewardsExecutor.RequestRewardsCallback() {
-                    @Override
-                    public void onGetRewards(List<Reward> rewards) {
-                        Set<Reward> newRewards = new HashSet<>(rewards);
-                        if (checkRewardsAreSame(newRewards)) {
-                            if (BuildConfig.DEBUG) Log.w(Constants.LOG_TAG, "Rewards are same");
-                            return;
-                        }
-                        lastReceivedRewards = newRewards;
-                        if (onNewRewardsReceived(rewards, null)) confirmRewards(rewards);
-                    }
+        if (TextUtils.isEmpty(token)) {
+            refreshToken(new TokenExecutor.TokenCallback() {
+                @Override
+                public void onGetToken(String token) {
+                    requestRewardsWithTokenUpdate(false);
+                }
 
-                    @Override
-                    public void onFailToLoadRewards(Throwable t) {
-                        if (BuildConfig.DEBUG) {
-                            Log.e(Constants.LOG_TAG, "Failed to load rewards");
-                            t.printStackTrace();
-                        }
+                @Override
+                public void onFailToLoadToken(Throwable t) {
+                    if (BuildConfig.DEBUG) {
+                        Log.e(Constants.LOG_TAG, "Failed to load token");
+                        t.printStackTrace();
                     }
-                }, appUserId, deviceId);
+                }
+            });
+        } else {
+            requestRewardsWithTokenUpdate(true);
+        }
+    }
+
+    private void requestRewardsWithTokenUpdate(final boolean updateToken) {
+        RewardsExecutor rewardsExecutor = new RewardsExecutor();
+        rewardsExecutor.getRewards(token, new RewardsExecutor.RequestRewardsCallback() {
+            @Override
+            public void onGetRewards(List<Reward> rewards) {
+                onGetRewardsSuccess(rewards);
             }
 
             @Override
-            public void onFailToLoadToken(Throwable t) {
-                if (BuildConfig.DEBUG) {
-                    Log.e(Constants.LOG_TAG, "Failed to load token");
-                    t.printStackTrace();
+            public void onFailToLoadRewards(Throwable t) {
+                if (t instanceof TokenExpiredException) {
+                    if (BuildConfig.DEBUG) {
+                        Log.e(Constants.LOG_TAG, "Token expired");
+                    }
+                    if (updateToken) {
+                        refreshToken(new TokenExecutor.TokenCallback() {
+                            @Override
+                            public void onGetToken(String token) {
+                                requestRewardsWithTokenUpdate(false);
+                            }
+
+                            @Override
+                            public void onFailToLoadToken(Throwable t) {
+                                if (BuildConfig.DEBUG) {
+                                    Log.e(Constants.LOG_TAG, "Failed to load token");
+                                    t.printStackTrace();
+                                }
+                            }
+                        });
+                    } else {
+                        if (BuildConfig.DEBUG) {
+                            Log.e(Constants.LOG_TAG, "Token is expired, but not gonna update");
+                        }
+                    }
+                } else {
+                    if (BuildConfig.DEBUG) {
+                        Log.e(Constants.LOG_TAG, "Failed to load rewards");
+                        t.printStackTrace();
+                    }
                 }
             }
-        });
+        }, appUserId, deviceId);
+    }
+
+    private void onGetRewardsSuccess(List<Reward> rewards) {
+        Set<Reward> newRewards = new HashSet<>(rewards);
+        if (checkRewardsAreSame(newRewards)) {
+            if (BuildConfig.DEBUG) Log.w(Constants.LOG_TAG, "Rewards are same");
+            return;
+        }
+        lastReceivedRewards = newRewards;
+        if (onNewRewardsReceived(rewards, null)) confirmRewards(rewards);
     }
 
     private boolean checkRewardsAreSame(Set<Reward> newRewards) {
@@ -200,16 +283,34 @@ public class InBrain {
         if (!rewards.isEmpty()) {
             if (externalCallback != null) {
                 return externalCallback.handleRewards(rewards); // notify by request
-            } else if (callback != null) {
-                return callback.handleRewards(rewards); // notify by subscription
+            } else if (!callbacksList.isEmpty()) {
+                boolean handleBySelf = false;
+                for (InBrainCallback callback : callbacksList) {
+                    if (callback.handleRewards(rewards)) {
+                        handleBySelf = true;
+                        break;
+                    }
+                }
+                return handleBySelf; // notify by subscription
             }
         }
-        return false;
+        return true;
     }
 
-    private void getToken(TokenExecutor.TokenCallback tokenCallback) {
+    private void refreshToken(final TokenExecutor.TokenCallback tokenCallback) {
         TokenExecutor executor = new TokenExecutor(clientId, clientSecret);
-        executor.getToken(tokenCallback);
+        executor.getToken(new TokenExecutor.TokenCallback() {
+            @Override
+            public void onGetToken(String token) {
+                InBrain.this.token = token;
+                tokenCallback.onGetToken(token);
+            }
+
+            @Override
+            public void onFailToLoadToken(Throwable t) {
+                tokenCallback.onFailToLoadToken(t);
+            }
+        });
     }
 
     /**
@@ -236,39 +337,86 @@ public class InBrain {
         final Set<Long> pendingRewardIds = getPendingRewardIds();
         pendingRewardIds.addAll(rewardIds);
         savePendingRewards(pendingRewardIds);
-        TokenExecutor executor = new TokenExecutor(clientId, clientSecret);
-        executor.getToken(new TokenExecutor.TokenCallback() {
-            @Override
-            public void onGetToken(String token) {
-                ConfirmRewardsExecutor confirmRewardsExecutor = new ConfirmRewardsExecutor();
-                confirmRewardsExecutor.confirmRewards(token, pendingRewardIds, new ConfirmRewardsExecutor.ConfirmRewardsCallback() {
-                    @Override
-                    public void onSuccess() {
-                        if (BuildConfig.DEBUG) {
-                            Log.d(Constants.LOG_TAG, "Successfully confirmed rewards");
-                        }
-                        confirmedRewardsIds.addAll(pendingRewardIds);
-                        Set<Long> newPendingRewardIds = getPendingRewardIds(); // It might have changed
-                        newPendingRewardIds.removeAll(pendingRewardIds);
-                        savePendingRewards(newPendingRewardIds);
-                    }
+        if (TextUtils.isEmpty(token)) {
+            refreshToken(new TokenExecutor.TokenCallback() {
+                @Override
+                public void onGetToken(String token) {
+                    confirmRewards(token, pendingRewardIds);
+                }
 
-                    @Override
-                    public void onFailed(Throwable t) {
-                        if (BuildConfig.DEBUG) {
-                            Log.e(Constants.LOG_TAG, "On failed to confirm rewards:" + t);
-                        }
+                @Override
+                public void onFailToLoadToken(Throwable t) {
+                    if (BuildConfig.DEBUG) {
+                        Log.e(Constants.LOG_TAG, "Failed to load token");
+                        t.printStackTrace();
                     }
-                }, appUserId, deviceId);
+                }
+            });
+        } else {
+            confirmRewards(token, pendingRewardIds);
+        }
+    }
+
+    private void confirmRewards(String token, final Set<Long> pendingRewardIds) {
+        ConfirmRewardsExecutor confirmRewardsExecutor = new ConfirmRewardsExecutor();
+        confirmRewardsExecutor.confirmRewards(token, pendingRewardIds, new ConfirmRewardsExecutor.ConfirmRewardsCallback() {
+            @Override
+            public void onSuccess() {
+                if (BuildConfig.DEBUG) {
+                    Log.d(Constants.LOG_TAG, "Successfully confirmed rewards");
+                }
+                confirmedRewardsIds.addAll(pendingRewardIds);
+                Set<Long> newPendingRewardIds = getPendingRewardIds(); // It might have changed
+                newPendingRewardIds.removeAll(pendingRewardIds);
+                savePendingRewards(newPendingRewardIds);
             }
 
             @Override
-            public void onFailToLoadToken(Throwable t) {
-                if (BuildConfig.DEBUG) {
-                    Log.e(Constants.LOG_TAG, "On failed to load token:" + t);
+            public void onFailed(Throwable t) {
+                if (t instanceof TokenExpiredException) {
+                    if (BuildConfig.DEBUG) {
+                        Log.e(Constants.LOG_TAG, "Token expired");
+                    }
+                    refreshToken(new TokenExecutor.TokenCallback() {
+                        @Override
+                        public void onGetToken(String token) {
+                            ConfirmRewardsExecutor confirmRewardsExecutor = new ConfirmRewardsExecutor();
+                            confirmRewardsExecutor.confirmRewards(token, pendingRewardIds, new ConfirmRewardsExecutor.ConfirmRewardsCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    if (BuildConfig.DEBUG) {
+                                        Log.d(Constants.LOG_TAG, "Successfully confirmed rewards");
+                                    }
+                                    confirmedRewardsIds.addAll(pendingRewardIds);
+                                    Set<Long> newPendingRewardIds = getPendingRewardIds(); // It might have changed
+                                    newPendingRewardIds.removeAll(pendingRewardIds);
+                                    savePendingRewards(newPendingRewardIds);
+                                }
+
+                                @Override
+                                public void onFailed(Throwable t) {
+                                    if (BuildConfig.DEBUG) {
+                                        Log.e(Constants.LOG_TAG, "On failed to confirm rewards:" + t);
+                                    }
+                                }
+                            }, appUserId, deviceId);
+                        }
+
+                        @Override
+                        public void onFailToLoadToken(Throwable t) {
+                            if (BuildConfig.DEBUG) {
+                                Log.e(Constants.LOG_TAG, "Failed to load token");
+                                t.printStackTrace();
+                            }
+                        }
+                    });
+                } else {
+                    if (BuildConfig.DEBUG) {
+                        Log.e(Constants.LOG_TAG, "On failed to confirm rewards:" + t);
+                    }
                 }
             }
-        });
+        }, appUserId, deviceId);
     }
 
     private void savePendingRewards(Set<Long> rewardsIds) {
@@ -304,8 +452,8 @@ public class InBrain {
     }
 
     void onClosed() {
-        if (callback != null) {
-            callback.onClosed();
+        if (!callbacksList.isEmpty()) {
+            for (InBrainCallback callback : callbacksList) callback.onClosed();
         }
     }
 }

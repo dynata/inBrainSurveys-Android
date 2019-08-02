@@ -12,6 +12,8 @@ import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import static com.inbrain.sdk.AuthorizedGetRequest.RESPONSE_CODE_UNAUTHORIZED;
+import static com.inbrain.sdk.AuthorizedGetRequest.RESPONSE_MESSAGE_UNAUTHORIZED;
 import static com.inbrain.sdk.Constants.REQUEST_TIMEOUT_MS;
 
 class AuthorizedPostRequest extends AsyncTask<String, Void, String> {
@@ -62,6 +64,10 @@ class AuthorizedPostRequest extends AsyncTask<String, Void, String> {
                 in.close();
                 success = true;
                 return sb.toString();
+            } else if (con.getResponseCode() == RESPONSE_CODE_UNAUTHORIZED
+                    & con.getResponseMessage().equals(RESPONSE_MESSAGE_UNAUTHORIZED)) {
+                callback.onError(new TokenExpiredException(con.getResponseMessage()));
+                return null;
             }
             return con.getResponseMessage();
         } catch (Exception ex) {

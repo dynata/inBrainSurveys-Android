@@ -59,7 +59,6 @@ class RewardsExecutor {
 
     public interface RequestRewardsCallback {
         void onGetRewards(List<Reward> rewards);
-
         void onFailToLoadRewards(Throwable t);
     }
 }
