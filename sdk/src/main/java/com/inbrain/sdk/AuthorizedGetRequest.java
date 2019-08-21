@@ -11,6 +11,8 @@ import java.net.URL;
 import static com.inbrain.sdk.Constants.REQUEST_TIMEOUT_MS;
 
 class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
+    static final int RESPONSE_CODE_UNAUTHORIZED = 401;
+    static final String RESPONSE_MESSAGE_UNAUTHORIZED = "Unauthorized";
     private final AsyncResponse callback;
 
     AuthorizedGetRequest(AsyncResponse callback) {
@@ -43,6 +45,10 @@ class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
                 }
                 in.close();
                 return response.toString();
+            } else if (con.getResponseCode() == RESPONSE_CODE_UNAUTHORIZED
+                    & con.getResponseMessage().equals(RESPONSE_MESSAGE_UNAUTHORIZED)) {
+                callback.onError(new TokenExpiredException(con.getResponseMessage()));
+                return null;
             } else {
                 callback.onError(new IllegalStateException(con.getResponseMessage()));
                 return null;

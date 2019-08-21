@@ -4,6 +4,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 class TokenExecutor {
+    private static final String FIELD_NAME_ACCESS_TOKEN = "access_token";
     private final String clientId;
     private final String clientSecret;
 
@@ -18,7 +19,7 @@ class TokenExecutor {
             public void processFinish(String output) {
                 try {
                     JSONObject jObj = new JSONObject(output);
-                    String token = jObj.getString("access_token");
+                    String token = jObj.getString(FIELD_NAME_ACCESS_TOKEN);
                     callback.onGetToken(token);
                 } catch (JSONException e) {
                     callback.onFailToLoadToken(e);
