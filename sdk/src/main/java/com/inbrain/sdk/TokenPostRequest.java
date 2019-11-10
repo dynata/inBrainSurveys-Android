@@ -8,8 +8,10 @@ import java.io.BufferedWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -36,8 +38,16 @@ class TokenPostRequest extends AsyncTask<Void, Void, String> {
 
     @Override
     protected String doInBackground(Void... voids) {
+        String encodedClientId = "";
+        String encodedClientSecret = "";
+        try {
+            encodedClientId = URLEncoder.encode(clientId, "UTF-8");
+            encodedClientSecret = URLEncoder.encode(clientSecret, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         String urlParameters = String.format("client_id=%s&client_secret=%s&scope=%s&grant_type=%s",
-                clientId, clientSecret, TOKEN_SCOPE, GRANT_TYPE_CLIENT_CREDENTIALS);
+                encodedClientId, encodedClientSecret, TOKEN_SCOPE, GRANT_TYPE_CLIENT_CREDENTIALS);
 
         try {
             byte[] postData = urlParameters.getBytes(Charset.forName("UTF-8"));
