@@ -16,6 +16,7 @@ import java.nio.charset.Charset;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import static com.inbrain.sdk.Constants.ERROR_INVALID_CLIENT;
 import static com.inbrain.sdk.Constants.GRANT_TYPE_CLIENT_CREDENTIALS;
 import static com.inbrain.sdk.Constants.TOKEN_SCOPE;
 import static com.inbrain.sdk.Constants.TOKEN_URL;
@@ -71,7 +72,6 @@ class TokenPostRequest extends AsyncTask<Void, Void, String> {
 
             int responseCode = conn.getResponseCode();
             if (responseCode == HttpsURLConnection.HTTP_OK) {
-
                 BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 StringBuilder sb = new StringBuilder();
                 String line;
@@ -80,6 +80,25 @@ class TokenPostRequest extends AsyncTask<Void, Void, String> {
                 }
                 in.close();
                 return sb.toString();
+            } else {
+                try {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = in.readLine()) != null) {
+                        sb.append(line);
+                    }
+                    in.close();
+                    String errorText = sb.toString();
+                    if (errorText.equals(ERROR_INVALID_CLIENT)) {
+                        callback.onError(new InvalidClientException());
+                        return "";
+                    }
+                } catch (Exception ex) {
+                    if (BuildConfig.DEBUG) {
+                        ex.printStackTrace();
+                    }
+                }
             }
             callback.onError(new IllegalStateException(conn.getResponseMessage()));
             return "";
