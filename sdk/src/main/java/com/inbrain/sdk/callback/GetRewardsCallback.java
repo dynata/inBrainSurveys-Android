@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface GetRewardsCallback {
     int ERROR_CODE_UNKNOWN = 0;
+    int ERROR_CODE_INVALID_CLIENT_ID = 1;
 
     /**
      * Notifies the application about new rewards.

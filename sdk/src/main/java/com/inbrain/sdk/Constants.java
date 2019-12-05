@@ -24,4 +24,6 @@ class Constants {
     static final String CONFIRM_TRANSACTIONS = "confirm-transactions";
 
     static final int REQUEST_TIMEOUT_MS = 30000;
+
+    static final String ERROR_INVALID_CLIENT = "{\"error\":\"invalid_client\"}";
 }

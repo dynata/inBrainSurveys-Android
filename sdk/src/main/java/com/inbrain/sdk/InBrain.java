@@ -2,7 +2,6 @@ package com.inbrain.sdk;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -35,6 +34,7 @@ public class InBrain {
     private String deviceId = null;
     private SharedPreferences preferences;
     private String token;
+    private boolean wrongClientIdError;
 
 
     private InBrain() {
@@ -50,6 +50,7 @@ public class InBrain {
     public void init(Context context, String clientId, String clientSecret) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
+        wrongClientIdError = false;
         preferences = getPreferences(context);
         if (preferences.contains(PREFERENCE_DEVICE_ID)) {
             deviceId = preferences.getString(PREFERENCE_DEVICE_ID, null);
@@ -58,26 +59,27 @@ public class InBrain {
             appUserId = preferences.getString(PREFERENCE_APP_USER_ID, null);
         }
         if (TextUtils.isEmpty(deviceId)) {
-            String androidId = Settings.Secure.ANDROID_ID;
-            if (!TextUtils.isEmpty(androidId)) {
-                deviceId = UUID.nameUUIDFromBytes(androidId.getBytes()).toString();
-            }
-        }
-        if (TextUtils.isEmpty(deviceId)) {
             deviceId = UUID.randomUUID().toString();
         }
         preferences.edit().putString(PREFERENCE_DEVICE_ID, deviceId).apply();
     }
 
-    private void requireInit() {
+    private boolean checkForInit() {
         if (TextUtils.isEmpty(clientId) || TextUtils.isEmpty(clientSecret)) {
             Log.e(Constants.LOG_TAG, "Please first call init() method!");
-            throw new IllegalStateException();
+            return false;
         }
+        if (wrongClientIdError) {
+            Log.e(Constants.LOG_TAG, "Wrong client id!");
+            return false;
+        }
+        return true;
     }
 
     public void setAppUserId(String id) {
-        requireInit();
+        if (!checkForInit()) {
+            return;
+        }
         appUserId = id;
         preferences.edit().putString(PREFERENCE_APP_USER_ID, appUserId).apply();
         token = null;
@@ -97,7 +99,9 @@ public class InBrain {
      * @param context
      */
     public void showSurveys(Context context) {
-        requireInit();
+        if (!checkForInit()) {
+            return;
+        }
         SurveysActivity.start(context, clientId, clientSecret, appUserId, deviceId);
     }
 
@@ -107,7 +111,9 @@ public class InBrain {
      * @see InBrainCallback
      */
     public void getRewards(final GetRewardsCallback callback) {
-        requireInit();
+        if (!checkForInit()) {
+            return;
+        }
         if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "External get rewards");
         if (TextUtils.isEmpty(token)) {
             refreshToken(new TokenExecutor.TokenCallback() {
@@ -122,7 +128,11 @@ public class InBrain {
                         Log.e(Constants.LOG_TAG, "Failed to load token");
                         t.printStackTrace();
                     }
-                    callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
+                    if (t instanceof InvalidClientException) {
+                        callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_INVALID_CLIENT_ID);
+                    } else {
+                        callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
+                    }
                 }
             });
         } else {
@@ -161,7 +171,11 @@ public class InBrain {
                                     Log.e(Constants.LOG_TAG, "Failed to load token");
                                     t.printStackTrace();
                                 }
-                                callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
+                                if (t instanceof InvalidClientException) {
+                                    callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_INVALID_CLIENT_ID);
+                                } else {
+                                    callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
+                                }
                             }
                         });
                     } else {
@@ -183,7 +197,9 @@ public class InBrain {
      * Requests rewards manually. Returns result through global callback set in setListener().
      */
     public void getRewards() {
-        requireInit();
+        if (!checkForInit()) {
+            return;
+        }
         if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "Get rewards");
         if (TextUtils.isEmpty(token)) {
             refreshToken(new TokenExecutor.TokenCallback() {
@@ -308,6 +324,11 @@ public class InBrain {
 
             @Override
             public void onFailToLoadToken(Throwable t) {
+                if (t instanceof InvalidClientException) {
+                    token = null;
+                    wrongClientIdError = true;
+                    Log.w(Constants.LOG_TAG, "Invalid client");
+                }
                 tokenCallback.onFailToLoadToken(t);
             }
         });
@@ -319,7 +340,9 @@ public class InBrain {
      * @param rewards list of rewards which need to be confirmed
      */
     public void confirmRewards(final List<Reward> rewards) {
-        requireInit();
+        if (!checkForInit()) {
+            return;
+        }
         Set<Long> rewardsIds = getRewardsIds(rewards);
         confirmRewardsById(rewardsIds);
     }

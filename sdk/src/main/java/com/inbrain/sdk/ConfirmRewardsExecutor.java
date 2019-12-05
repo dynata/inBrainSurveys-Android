@@ -8,6 +8,10 @@ import java.util.Set;
 
 class ConfirmRewardsExecutor {
     void confirmRewards(String token, Set<Long> rewardsIds, final ConfirmRewardsCallback callback, String appUserId, String deviceId) {
+        if (rewardsIds == null || rewardsIds.isEmpty()) {
+            if (BuildConfig.DEBUG) Log.w("ConfirmRewardsExecutor", "rewards are empty");
+            return;
+        }
         String rewardsUrl = getConfirmRewardsUrl(appUserId, deviceId);
         String rewardsBody = getConfirmRewardsBody(rewardsIds);
         AuthorizedPostRequest confirmTransactionsRequest = new AuthorizedPostRequest(new AsyncResponse() {
@@ -21,9 +25,9 @@ class ConfirmRewardsExecutor {
                 callback.onFailed(ex);
             }
         });
-        if (BuildConfig.DEBUG) Log.d("RewardsExecutor", "token is:" + token);
-        if (BuildConfig.DEBUG) Log.d("RewardsExecutor", "rewardsUrl is:" + rewardsUrl);
-        if (BuildConfig.DEBUG) Log.d("RewardsExecutor", "rewardsBody is:" + rewardsBody);
+        if (BuildConfig.DEBUG) Log.d("ConfirmRewardsExecutor", "token is:" + token);
+        if (BuildConfig.DEBUG) Log.d("ConfirmRewardsExecutor", "rewardsUrl is:" + rewardsUrl);
+        if (BuildConfig.DEBUG) Log.d("ConfirmRewardsExecutor", "rewardsBody is:" + rewardsBody);
         confirmTransactionsRequest.execute(rewardsUrl, token, rewardsBody);
     }
 
@@ -39,6 +43,7 @@ class ConfirmRewardsExecutor {
 
     public interface ConfirmRewardsCallback {
         void onSuccess();
+
         void onFailed(Throwable t);
     }
 }
