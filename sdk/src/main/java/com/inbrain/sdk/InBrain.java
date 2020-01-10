@@ -2,6 +2,7 @@ package com.inbrain.sdk;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -102,6 +103,11 @@ public class InBrain {
         if (!checkForInit()) {
             return;
         }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            Log.e(Constants.LOG_TAG, "Supported API version is 24+");
+            return;
+        }
+
         SurveysActivity.start(context, clientId, clientSecret, appUserId, deviceId);
     }
 

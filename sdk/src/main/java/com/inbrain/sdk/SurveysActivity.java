@@ -80,8 +80,7 @@ public class SurveysActivity extends Activity {
         backImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (surveyActive) showAbortSurveyDialog();
-                else finish();
+                handleBackButton(false);
             }
         });
 
@@ -182,7 +181,19 @@ public class SurveysActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        // ignore because we don't have agreed navigation in web view and we don't want to leave immediately
+        handleBackButton(true);
+    }
+
+    private void handleBackButton(boolean hardware) {
+        if (surveyActive) {
+            if (hardware) {
+                return;
+            } else {
+                showAbortSurveyDialog();
+            }
+        } else {
+            finish();
+        }
     }
 
     @Override
