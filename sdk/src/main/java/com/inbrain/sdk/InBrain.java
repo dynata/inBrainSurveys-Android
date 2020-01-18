@@ -5,9 +5,11 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
+import android.webkit.WebView;
 
 import com.inbrain.sdk.callback.GetRewardsCallback;
 import com.inbrain.sdk.callback.InBrainCallback;
+import com.inbrain.sdk.callback.StartSurveysCallback;
 import com.inbrain.sdk.model.Reward;
 
 import java.util.ArrayList;
@@ -16,6 +18,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_1;
+import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_2;
+import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_3;
 
 public class InBrain {
     private static final String PREFERENCES = "SharedPreferences_inBrain25930";
@@ -96,19 +104,60 @@ public class InBrain {
 
     /**
      * Opens survey wall
-     *
-     * @param context
      */
-    public void showSurveys(Context context) {
+    public void showSurveys(Context context, StartSurveysCallback callback) {
         if (!checkForInit()) {
             return;
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-            Log.e(Constants.LOG_TAG, "Supported API version is 24+");
-            return;
+            try {
+                WebView webView = new WebView(context);
+                String userAgent = webView.getSettings().getUserAgentString();
+                Pattern pattern = Pattern.compile("chrome/(\\d+)\\.(\\d+)\\.(\\d+)",
+                        Pattern.CASE_INSENSITIVE);
+                Matcher m = pattern.matcher(userAgent);
+                ArrayList<String> matches = new ArrayList<>();
+                while (m.find()) {
+                    for (int i = 1; i <= m.groupCount(); i++) {
+                        matches.add(m.group(i));
+                    }
+                }
+                if (matches.size() > 2) {
+                    int group0 = Integer.parseInt(matches.get(0));
+                    int group1 = Integer.parseInt(matches.get(1));
+                    int group2 = Integer.parseInt(matches.get(2));
+                    boolean group0Matches = group0 >= MINIMUM_WEBVIEW_VERSION_GROUP_1;
+                    boolean group1Matches = group1 >= MINIMUM_WEBVIEW_VERSION_GROUP_2;
+                    boolean group2Matches = group2 >= MINIMUM_WEBVIEW_VERSION_GROUP_3;
+                    if (group0Matches) {
+                        if (!group1Matches) {
+                            callback.onFail("Android System WebView version isn't supported");
+                            return;
+                        } else if (!group2Matches) {
+                            callback.onFail("Android System WebView version isn't supported");
+                            return;
+                        }
+                    } else {
+                        callback.onFail("Android System WebView version isn't supported");
+                        return;
+                    }
+                } else {
+                    callback.onFail("Failed to check webview version, can't start SDK");
+                    return;
+                }
+            } catch (Exception ex) {
+                callback.onFail("Failed to check webview version, can't start SDK");
+                return;
+            }
         }
 
-        SurveysActivity.start(context, clientId, clientSecret, appUserId, deviceId);
+        try {
+            SurveysActivity.start(context, clientId, clientSecret, appUserId, deviceId);
+            callback.onSuccess();
+        } catch (Exception ex) {
+            callback.onFail("Failed to start SDK:" + ex);
+            return;
+        }
     }
 
     /**
