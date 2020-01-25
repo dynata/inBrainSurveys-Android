@@ -26,4 +26,10 @@ class Constants {
     static final int REQUEST_TIMEOUT_MS = 30000;
 
     static final String ERROR_INVALID_CLIENT = "{\"error\":\"invalid_client\"}";
+
+    static final int MINIMUM_WEBVIEW_VERSION_GROUP_1 = 51;
+
+    static final int MINIMUM_WEBVIEW_VERSION_GROUP_2 = 0;
+
+    static final int MINIMUM_WEBVIEW_VERSION_GROUP_3 = 2704;
 }
