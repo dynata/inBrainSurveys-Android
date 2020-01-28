@@ -5,4 +5,7 @@
     <string name="dont_abandon_the_survey_message">Abandonment of this survey will terminate your progress and you will not receive your reward.</string>
     <string name="abort_survey">Abandon Survey and Forfeit Reward</string>
     <string name="cancel">Continue Survey</string>
+    <string name="error_inbrain_unavailable_title">inBrain is unavailable</string>
+    <string name="error_inbrain_unavailable_message">Sorry, inBrain is unavailable right now. Please try again later.</string>
+    <string name="quit">Quit</string>
 </resources>

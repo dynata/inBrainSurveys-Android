@@ -15,6 +15,8 @@ import android.view.View;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -116,6 +118,21 @@ public class SurveysActivity extends Activity {
                     webView.loadUrl(newUrl);
                 }
             }
+
+            @SuppressLint("NewApi")
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request,
+                                        WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                onFailedToLoadInBrainSurveys(error.getErrorCode());
+            }
+
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description,
+                                        String failingUrl) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
+                onFailedToLoadInBrainSurveys(errorCode);
+            }
         });
         webView.addJavascriptInterface(new SurveyJavaScriptInterface(), INTERFACE_NAME);
 
@@ -194,6 +211,25 @@ public class SurveysActivity extends Activity {
         } else {
             finish();
         }
+    }
+
+    private void onFailedToLoadInBrainSurveys(int errorCode) {
+        webView.setVisibility(View.INVISIBLE);
+        showInBrainErrorDialog();
+    }
+
+    private void showInBrainErrorDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.error_inbrain_unavailable_title)
+                .setMessage(getString(R.string.error_inbrain_unavailable_message))
+                .setPositiveButton(R.string.quit, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                })
+                .setCancelable(false)
+                .show();
     }
 
     @Override
