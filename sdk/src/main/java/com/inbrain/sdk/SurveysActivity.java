@@ -43,6 +43,8 @@ public class SurveysActivity extends Activity {
 
     private boolean surveyActive;
     private Handler updateRewardsHandler = new Handler();
+    private AlertDialog inBrainErrorDialog;
+    private AlertDialog abortSurveyDialog;
 
     public static void start(Context context, String clientId, String clientSecret, String appUserId, String deviceId) {
         Intent intent = new Intent(context, SurveysActivity.class);
@@ -165,7 +167,10 @@ public class SurveysActivity extends Activity {
     }
 
     private void showAbortSurveyDialog() {
-        new AlertDialog.Builder(this)
+        if (abortSurveyDialog != null && abortSurveyDialog.isShowing()) {
+            return;
+        }
+        abortSurveyDialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.dont_abandon_the_survey_title)
                 .setMessage(getString(R.string.dont_abandon_the_survey_message))
                 .setPositiveButton(R.string.abort_survey, new DialogInterface.OnClickListener() {
@@ -219,7 +224,10 @@ public class SurveysActivity extends Activity {
     }
 
     private void showInBrainErrorDialog() {
-        new AlertDialog.Builder(this)
+        if (inBrainErrorDialog != null && inBrainErrorDialog.isShowing()) {
+            return;
+        }
+        inBrainErrorDialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.error_inbrain_unavailable_title)
                 .setMessage(getString(R.string.error_inbrain_unavailable_message))
                 .setPositiveButton(R.string.quit, new DialogInterface.OnClickListener() {

@@ -245,7 +245,9 @@ public class InBrain {
 
     private void onGetRewardsSuccess(GetRewardsCallback callback, List<Reward> rewards) {
         lastReceivedRewards = new HashSet<>(rewards);
-        if (onNewRewardsReceived(rewards, callback)) confirmRewards(rewards);
+        if (shouldConfirmNewRewards(rewards, callback)) {
+            confirmRewards(rewards);
+        }
     }
 
     /**
@@ -327,7 +329,9 @@ public class InBrain {
             return;
         }
         lastReceivedRewards = newRewards;
-        if (onNewRewardsReceived(rewards, null)) confirmRewards(rewards);
+        if (shouldConfirmNewRewards(rewards, null)) {
+            confirmRewards(rewards);
+        }
     }
 
     private boolean checkRewardsAreSame(Set<Reward> newRewards) {
@@ -336,8 +340,8 @@ public class InBrain {
         return firstContainsAll && secondContainsAll;
     }
 
-    private boolean onNewRewardsReceived(List<Reward> rewards,
-                                         GetRewardsCallback externalCallback) {
+    private boolean shouldConfirmNewRewards(List<Reward> rewards,
+                                            GetRewardsCallback externalCallback) {
         Iterator<Reward> iterator = rewards.iterator();
         while (iterator.hasNext()) {
             Reward reward = iterator.next();
@@ -351,21 +355,19 @@ public class InBrain {
                 }
             }
         }
-        if (!rewards.isEmpty()) {
-            if (externalCallback != null) {
-                return externalCallback.handleRewards(rewards); // notify by request
-            } else if (!callbacksList.isEmpty()) {
-                boolean handleBySelf = false;
-                for (InBrainCallback callback : callbacksList) {
-                    if (callback.handleRewards(rewards)) {
-                        handleBySelf = true;
-                        break;
-                    }
+        if (externalCallback != null) {
+            return externalCallback.handleRewards(rewards); // notify by request
+        } else if (!callbacksList.isEmpty()) {
+            boolean handleBySelf = false;
+            for (InBrainCallback callback : callbacksList) {
+                if (callback.handleRewards(rewards)) {
+                    handleBySelf = true;
+                    break;
                 }
-                return handleBySelf; // notify by subscription
             }
+            return handleBySelf; // notify by subscription
         }
-        return true;
+        return !rewards.isEmpty();
     }
 
     private void refreshToken(final TokenExecutor.TokenCallback tokenCallback) {
