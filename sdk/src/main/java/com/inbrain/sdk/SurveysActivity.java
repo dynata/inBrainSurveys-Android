@@ -1,6 +1,7 @@
 package com.inbrain.sdk;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -121,18 +122,30 @@ public class SurveysActivity extends Activity {
                 }
             }
 
-            @SuppressLint("NewApi")
+            @TargetApi(Build.VERSION_CODES.M)
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request,
                                         WebResourceError error) {
                 super.onReceivedError(view, request, error);
-                onFailedToLoadInBrainSurveys(error.getErrorCode());
+                if (request.isForMainFrame()) {
+                    if (BuildConfig.DEBUG) {
+                        Log.w(LOG_TAG, "error for main frame:" + error.getDescription());
+                    }
+                    onFailedToLoadInBrainSurveys(error.getErrorCode());
+                } else {
+                    if (BuildConfig.DEBUG) {
+                        Log.w(LOG_TAG, "error for secondary frame:" + error.getDescription());
+                    }
+                }
             }
 
             @Override
             public void onReceivedError(WebView view, int errorCode, String description,
                                         String failingUrl) {
                 super.onReceivedError(view, errorCode, description, failingUrl);
+                if (BuildConfig.DEBUG) {
+                    Log.w(LOG_TAG, "old api error for main frame:" + errorCode + ", " + description);
+                }
                 onFailedToLoadInBrainSurveys(errorCode);
             }
         });
