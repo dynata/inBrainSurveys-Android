@@ -11,6 +11,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.webkit.ConsoleMessage;
@@ -29,6 +30,7 @@ import static com.inbrain.sdk.Constants.LOG_TAG;
 public class SurveysActivity extends Activity {
     private static final String EXTRA_CLIENT_ID = "368234109";
     private static final String EXTRA_CLIENT_SECRET = "6388991";
+    private static final String EXTRA_SESSION_UID = "64548792";
     private static final String EXTRA_APP_USER_ID = "29678234";
     private static final String EXTRA_DEVICE_ID = "97497286";
     private static final int UPDATE_REWARDS_DELAY_MS = 10000;
@@ -39,6 +41,7 @@ public class SurveysActivity extends Activity {
 
     private String clientId;
     private String clientSecret;
+    private String sessionUid;
     private String appUserId;
     private String deviceId;
 
@@ -47,10 +50,12 @@ public class SurveysActivity extends Activity {
     private AlertDialog inBrainErrorDialog;
     private AlertDialog abortSurveyDialog;
 
-    public static void start(Context context, String clientId, String clientSecret, String appUserId, String deviceId) {
+    static void start(Context context, String clientId, String clientSecret, String sessionUid,
+                      String appUserId, String deviceId) {
         Intent intent = new Intent(context, SurveysActivity.class);
         intent.putExtra(EXTRA_CLIENT_ID, clientId);
         intent.putExtra(EXTRA_CLIENT_SECRET, clientSecret);
+        intent.putExtra(EXTRA_SESSION_UID, sessionUid);
         intent.putExtra(EXTRA_APP_USER_ID, appUserId);
         intent.putExtra(EXTRA_DEVICE_ID, deviceId);
         context.startActivity(intent);
@@ -77,6 +82,7 @@ public class SurveysActivity extends Activity {
 
         clientId = getIntent().getStringExtra(EXTRA_CLIENT_ID);
         clientSecret = getIntent().getStringExtra(EXTRA_CLIENT_SECRET);
+        sessionUid = getIntent().getStringExtra(EXTRA_SESSION_UID);
         appUserId = getIntent().getStringExtra(EXTRA_APP_USER_ID);
         deviceId = getIntent().getStringExtra(EXTRA_DEVICE_ID);
 
@@ -108,13 +114,25 @@ public class SurveysActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 if (url.equals(Constants.CONFIGURATION_URL)) {
-                    String newUrl = "javascript:" +
-                            "setConfiguration({" +
-                            "\"client_id\":\"" + clientId + "\"," +
-                            "\"client_secret\":\"" + clientSecret + "\"," +
-                            "\"device_id\":\"" + deviceId + "\"," +
-                            "\"app_uid\":\"" + appUserId + "\"" +
-                            "});";
+                    String newUrl;
+                    if (TextUtils.isEmpty(sessionUid)) {
+                        newUrl = "javascript:" +
+                                "setConfiguration({" +
+                                "\"client_id\":\"" + clientId + "\"," +
+                                "\"client_secret\":\"" + clientSecret + "\"," +
+                                "\"device_id\":\"" + deviceId + "\"," +
+                                "\"app_uid\":\"" + appUserId + "\"" +
+                                "});";
+                    } else {
+                        newUrl = "javascript:" +
+                                "setConfiguration({" +
+                                "\"client_id\":\"" + clientId + "\"," +
+                                "\"client_secret\":\"" + clientSecret + "\"," +
+                                "\"session_uid\":\"" + sessionUid + "\"," +
+                                "\"device_id\":\"" + deviceId + "\"," +
+                                "\"app_uid\":\"" + appUserId + "\"" +
+                                "});";
+                    }
                     if (BuildConfig.DEBUG) {
                         Log.i(LOG_TAG, "URL: " + newUrl);
                     }

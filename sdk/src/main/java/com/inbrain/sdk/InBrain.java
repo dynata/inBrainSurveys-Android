@@ -43,6 +43,7 @@ public class InBrain {
     private String deviceId = null;
     private SharedPreferences preferences;
     private String token;
+    private String sessionUid;
     private boolean wrongClientIdError;
 
 
@@ -57,8 +58,13 @@ public class InBrain {
     }
 
     public void init(Context context, String clientId, String clientSecret) {
+        init(context, clientId, clientSecret, null);
+    }
+
+    public void init(Context context, String clientId, String clientSecret, String sessionUid) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
+        this.sessionUid = sessionUid;
         wrongClientIdError = false;
         preferences = getPreferences(context);
         if (preferences.contains(PREFERENCE_DEVICE_ID)) {
@@ -152,7 +158,7 @@ public class InBrain {
         }
 
         try {
-            SurveysActivity.start(context, clientId, clientSecret, appUserId, deviceId);
+            SurveysActivity.start(context, clientId, clientSecret, sessionUid, appUserId, deviceId);
             callback.onSuccess();
         } catch (Exception ex) {
             callback.onFail("Failed to start SDK:" + ex);
