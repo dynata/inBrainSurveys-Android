@@ -13,6 +13,7 @@ import com.inbrain.sdk.callback.StartSurveysCallback;
 import com.inbrain.sdk.model.Reward;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -44,6 +45,7 @@ public class InBrain {
     private SharedPreferences preferences;
     private String token;
     private String sessionUid;
+    private HashMap<String, String> dataPoints;
     private boolean wrongClientIdError;
 
 
@@ -58,13 +60,8 @@ public class InBrain {
     }
 
     public void init(Context context, String clientId, String clientSecret) {
-        init(context, clientId, clientSecret, null);
-    }
-
-    public void init(Context context, String clientId, String clientSecret, String sessionUid) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
-        this.sessionUid = sessionUid;
         wrongClientIdError = false;
         preferences = getPreferences(context);
         if (preferences.contains(PREFERENCE_DEVICE_ID)) {
@@ -77,6 +74,14 @@ public class InBrain {
             deviceId = UUID.randomUUID().toString();
         }
         preferences.edit().putString(PREFERENCE_DEVICE_ID, deviceId).apply();
+    }
+
+    public void setSessionUid(String sessionUid) {
+        this.sessionUid = sessionUid;
+    }
+
+    public void setDataPoints(HashMap<String, String> dataPoints) {
+        this.dataPoints = dataPoints;
     }
 
     private boolean checkForInit() {
@@ -158,7 +163,8 @@ public class InBrain {
         }
 
         try {
-            SurveysActivity.start(context, clientId, clientSecret, sessionUid, appUserId, deviceId);
+            SurveysActivity.start(context, clientId, clientSecret, sessionUid, appUserId, deviceId,
+                    dataPoints);
             callback.onSuccess();
         } catch (Exception ex) {
             callback.onFail("Failed to start SDK:" + ex);
