@@ -11,7 +11,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.webkit.ConsoleMessage;
@@ -22,6 +21,11 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.inbrain.sdk.model.Configuration;
+
+import java.io.IOException;
+import java.util.HashMap;
+
 import static com.inbrain.sdk.Constants.DOMAIN;
 import static com.inbrain.sdk.Constants.INTERFACE_NAME;
 import static com.inbrain.sdk.Constants.JS_LOG_TAG;
@@ -31,6 +35,7 @@ public class SurveysActivity extends Activity {
     private static final String EXTRA_CLIENT_ID = "368234109";
     private static final String EXTRA_CLIENT_SECRET = "6388991";
     private static final String EXTRA_SESSION_UID = "64548792";
+    private static final String EXTRA_DATA_POINTS = "15895132";
     private static final String EXTRA_APP_USER_ID = "29678234";
     private static final String EXTRA_DEVICE_ID = "97497286";
     private static final int UPDATE_REWARDS_DELAY_MS = 10000;
@@ -42,6 +47,7 @@ public class SurveysActivity extends Activity {
     private String clientId;
     private String clientSecret;
     private String sessionUid;
+    private HashMap<String, String> dataPoints;
     private String appUserId;
     private String deviceId;
 
@@ -51,11 +57,12 @@ public class SurveysActivity extends Activity {
     private AlertDialog abortSurveyDialog;
 
     static void start(Context context, String clientId, String clientSecret, String sessionUid,
-                      String appUserId, String deviceId) {
+                      String appUserId, String deviceId, HashMap<String, String> dataPoints) {
         Intent intent = new Intent(context, SurveysActivity.class);
         intent.putExtra(EXTRA_CLIENT_ID, clientId);
         intent.putExtra(EXTRA_CLIENT_SECRET, clientSecret);
         intent.putExtra(EXTRA_SESSION_UID, sessionUid);
+        intent.putExtra(EXTRA_DATA_POINTS, dataPoints);
         intent.putExtra(EXTRA_APP_USER_ID, appUserId);
         intent.putExtra(EXTRA_DEVICE_ID, deviceId);
         context.startActivity(intent);
@@ -83,6 +90,7 @@ public class SurveysActivity extends Activity {
         clientId = getIntent().getStringExtra(EXTRA_CLIENT_ID);
         clientSecret = getIntent().getStringExtra(EXTRA_CLIENT_SECRET);
         sessionUid = getIntent().getStringExtra(EXTRA_SESSION_UID);
+        dataPoints = (HashMap<String, String>) getIntent().getSerializableExtra(EXTRA_DATA_POINTS);
         appUserId = getIntent().getStringExtra(EXTRA_APP_USER_ID);
         deviceId = getIntent().getStringExtra(EXTRA_DEVICE_ID);
 
@@ -114,29 +122,18 @@ public class SurveysActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 if (url.equals(Constants.CONFIGURATION_URL)) {
-                    String newUrl;
-                    if (TextUtils.isEmpty(sessionUid)) {
-                        newUrl = "javascript:" +
-                                "setConfiguration({" +
-                                "\"client_id\":\"" + clientId + "\"," +
-                                "\"client_secret\":\"" + clientSecret + "\"," +
-                                "\"device_id\":\"" + deviceId + "\"," +
-                                "\"app_uid\":\"" + appUserId + "\"" +
-                                "});";
-                    } else {
-                        newUrl = "javascript:" +
-                                "setConfiguration({" +
-                                "\"client_id\":\"" + clientId + "\"," +
-                                "\"client_secret\":\"" + clientSecret + "\"," +
-                                "\"session_uid\":\"" + sessionUid + "\"," +
-                                "\"device_id\":\"" + deviceId + "\"," +
-                                "\"app_uid\":\"" + appUserId + "\"" +
-                                "});";
+                    try {
+                        String newUrl = getConfigurationUrl();
+                        if (BuildConfig.DEBUG) {
+                            Log.i(LOG_TAG, "URL: " + newUrl);
+                        }
+                        webView.loadUrl(newUrl);
+                    } catch (IOException e) {
+                        if (BuildConfig.DEBUG) {
+                            e.printStackTrace();
+                        }
+                        onFailedToLoadInBrainSurveys();
                     }
-                    if (BuildConfig.DEBUG) {
-                        Log.i(LOG_TAG, "URL: " + newUrl);
-                    }
-                    webView.loadUrl(newUrl);
                 }
             }
 
@@ -149,7 +146,7 @@ public class SurveysActivity extends Activity {
                     if (BuildConfig.DEBUG) {
                         Log.w(LOG_TAG, "error for main frame:" + error.getDescription());
                     }
-                    onFailedToLoadInBrainSurveys(error.getErrorCode());
+                    onFailedToLoadInBrainSurveys();
                 } else {
                     if (BuildConfig.DEBUG) {
                         Log.w(LOG_TAG, "error for secondary frame:" + error.getDescription());
@@ -164,7 +161,7 @@ public class SurveysActivity extends Activity {
                 if (BuildConfig.DEBUG) {
                     Log.w(LOG_TAG, "old api error for main frame:" + errorCode + ", " + description);
                 }
-                onFailedToLoadInBrainSurveys(errorCode);
+                onFailedToLoadInBrainSurveys();
             }
         });
         webView.addJavascriptInterface(new SurveyJavaScriptInterface(), INTERFACE_NAME);
@@ -174,6 +171,12 @@ public class SurveysActivity extends Activity {
         webView.loadUrl(Constants.CONFIGURATION_URL);
 
         updateRewards(false);
+    }
+
+    private String getConfigurationUrl() throws IOException {
+        Configuration configuration = new Configuration(clientId, clientSecret, appUserId, deviceId,
+                sessionUid, dataPoints);
+        return String.format("javascript:setConfiguration(%s);", configuration.toJson());
     }
 
     private void setSurveyActive(final boolean surveyActive) {
@@ -249,7 +252,7 @@ public class SurveysActivity extends Activity {
         }
     }
 
-    private void onFailedToLoadInBrainSurveys(int errorCode) {
+    private void onFailedToLoadInBrainSurveys() {
         webView.setVisibility(View.INVISIBLE);
         showInBrainErrorDialog();
     }
