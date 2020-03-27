@@ -5,9 +5,6 @@ import com.inbrain.sdk.model.Reward;
 import java.util.List;
 
 public interface GetRewardsCallback {
-    int ERROR_CODE_UNKNOWN = 0;
-    int ERROR_CODE_INVALID_CLIENT_ID = 1;
-
     /**
      * Notifies the application about new rewards.
      * You need to confirm rewards that were processed in your application.
@@ -23,7 +20,7 @@ public interface GetRewardsCallback {
 
     /**
      * Called when rewards failed to load.
-     * @param errorCode an identifier that might help to investigate the error.
+     * @param t an throwable that might help to investigate the error.
      */
-    void onFailToLoadRewards(int errorCode);
+    void onFailToLoadRewards(Throwable t);
 }

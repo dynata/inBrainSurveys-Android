@@ -2,6 +2,7 @@ package com.inbrain.sdk;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
@@ -22,6 +23,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.inbrain.sdk.Constants.LOG_TAG;
 import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_1;
 import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_2;
 import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_3;
@@ -43,11 +45,15 @@ public class InBrain {
     private String appUserId = null;
     private String deviceId = null;
     private SharedPreferences preferences;
-    private String token;
     private String sessionUid;
     private HashMap<String, String> dataPoints;
+    private String title;
+    private int toolbarColorResId;
+    private int toolbarColor;
+    private int backButtonColorResId;
+    private int backButtonColor;
+    private String token;
     private boolean wrongClientIdError;
-
 
     private InBrain() {
     }
@@ -113,6 +119,26 @@ public class InBrain {
         callbacksList.remove(callback);
     }
 
+    public void setToolbarTitle(String title) {
+        this.title = title;
+    }
+
+    public void setToolbarColorResId(int toolbarColorResId) {
+        this.toolbarColorResId = toolbarColorResId;
+    }
+
+    public void setToolbarColor(int toolbarColor) {
+        this.toolbarColor = toolbarColor;
+    }
+
+    public void setTitleTextColorResId(int backButtonColorResId) {
+        this.backButtonColorResId = backButtonColorResId;
+    }
+
+    public void setTitleTextColor(int backButtonColor) {
+        this.backButtonColor = backButtonColor;
+    }
+
     /**
      * Opens survey wall
      */
@@ -162,9 +188,25 @@ public class InBrain {
             }
         }
 
+        if (toolbarColorResId != 0) {
+            try {
+                toolbarColor = context.getResources().getColor(toolbarColorResId);
+            } catch (Resources.NotFoundException e) {
+                Log.e(LOG_TAG, "Can't find color resource for toolbar:" + toolbarColorResId);
+            }
+        }
+
+        if (backButtonColorResId != 0) {
+            try {
+                backButtonColor = context.getResources().getColor(backButtonColorResId);
+            } catch (Resources.NotFoundException e) {
+                Log.e(LOG_TAG, "Can't find color resource for back button:" + backButtonColorResId);
+            }
+        }
+
         try {
             SurveysActivity.start(context, clientId, clientSecret, sessionUid, appUserId, deviceId,
-                    dataPoints);
+                    dataPoints, title, toolbarColor, backButtonColor);
             callback.onSuccess();
         } catch (Exception ex) {
             callback.onFail("Failed to start SDK:" + ex);
@@ -195,11 +237,7 @@ public class InBrain {
                         Log.e(Constants.LOG_TAG, "Failed to load token");
                         t.printStackTrace();
                     }
-                    if (t instanceof InvalidClientException) {
-                        callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_INVALID_CLIENT_ID);
-                    } else {
-                        callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
-                    }
+                    callback.onFailToLoadRewards(t);
                 }
             });
         } else {
@@ -238,18 +276,14 @@ public class InBrain {
                                     Log.e(Constants.LOG_TAG, "Failed to load token");
                                     t.printStackTrace();
                                 }
-                                if (t instanceof InvalidClientException) {
-                                    callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_INVALID_CLIENT_ID);
-                                } else {
-                                    callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
-                                }
+                                callback.onFailToLoadRewards(t);
                             }
                         });
                     } else {
-                        callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
+                        callback.onFailToLoadRewards(t);
                     }
                 } else {
-                    callback.onFailToLoadRewards(GetRewardsCallback.ERROR_CODE_UNKNOWN);
+                    callback.onFailToLoadRewards(t);
                 }
             }
         }, appUserId, deviceId);

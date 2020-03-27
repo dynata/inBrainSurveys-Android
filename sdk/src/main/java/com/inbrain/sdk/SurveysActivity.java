@@ -7,6 +7,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,6 +21,8 @@ import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.inbrain.sdk.model.Configuration;
 
@@ -38,11 +41,14 @@ public class SurveysActivity extends Activity {
     private static final String EXTRA_DATA_POINTS = "15895132";
     private static final String EXTRA_APP_USER_ID = "29678234";
     private static final String EXTRA_DEVICE_ID = "97497286";
+    private static final String EXTRA_TOOLBAR_TEXT = "64587132";
+    private static final String EXTRA_TOOLBAR_COLOR = "67584922";
+    private static final String EXTRA_BACK_BUTTON_COLOR = "13645898";
     private static final int UPDATE_REWARDS_DELAY_MS = 10000;
 
     private WebView webView;
-    private View backImageView;
-    private View toolbarTextView;
+    private ImageView backImageView;
+    private TextView toolbarTextView;
 
     private String clientId;
     private String clientSecret;
@@ -57,7 +63,8 @@ public class SurveysActivity extends Activity {
     private AlertDialog abortSurveyDialog;
 
     static void start(Context context, String clientId, String clientSecret, String sessionUid,
-                      String appUserId, String deviceId, HashMap<String, String> dataPoints) {
+                      String appUserId, String deviceId, HashMap<String, String> dataPoints,
+                      String title, int toolbarColor, int backButtonColor) {
         Intent intent = new Intent(context, SurveysActivity.class);
         intent.putExtra(EXTRA_CLIENT_ID, clientId);
         intent.putExtra(EXTRA_CLIENT_SECRET, clientSecret);
@@ -65,6 +72,15 @@ public class SurveysActivity extends Activity {
         intent.putExtra(EXTRA_DATA_POINTS, dataPoints);
         intent.putExtra(EXTRA_APP_USER_ID, appUserId);
         intent.putExtra(EXTRA_DEVICE_ID, deviceId);
+        if (title != null) {
+            intent.putExtra(EXTRA_TOOLBAR_TEXT, title);
+        }
+        if (toolbarColor != 0) {
+            intent.putExtra(EXTRA_TOOLBAR_COLOR, toolbarColor);
+        }
+        if (backButtonColor != 0) {
+            intent.putExtra(EXTRA_BACK_BUTTON_COLOR, backButtonColor);
+        }
         context.startActivity(intent);
     }
 
@@ -78,21 +94,36 @@ public class SurveysActivity extends Activity {
         toolbarTextView = findViewById(R.id.toolbar_title_text);
 
         getWindow().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.background)));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            int flags = getWindow().getDecorView().getSystemUiVisibility();
-            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-            getWindow().getDecorView().setSystemUiVisibility(flags);
-            getWindow().setStatusBarColor(getResources().getColor(R.color.background));
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setStatusBarColor(getResources().getColor(R.color.darker_background));
+
+        Intent intent = getIntent();
+        clientId = intent.getStringExtra(EXTRA_CLIENT_ID);
+        clientSecret = intent.getStringExtra(EXTRA_CLIENT_SECRET);
+        sessionUid = intent.getStringExtra(EXTRA_SESSION_UID);
+        dataPoints = (HashMap<String, String>) intent.getSerializableExtra(EXTRA_DATA_POINTS);
+        appUserId = intent.getStringExtra(EXTRA_APP_USER_ID);
+        deviceId = intent.getStringExtra(EXTRA_DEVICE_ID);
+
+        if (intent.hasExtra(EXTRA_TOOLBAR_TEXT)) {
+            toolbarTextView.setText(intent.getStringExtra(EXTRA_TOOLBAR_TEXT));
         }
 
-        clientId = getIntent().getStringExtra(EXTRA_CLIENT_ID);
-        clientSecret = getIntent().getStringExtra(EXTRA_CLIENT_SECRET);
-        sessionUid = getIntent().getStringExtra(EXTRA_SESSION_UID);
-        dataPoints = (HashMap<String, String>) getIntent().getSerializableExtra(EXTRA_DATA_POINTS);
-        appUserId = getIntent().getStringExtra(EXTRA_APP_USER_ID);
-        deviceId = getIntent().getStringExtra(EXTRA_DEVICE_ID);
+        if (intent.hasExtra(EXTRA_TOOLBAR_COLOR)) {
+            int color = intent.getIntExtra(EXTRA_TOOLBAR_COLOR, 0);
+            if (color == 0) {
+                setStatusBarColor(getResources().getColor(R.color.background));
+            } else {
+                findViewById(R.id.toolbar).setBackgroundColor(color);
+                setStatusBarColor(color);
+            }
+        } else {
+            setStatusBarColor(R.color.background);
+        }
+
+        if (intent.hasExtra(EXTRA_BACK_BUTTON_COLOR)) {
+            int color = intent.getIntExtra(EXTRA_BACK_BUTTON_COLOR, getResources().getColor(android.R.color.black));
+            backImageView.setColorFilter(color);
+            toolbarTextView.setTextColor(color);
+        }
 
         webView = findViewById(R.id.web_view);
 
@@ -171,6 +202,26 @@ public class SurveysActivity extends Activity {
         webView.loadUrl(Constants.CONFIGURATION_URL);
 
         updateRewards(false);
+    }
+
+    private void setStatusBarColor(int color) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            int flags = getWindow().getDecorView().getSystemUiVisibility();
+            if (shouldInvertStatusBarIconsColor(color)) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            }
+            getWindow().getDecorView().setSystemUiVisibility(flags);
+            getWindow().setStatusBarColor(color);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(getResources().getColor(R.color.darker_background));
+        }
+    }
+
+    private boolean shouldInvertStatusBarIconsColor(int color) {
+        float red = Color.red(color);
+        float green = Color.green(color);
+        float blue = Color.red(color);
+        return (red * 0.299 + green * 0.587 + blue * 0.114) > 186;
     }
 
     private String getConfigurationUrl() throws IOException {
