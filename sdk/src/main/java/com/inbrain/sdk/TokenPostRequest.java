@@ -18,16 +18,19 @@ import javax.net.ssl.HttpsURLConnection;
 
 import static com.inbrain.sdk.Constants.ERROR_INVALID_CLIENT;
 import static com.inbrain.sdk.Constants.GRANT_TYPE_CLIENT_CREDENTIALS;
+import static com.inbrain.sdk.Constants.STAGING_TOKEN_URL;
 import static com.inbrain.sdk.Constants.TOKEN_SCOPE;
 import static com.inbrain.sdk.Constants.TOKEN_URL;
 
 class TokenPostRequest extends AsyncTask<Void, Void, String> {
     private final AsyncResponse callback;
+    private final boolean stagingMode;
     private final String clientId;
     private final String clientSecret;
 
-    TokenPostRequest(AsyncResponse callback, String clientId, String clientSecret) {
+    TokenPostRequest(AsyncResponse callback, boolean stagingMode, String clientId, String clientSecret) {
         this.callback = callback;
+        this.stagingMode = stagingMode;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
     }
@@ -53,7 +56,12 @@ class TokenPostRequest extends AsyncTask<Void, Void, String> {
         try {
             byte[] postData = urlParameters.getBytes(Charset.forName("UTF-8"));
             int postDataLength = postData.length;
-            URL url = new URL(TOKEN_URL);
+            URL url;
+            if (stagingMode) {
+                url = new URL(STAGING_TOKEN_URL);
+            } else {
+                url = new URL(TOKEN_URL);
+            }
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
             conn.setInstanceFollowRedirects(false);

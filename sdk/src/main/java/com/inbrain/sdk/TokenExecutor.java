@@ -5,10 +5,12 @@ import org.json.JSONObject;
 
 class TokenExecutor {
     private static final String FIELD_NAME_ACCESS_TOKEN = "access_token";
+    private final boolean stagingMode;
     private final String clientId;
     private final String clientSecret;
 
-    TokenExecutor(String clientId, String clientSecret) {
+    TokenExecutor(boolean stagingMode, String clientId, String clientSecret) {
+        this.stagingMode = stagingMode;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
     }
@@ -30,7 +32,7 @@ class TokenExecutor {
             public void onError(Exception ex) {
                 callback.onFailToLoadToken(ex);
             }
-        }, clientId, clientSecret);
+        }, stagingMode, clientId, clientSecret);
         tokenRequest.execute();
     }
 

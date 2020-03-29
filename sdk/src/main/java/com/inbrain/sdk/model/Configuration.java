@@ -15,15 +15,17 @@ public class Configuration {
     final String deviceId;
     final String sessionUid;
     final HashMap<String, String> dataPoints;
+    final String language;
 
     public Configuration(String clientId, String clientSecret, String appUserId, String deviceId,
-                         String sessionUid, HashMap<String, String> dataPoints) {
+                         String sessionUid, HashMap<String, String> dataPoints, String language) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.appUserId = appUserId;
         this.deviceId = deviceId;
         this.sessionUid = sessionUid;
         this.dataPoints = dataPoints;
+        this.language = language;
     }
 
     public String toJson() throws IOException {
@@ -44,11 +46,17 @@ public class Configuration {
             writer.name("session_uid").value(sessionUid);
         }
         if (dataPoints != null) {
-            writer.name("data_points").beginObject();
+            writer.name("data_points").beginArray();
             for (Map.Entry<String, String> entry : dataPoints.entrySet()) {
+                writer.beginObject();
                 writer.name(entry.getKey()).value(entry.getValue());
+                writer.endObject();
             }
-            writer.endObject();
+            writer.endArray();
+        }
+
+        if (!TextUtils.isEmpty(language)) {
+            writer.name("language").value(language);
         }
         writer.endObject();
     }

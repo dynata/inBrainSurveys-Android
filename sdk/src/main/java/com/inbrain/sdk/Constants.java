@@ -1,9 +1,9 @@
 package com.inbrain.sdk;
 
 class Constants {
-    static final String DOMAIN = "https://www.surveyb.in";
+    static final String STAGING_DOMAIN = "https://inbrainwebview-staging.azureedge.net";
 
-    static final String CONFIGURATION_URL = DOMAIN + "/configuration";
+    static final String DOMAIN = "https://www.surveyb.in";
 
     static final String LOG_TAG = "InBrainSDK";
 
@@ -13,7 +13,11 @@ class Constants {
 
     static final String BASE_URL = "https://api.surveyb.in/api/v1/external-surveys/";
 
+    static final String STAGING_BASE_URL = "https://inbrain-api-staging.azurewebsites.net/api/v1/external-surveys/";
+
     static final String TOKEN_URL = "https://auth.surveyb.in/connect/token";
+
+    static final String STAGING_TOKEN_URL = "https://inbrain-auth-staging.azurewebsites.net/connect/token";
 
     static final String TOKEN_SCOPE = "inbrain-api:integration";
 

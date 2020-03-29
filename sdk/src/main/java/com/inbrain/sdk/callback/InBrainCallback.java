@@ -14,6 +14,11 @@ public interface InBrainCallback {
     void onClosed();
 
     /**
+     * Called when InBrain Activity is finished from JS interface.
+     */
+    void onClosedFromPage();
+
+    /**
      * Notifies the application about new rewards.
      * You need to confirm rewards that were processed in your application.
      * For simple synchronous confirmation just return true from this method.

@@ -12,6 +12,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.webkit.ConsoleMessage;
@@ -33,14 +34,17 @@ import static com.inbrain.sdk.Constants.DOMAIN;
 import static com.inbrain.sdk.Constants.INTERFACE_NAME;
 import static com.inbrain.sdk.Constants.JS_LOG_TAG;
 import static com.inbrain.sdk.Constants.LOG_TAG;
+import static com.inbrain.sdk.Constants.STAGING_DOMAIN;
 
 public class SurveysActivity extends Activity {
+    private static final String EXTRA_STAGING_MODE = "15213412";
     private static final String EXTRA_CLIENT_ID = "368234109";
     private static final String EXTRA_CLIENT_SECRET = "6388991";
     private static final String EXTRA_SESSION_UID = "64548792";
     private static final String EXTRA_DATA_POINTS = "15895132";
     private static final String EXTRA_APP_USER_ID = "29678234";
     private static final String EXTRA_DEVICE_ID = "97497286";
+    private static final String EXTRA_LANGUAGE = "51211232";
     private static final String EXTRA_TOOLBAR_TEXT = "64587132";
     private static final String EXTRA_TOOLBAR_COLOR = "67584922";
     private static final String EXTRA_BACK_BUTTON_COLOR = "13645898";
@@ -50,28 +54,37 @@ public class SurveysActivity extends Activity {
     private ImageView backImageView;
     private TextView toolbarTextView;
 
+    private String configurationUrl;
+
     private String clientId;
     private String clientSecret;
     private String sessionUid;
     private HashMap<String, String> dataPoints;
     private String appUserId;
     private String deviceId;
+    private String language;
+    private boolean stagingMode;
 
     private boolean surveyActive;
     private Handler updateRewardsHandler = new Handler();
     private AlertDialog inBrainErrorDialog;
     private AlertDialog abortSurveyDialog;
+    private boolean finishedFromPage;
 
-    static void start(Context context, String clientId, String clientSecret, String sessionUid,
+    static void start(Context context, boolean stagingMode, String clientId, String clientSecret, String sessionUid,
                       String appUserId, String deviceId, HashMap<String, String> dataPoints,
-                      String title, int toolbarColor, int backButtonColor) {
+                      String language, String title, int toolbarColor, int backButtonColor) {
         Intent intent = new Intent(context, SurveysActivity.class);
+        intent.putExtra(EXTRA_STAGING_MODE, stagingMode);
         intent.putExtra(EXTRA_CLIENT_ID, clientId);
         intent.putExtra(EXTRA_CLIENT_SECRET, clientSecret);
         intent.putExtra(EXTRA_SESSION_UID, sessionUid);
         intent.putExtra(EXTRA_DATA_POINTS, dataPoints);
         intent.putExtra(EXTRA_APP_USER_ID, appUserId);
         intent.putExtra(EXTRA_DEVICE_ID, deviceId);
+        if (!TextUtils.isEmpty(language)) {
+            intent.putExtra(EXTRA_LANGUAGE, language);
+        }
         if (title != null) {
             intent.putExtra(EXTRA_TOOLBAR_TEXT, title);
         }
@@ -96,12 +109,23 @@ public class SurveysActivity extends Activity {
         getWindow().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.background)));
 
         Intent intent = getIntent();
+        stagingMode = intent.getBooleanExtra(EXTRA_STAGING_MODE, false);
         clientId = intent.getStringExtra(EXTRA_CLIENT_ID);
         clientSecret = intent.getStringExtra(EXTRA_CLIENT_SECRET);
         sessionUid = intent.getStringExtra(EXTRA_SESSION_UID);
         dataPoints = (HashMap<String, String>) intent.getSerializableExtra(EXTRA_DATA_POINTS);
         appUserId = intent.getStringExtra(EXTRA_APP_USER_ID);
         deviceId = intent.getStringExtra(EXTRA_DEVICE_ID);
+
+        if (stagingMode) {
+            configurationUrl = STAGING_DOMAIN + "/configuration";
+        } else {
+            configurationUrl = DOMAIN + "/configuration";
+        }
+
+        if (intent.hasExtra(EXTRA_LANGUAGE)) {
+            language = intent.getStringExtra(EXTRA_LANGUAGE);
+        }
 
         if (intent.hasExtra(EXTRA_TOOLBAR_TEXT)) {
             toolbarTextView.setText(intent.getStringExtra(EXTRA_TOOLBAR_TEXT));
@@ -126,6 +150,8 @@ public class SurveysActivity extends Activity {
         }
 
         webView = findViewById(R.id.web_view);
+        webView.clearCache(true);
+        webView.clearHistory();
 
         backImageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -152,7 +178,7 @@ public class SurveysActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                if (url.equals(Constants.CONFIGURATION_URL)) {
+                if (url.equals(configurationUrl)) {
                     try {
                         String newUrl = getConfigurationUrl();
                         if (BuildConfig.DEBUG) {
@@ -199,7 +225,7 @@ public class SurveysActivity extends Activity {
 
         webView.clearHistory();
 
-        webView.loadUrl(Constants.CONFIGURATION_URL);
+        webView.loadUrl(configurationUrl);
 
         updateRewards(false);
     }
@@ -226,7 +252,7 @@ public class SurveysActivity extends Activity {
 
     private String getConfigurationUrl() throws IOException {
         Configuration configuration = new Configuration(clientId, clientSecret, appUserId, deviceId,
-                sessionUid, dataPoints);
+                sessionUid, dataPoints, language);
         return String.format("javascript:setConfiguration(%s);", configuration.toJson());
     }
 
@@ -335,7 +361,7 @@ public class SurveysActivity extends Activity {
         webView.removeAllViews();
         webView.destroy();
         super.onDestroy();
-        InBrain.getInstance().onClosed();
+        InBrain.getInstance().onClosed(finishedFromPage);
     }
 
     private class SurveyJavaScriptInterface {
@@ -357,6 +383,13 @@ public class SurveysActivity extends Activity {
             boolean visible = Boolean.parseBoolean(toggle);
             if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "toggleNativeButtons:" + toggle);
             setToolbarVisible(visible);
+        }
+
+        @JavascriptInterface
+        public void dismissWebView() {
+            if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "dismissWebView");
+            finishedFromPage = true;
+            finish();
         }
     }
 }
