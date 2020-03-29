@@ -12,12 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 class RewardsExecutor {
-    private String getRewardsUrl(String appUserId, String deviceId) {
-        return String.format("%s%s/%s/%s", Constants.BASE_URL, Constants.REWARDS, appUserId, deviceId);
-    }
-
-    void getRewards(String token, final RequestRewardsCallback callback, String appUserId, String deviceId) {
-        String rewardsUrl = getRewardsUrl(appUserId, deviceId);
+    void getRewards(boolean stagingMode, String token, final RequestRewardsCallback callback, String appUserId, String deviceId) {
+        String rewardsUrl = getRewardsUrl(stagingMode, appUserId, deviceId);
         AuthorizedGetRequest getRewardsRequest = new AuthorizedGetRequest(new AsyncResponse() {
             @Override
             public void processFinish(String output) {
@@ -32,6 +28,16 @@ class RewardsExecutor {
         if (BuildConfig.DEBUG) Log.d("RewardsExecutor", "token is:" + token);
         if (BuildConfig.DEBUG) Log.d("RewardsExecutor", "rewardsUrl is:" + rewardsUrl);
         getRewardsRequest.execute(rewardsUrl, token);
+    }
+
+    private String getRewardsUrl(boolean stagingMode, String appUserId, String deviceId) {
+        String baseUrl;
+        if (stagingMode) {
+            baseUrl = Constants.STAGING_BASE_URL;
+        } else {
+            baseUrl = Constants.BASE_URL;
+        }
+        return String.format("%s%s/%s/%s", baseUrl, Constants.REWARDS, appUserId, deviceId);
     }
 
     private void onGotRewardsData(RequestRewardsCallback callback, String data) {

@@ -7,12 +7,12 @@ import org.json.JSONArray;
 import java.util.Set;
 
 class ConfirmRewardsExecutor {
-    void confirmRewards(String token, Set<Long> rewardsIds, final ConfirmRewardsCallback callback, String appUserId, String deviceId) {
+    void confirmRewards(boolean stagingMode, String token, Set<Long> rewardsIds, final ConfirmRewardsCallback callback, String appUserId, String deviceId) {
         if (rewardsIds == null || rewardsIds.isEmpty()) {
             if (BuildConfig.DEBUG) Log.w("ConfirmRewardsExecutor", "rewards are empty");
             return;
         }
-        String rewardsUrl = getConfirmRewardsUrl(appUserId, deviceId);
+        String rewardsUrl = getConfirmRewardsUrl(stagingMode, appUserId, deviceId);
         String rewardsBody = getConfirmRewardsBody(rewardsIds);
         AuthorizedPostRequest confirmTransactionsRequest = new AuthorizedPostRequest(new AsyncResponse() {
             @Override
@@ -31,8 +31,14 @@ class ConfirmRewardsExecutor {
         confirmTransactionsRequest.execute(rewardsUrl, token, rewardsBody);
     }
 
-    private String getConfirmRewardsUrl(String appUserId, String deviceId) {
-        return String.format("%s%s/%s/%s", Constants.BASE_URL, Constants.CONFIRM_TRANSACTIONS, appUserId, deviceId);
+    private String getConfirmRewardsUrl(boolean stagingMode, String appUserId, String deviceId) {
+        String baseUrl;
+        if (stagingMode) {
+            baseUrl = Constants.STAGING_BASE_URL;
+        } else {
+            baseUrl = Constants.BASE_URL;
+        }
+        return String.format("%s%s/%s/%s", baseUrl, Constants.CONFIRM_TRANSACTIONS, appUserId, deviceId);
     }
 
     private String getConfirmRewardsBody(Set<Long> rewardsIds) {
@@ -43,7 +49,6 @@ class ConfirmRewardsExecutor {
 
     public interface ConfirmRewardsCallback {
         void onSuccess();
-
         void onFailed(Throwable t);
     }
 }

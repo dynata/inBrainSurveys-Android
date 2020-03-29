@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -47,6 +48,7 @@ public class InBrain {
     private SharedPreferences preferences;
     private String sessionUid;
     private HashMap<String, String> dataPoints;
+    private String language;
     private String title;
     private int toolbarColorResId;
     private int toolbarColor;
@@ -54,6 +56,7 @@ public class InBrain {
     private int backButtonColor;
     private String token;
     private boolean wrongClientIdError;
+    private boolean stagingMode;
 
     private InBrain() {
     }
@@ -82,14 +85,6 @@ public class InBrain {
         preferences.edit().putString(PREFERENCE_DEVICE_ID, deviceId).apply();
     }
 
-    public void setSessionUid(String sessionUid) {
-        this.sessionUid = sessionUid;
-    }
-
-    public void setDataPoints(HashMap<String, String> dataPoints) {
-        this.dataPoints = dataPoints;
-    }
-
     private boolean checkForInit() {
         if (TextUtils.isEmpty(clientId) || TextUtils.isEmpty(clientSecret)) {
             Log.e(Constants.LOG_TAG, "Please first call init() method!");
@@ -102,6 +97,14 @@ public class InBrain {
         return true;
     }
 
+    public void addCallback(InBrainCallback callback) {
+        callbacksList.add(callback);
+    }
+
+    public void removeCallback(InBrainCallback callback) {
+        callbacksList.remove(callback);
+    }
+
     public void setAppUserId(String id) {
         if (!checkForInit()) {
             return;
@@ -111,12 +114,20 @@ public class InBrain {
         token = null;
     }
 
-    public void addCallback(InBrainCallback callback) {
-        callbacksList.add(callback);
+    public void setSessionUid(String sessionUid) {
+        this.sessionUid = sessionUid;
     }
 
-    public void removeCallback(InBrainCallback callback) {
-        callbacksList.remove(callback);
+    public void setDataPoints(HashMap<String, String> dataPoints) {
+        this.dataPoints = dataPoints;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    public void setStagingMode(boolean stagingMode) {
+        this.stagingMode = stagingMode;
     }
 
     public void setToolbarTitle(String title) {
@@ -188,6 +199,24 @@ public class InBrain {
             }
         }
 
+        if (language == null) {
+            Locale locale;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                locale = context.getResources().getConfiguration().getLocales().get(0);
+            } else {
+                locale = context.getResources().getConfiguration().locale;
+            }
+            if (locale != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    language = locale.toLanguageTag().toLowerCase();
+                } else {
+                    String lang = locale.getLanguage();
+                    String country = locale.getCountry().toLowerCase();
+                    language = lang + "-" + country;
+                }
+            }
+        }
+
         if (toolbarColorResId != 0) {
             try {
                 toolbarColor = context.getResources().getColor(toolbarColorResId);
@@ -205,8 +234,8 @@ public class InBrain {
         }
 
         try {
-            SurveysActivity.start(context, clientId, clientSecret, sessionUid, appUserId, deviceId,
-                    dataPoints, title, toolbarColor, backButtonColor);
+            SurveysActivity.start(context, stagingMode, clientId, clientSecret, sessionUid, appUserId, deviceId,
+                    dataPoints, language, title, toolbarColor, backButtonColor);
             callback.onSuccess();
         } catch (Exception ex) {
             callback.onFail("Failed to start SDK:" + ex);
@@ -247,7 +276,7 @@ public class InBrain {
 
     private void requestRewardsWithTokenUpdate(final GetRewardsCallback callback, final boolean updateToken) {
         RewardsExecutor rewardsExecutor = new RewardsExecutor();
-        rewardsExecutor.getRewards(token, new RewardsExecutor.RequestRewardsCallback() {
+        rewardsExecutor.getRewards(stagingMode, token, new RewardsExecutor.RequestRewardsCallback() {
             @Override
             public void onGetRewards(List<Reward> rewards) {
                 onGetRewardsSuccess(callback, rewards);
@@ -326,7 +355,7 @@ public class InBrain {
 
     private void requestRewardsWithTokenUpdate(final boolean updateToken) {
         RewardsExecutor rewardsExecutor = new RewardsExecutor();
-        rewardsExecutor.getRewards(token, new RewardsExecutor.RequestRewardsCallback() {
+        rewardsExecutor.getRewards(stagingMode, token, new RewardsExecutor.RequestRewardsCallback() {
             @Override
             public void onGetRewards(List<Reward> rewards) {
                 onGetRewardsSuccess(rewards);
@@ -417,7 +446,7 @@ public class InBrain {
     }
 
     private void refreshToken(final TokenExecutor.TokenCallback tokenCallback) {
-        TokenExecutor executor = new TokenExecutor(clientId, clientSecret);
+        TokenExecutor executor = new TokenExecutor(stagingMode, clientId, clientSecret);
         executor.getToken(new TokenExecutor.TokenCallback() {
             @Override
             public void onGetToken(String token) {
@@ -485,7 +514,7 @@ public class InBrain {
 
     private void confirmRewards(String token, final Set<Long> pendingRewardIds) {
         ConfirmRewardsExecutor confirmRewardsExecutor = new ConfirmRewardsExecutor();
-        confirmRewardsExecutor.confirmRewards(token, pendingRewardIds, new ConfirmRewardsExecutor.ConfirmRewardsCallback() {
+        confirmRewardsExecutor.confirmRewards(stagingMode, token, pendingRewardIds, new ConfirmRewardsExecutor.ConfirmRewardsCallback() {
             @Override
             public void onSuccess() {
                 if (BuildConfig.DEBUG) {
@@ -507,7 +536,7 @@ public class InBrain {
                         @Override
                         public void onGetToken(String token) {
                             ConfirmRewardsExecutor confirmRewardsExecutor = new ConfirmRewardsExecutor();
-                            confirmRewardsExecutor.confirmRewards(token, pendingRewardIds, new ConfirmRewardsExecutor.ConfirmRewardsCallback() {
+                            confirmRewardsExecutor.confirmRewards(stagingMode, token, pendingRewardIds, new ConfirmRewardsExecutor.ConfirmRewardsCallback() {
                                 @Override
                                 public void onSuccess() {
                                     if (BuildConfig.DEBUG) {
@@ -577,9 +606,15 @@ public class InBrain {
         return context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
     }
 
-    void onClosed() {
+    void onClosed(boolean finishedFromPage) {
         if (!callbacksList.isEmpty()) {
-            for (InBrainCallback callback : callbacksList) callback.onClosed();
+            for (InBrainCallback callback : callbacksList) {
+                if (finishedFromPage) {
+                    callback.onClosedFromPage();
+                } else {
+                    callback.onClosed();
+                }
+            }
         }
     }
 }
