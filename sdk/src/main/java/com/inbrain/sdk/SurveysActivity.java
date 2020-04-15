@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
@@ -101,6 +102,10 @@ public class SurveysActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
+        if (getActionBar() != null) {
+            getActionBar().hide();
+        }
         setContentView(R.layout.activity_surveys);
 
         backImageView = findViewById(R.id.back_image);
@@ -150,8 +155,6 @@ public class SurveysActivity extends Activity {
         }
 
         webView = findViewById(R.id.web_view);
-        webView.clearCache(true);
-        webView.clearHistory();
 
         backImageView.setOnClickListener(new View.OnClickListener() {
             @Override
