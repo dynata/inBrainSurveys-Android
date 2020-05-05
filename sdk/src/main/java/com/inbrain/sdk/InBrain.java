@@ -617,4 +617,13 @@ public class InBrain {
             }
         }
     }
+
+    public String getDeviceId() {
+        if (TextUtils.isEmpty(clientId) || TextUtils.isEmpty(clientSecret)) {
+            Log.e(Constants.LOG_TAG, "Please first call init() method!");
+            return "";
+        }
+
+        return deviceId;
+    }
 }
