@@ -101,6 +101,11 @@ public class SurveysActivity extends Activity {
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            setTheme(android.R.style.Theme_Material_Light_DarkActionBar);
+        } else {
+            setTheme(android.R.style.Theme_Holo_Light_DarkActionBar);
+        }
         super.onCreate(savedInstanceState);
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
         if (getActionBar() != null) {
