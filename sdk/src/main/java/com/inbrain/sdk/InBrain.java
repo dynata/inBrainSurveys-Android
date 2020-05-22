@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.WebView;
@@ -57,6 +59,7 @@ public class InBrain {
     private String token;
     private boolean wrongClientIdError;
     private boolean stagingMode;
+    private Handler handler;
 
     private InBrain() {
     }
@@ -69,6 +72,12 @@ public class InBrain {
     }
 
     public void init(Context context, String clientId, String clientSecret) {
+        boolean isUiThread = Looper.getMainLooper().getThread() == Thread.currentThread();
+        if (!isUiThread) {
+            Log.e(Constants.LOG_TAG, "Method must be called from main thread!");
+            return;
+        }
+        handler = new Handler(Looper.getMainLooper());
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         wrongClientIdError = false;
@@ -153,10 +162,11 @@ public class InBrain {
     /**
      * Opens survey wall
      */
-    public void showSurveys(Context context, StartSurveysCallback callback) {
+    public void showSurveys(Context context, final StartSurveysCallback callback) {
         if (!checkForInit()) {
             return;
         }
+        // todo pay attention to minimal required chrome version, old devices may have updates
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             try {
                 WebView webView = new WebView(context);
@@ -179,22 +189,47 @@ public class InBrain {
                     boolean group2Matches = group2 >= MINIMUM_WEBVIEW_VERSION_GROUP_3;
                     if (group0Matches) {
                         if (!group1Matches) {
-                            callback.onFail("Android System WebView version isn't supported");
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    callback.onFail("Android System WebView version isn't supported");
+                                }
+                            });
                             return;
                         } else if (!group2Matches) {
-                            callback.onFail("Android System WebView version isn't supported");
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    callback.onFail("Android System WebView version isn't supported");
+                                }
+                            });
                             return;
                         }
                     } else {
-                        callback.onFail("Android System WebView version isn't supported");
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                callback.onFail("Android System WebView version isn't supported");
+                            }
+                        });
                         return;
                     }
                 } else {
-                    callback.onFail("Failed to check webview version, can't start SDK");
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onFail("Failed to check webview version, can't start SDK");
+                        }
+                    });
                     return;
                 }
             } catch (Exception ex) {
-                callback.onFail("Failed to check webview version, can't start SDK");
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onFail("Failed to check webview version, can't start SDK");
+                    }
+                });
                 return;
             }
         }
@@ -236,9 +271,19 @@ public class InBrain {
         try {
             SurveysActivity.start(context, stagingMode, clientId, clientSecret, sessionUid, appUserId, deviceId,
                     dataPoints, language, title, toolbarColor, backButtonColor);
-            callback.onSuccess();
-        } catch (Exception ex) {
-            callback.onFail("Failed to start SDK:" + ex);
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onSuccess();
+                }
+            });
+        } catch (final Exception ex) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onFail("Failed to start SDK:" + ex);
+                }
+            });
             return;
         }
     }
@@ -261,12 +306,17 @@ public class InBrain {
                 }
 
                 @Override
-                public void onFailToLoadToken(Throwable t) {
+                public void onFailToLoadToken(final Throwable t) {
                     if (BuildConfig.DEBUG) {
                         Log.e(Constants.LOG_TAG, "Failed to load token");
                         t.printStackTrace();
                     }
-                    callback.onFailToLoadRewards(t);
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onFailToLoadRewards(t);
+                        }
+                    });
                 }
             });
         } else {
@@ -283,7 +333,7 @@ public class InBrain {
             }
 
             @Override
-            public void onFailToLoadRewards(Throwable t) {
+            public void onFailToLoadRewards(final Throwable t) {
                 if (BuildConfig.DEBUG) {
                     Log.e(Constants.LOG_TAG, "Failed to load rewards");
                     t.printStackTrace();
@@ -300,19 +350,34 @@ public class InBrain {
                             }
 
                             @Override
-                            public void onFailToLoadToken(Throwable t) {
+                            public void onFailToLoadToken(final Throwable t) {
                                 if (BuildConfig.DEBUG) {
                                     Log.e(Constants.LOG_TAG, "Failed to load token");
                                     t.printStackTrace();
                                 }
-                                callback.onFailToLoadRewards(t);
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        callback.onFailToLoadRewards(t);
+                                    }
+                                });
                             }
                         });
                     } else {
-                        callback.onFailToLoadRewards(t);
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                callback.onFailToLoadRewards(t);
+                            }
+                        });
                     }
                 } else {
-                    callback.onFailToLoadRewards(t);
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onFailToLoadRewards(t);
+                        }
+                    });
                 }
             }
         }, appUserId, deviceId);
@@ -608,11 +673,21 @@ public class InBrain {
 
     void onClosed(boolean finishedFromPage) {
         if (!callbacksList.isEmpty()) {
-            for (InBrainCallback callback : callbacksList) {
+            for (final InBrainCallback callback : callbacksList) {
                 if (finishedFromPage) {
-                    callback.onClosedFromPage();
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onClosedFromPage();
+                        }
+                    });
                 } else {
-                    callback.onClosed();
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onClosed();
+                        }
+                    });
                 }
             }
         }
