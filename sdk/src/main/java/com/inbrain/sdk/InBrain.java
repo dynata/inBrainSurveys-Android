@@ -12,6 +12,7 @@ import android.webkit.WebView;
 
 import com.inbrain.sdk.callback.GetRewardsCallback;
 import com.inbrain.sdk.callback.InBrainCallback;
+import com.inbrain.sdk.callback.NewRewardsCallback;
 import com.inbrain.sdk.callback.StartSurveysCallback;
 import com.inbrain.sdk.model.Reward;
 
@@ -45,6 +46,7 @@ public class InBrain {
     private String clientId = null;
     private String clientSecret = null;
     private List<InBrainCallback> callbacksList = new ArrayList<>();
+    private List<NewRewardsCallback> newRewardsCallbacks = new ArrayList<>();
     private String appUserId = null;
     private String deviceId = null;
     private SharedPreferences preferences;
@@ -112,6 +114,14 @@ public class InBrain {
 
     public void removeCallback(InBrainCallback callback) {
         callbacksList.remove(callback);
+    }
+
+    public void addNewRewardsCallback(NewRewardsCallback newRewardsCallback) {
+        newRewardsCallbacks.add(newRewardsCallback);
+    }
+
+    public void removeNewRewardsCallback(NewRewardsCallback newRewardsCallback) {
+        newRewardsCallbacks.remove(newRewardsCallback);
     }
 
     public void setAppUserId(String id) {
@@ -498,16 +508,14 @@ public class InBrain {
         if (externalCallback != null) {
             return externalCallback.handleRewards(rewards); // notify by request
         } else if (!callbacksList.isEmpty()) {
-            boolean handleBySelf = false;
-            for (InBrainCallback callback : callbacksList) {
+            for (NewRewardsCallback callback : newRewardsCallbacks) {
                 if (callback.handleRewards(rewards)) {
-                    handleBySelf = true;
-                    break;
+                    return true;
                 }
             }
-            return handleBySelf; // notify by subscription
+            return false; // confirm by subscriber
         }
-        return !rewards.isEmpty();
+        return false; // no subscriptions for rewards, leave rewards for next call
     }
 
     private void refreshToken(final TokenExecutor.TokenCallback tokenCallback) {
