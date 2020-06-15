@@ -508,12 +508,13 @@ public class InBrain {
         if (externalCallback != null) {
             return externalCallback.handleRewards(rewards); // notify by request
         } else if (!callbacksList.isEmpty()) {
+            boolean processed = false;
             for (NewRewardsCallback callback : newRewardsCallbacks) {
                 if (callback.handleRewards(rewards)) {
-                    return true;
+                    processed = true;
                 }
             }
-            return false; // confirm by subscriber
+            return processed; // confirm by subscriber
         }
         return false; // no subscriptions for rewards, leave rewards for next call
     }
