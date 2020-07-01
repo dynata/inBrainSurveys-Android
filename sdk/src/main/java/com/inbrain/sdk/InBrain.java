@@ -12,7 +12,6 @@ import android.webkit.WebView;
 
 import com.inbrain.sdk.callback.GetRewardsCallback;
 import com.inbrain.sdk.callback.InBrainCallback;
-import com.inbrain.sdk.callback.NewRewardsCallback;
 import com.inbrain.sdk.callback.StartSurveysCallback;
 import com.inbrain.sdk.model.Reward;
 
@@ -43,15 +42,14 @@ public class InBrain {
     private Set<Long> confirmedRewardsIds = new HashSet<>();
     private Set<Reward> lastReceivedRewards = new HashSet<>();
 
-    private String clientId = null;
-    private String clientSecret = null;
+    private String apiClientID = null;
+    private String apiSecret = null;
     private List<InBrainCallback> callbacksList = new ArrayList<>();
-    private List<NewRewardsCallback> newRewardsCallbacks = new ArrayList<>();
-    private String appUserId = null;
+    private String userID = null;
     private String deviceId = null;
     private SharedPreferences preferences;
     private String sessionUid;
-    private HashMap<String, String> dataPoints;
+    private HashMap<String, String> dataOptions;
     private String language;
     private String title;
     private int toolbarColorResId;
@@ -73,22 +71,22 @@ public class InBrain {
         return instance;
     }
 
-    public void init(Context context, String clientId, String clientSecret) {
+    public void init(Context context, String apiClientID, String apiSecret) {
         boolean isUiThread = Looper.getMainLooper().getThread() == Thread.currentThread();
         if (!isUiThread) {
             Log.e(Constants.LOG_TAG, "Method must be called from main thread!");
             return;
         }
         handler = new Handler(Looper.getMainLooper());
-        this.clientId = clientId;
-        this.clientSecret = clientSecret;
+        this.apiClientID = apiClientID;
+        this.apiSecret = apiSecret;
         wrongClientIdError = false;
         preferences = getPreferences(context);
         if (preferences.contains(PREFERENCE_DEVICE_ID)) {
             deviceId = preferences.getString(PREFERENCE_DEVICE_ID, null);
         }
-        if (TextUtils.isEmpty(appUserId) && preferences.contains(PREFERENCE_APP_USER_ID)) {
-            appUserId = preferences.getString(PREFERENCE_APP_USER_ID, null);
+        if (TextUtils.isEmpty(userID) && preferences.contains(PREFERENCE_APP_USER_ID)) {
+            userID = preferences.getString(PREFERENCE_APP_USER_ID, null);
         }
         if (TextUtils.isEmpty(deviceId)) {
             deviceId = UUID.randomUUID().toString();
@@ -97,7 +95,7 @@ public class InBrain {
     }
 
     private boolean checkForInit() {
-        if (TextUtils.isEmpty(clientId) || TextUtils.isEmpty(clientSecret)) {
+        if (TextUtils.isEmpty(apiClientID) || TextUtils.isEmpty(apiSecret)) {
             Log.e(Constants.LOG_TAG, "Please first call init() method!");
             return false;
         }
@@ -116,29 +114,21 @@ public class InBrain {
         callbacksList.remove(callback);
     }
 
-    public void addNewRewardsCallback(NewRewardsCallback newRewardsCallback) {
-        newRewardsCallbacks.add(newRewardsCallback);
-    }
-
-    public void removeNewRewardsCallback(NewRewardsCallback newRewardsCallback) {
-        newRewardsCallbacks.remove(newRewardsCallback);
-    }
-
-    public void setAppUserId(String id) {
+    public void setUserID(String id) {
         if (!checkForInit()) {
             return;
         }
-        appUserId = id;
-        preferences.edit().putString(PREFERENCE_APP_USER_ID, appUserId).apply();
+        userID = id;
+        preferences.edit().putString(PREFERENCE_APP_USER_ID, userID).apply();
         token = null;
     }
 
-    public void setSessionUid(String sessionUid) {
+    public void setSessionID(String sessionUid) {
         this.sessionUid = sessionUid;
     }
 
-    public void setDataPoints(HashMap<String, String> dataPoints) {
-        this.dataPoints = dataPoints;
+    public void setDataOptions(HashMap<String, String> dataOptions) {
+        this.dataOptions = dataOptions;
     }
 
     public void setLanguage(String language) {
@@ -279,8 +269,8 @@ public class InBrain {
         }
 
         try {
-            SurveysActivity.start(context, stagingMode, clientId, clientSecret, sessionUid, appUserId, deviceId,
-                    dataPoints, language, title, toolbarColor, backButtonColor);
+            SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, sessionUid, userID, deviceId,
+                    dataOptions, language, title, toolbarColor, backButtonColor);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -390,7 +380,7 @@ public class InBrain {
                     });
                 }
             }
-        }, appUserId, deviceId);
+        }, userID, deviceId);
     }
 
     private void onGetRewardsSuccess(GetRewardsCallback callback, List<Reward> rewards) {
@@ -469,7 +459,7 @@ public class InBrain {
                     }
                 }
             }
-        }, appUserId, deviceId);
+        }, userID, deviceId);
     }
 
     private void onGetRewardsSuccess(List<Reward> rewards) {
@@ -509,8 +499,8 @@ public class InBrain {
             return externalCallback.handleRewards(rewards); // notify by request
         } else if (!callbacksList.isEmpty()) {
             boolean processed = false;
-            for (NewRewardsCallback callback : newRewardsCallbacks) {
-                if (callback.handleRewards(rewards)) {
+            for (InBrainCallback callback : callbacksList) {
+                if (callback.didReceiveInBrainRewards(rewards)) {
                     processed = true;
                 }
             }
@@ -520,7 +510,7 @@ public class InBrain {
     }
 
     private void refreshToken(final TokenExecutor.TokenCallback tokenCallback) {
-        TokenExecutor executor = new TokenExecutor(stagingMode, clientId, clientSecret);
+        TokenExecutor executor = new TokenExecutor(stagingMode, apiClientID, apiSecret);
         executor.getToken(new TokenExecutor.TokenCallback() {
             @Override
             public void onGetToken(String token) {
@@ -628,7 +618,7 @@ public class InBrain {
                                         Log.e(Constants.LOG_TAG, "On failed to confirm rewards:" + t);
                                     }
                                 }
-                            }, appUserId, deviceId);
+                            }, userID, deviceId);
                         }
 
                         @Override
@@ -645,7 +635,7 @@ public class InBrain {
                     }
                 }
             }
-        }, appUserId, deviceId);
+        }, userID, deviceId);
     }
 
     private void savePendingRewards(Set<Long> rewardsIds) {
@@ -687,14 +677,14 @@ public class InBrain {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            callback.onClosedFromPage();
+                            callback.surveysClosedFromPage();
                         }
                     });
                 } else {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            callback.onClosed();
+                            callback.surveysClosed();
                         }
                     });
                 }
@@ -703,7 +693,7 @@ public class InBrain {
     }
 
     public String getDeviceId() {
-        if (TextUtils.isEmpty(clientId) || TextUtils.isEmpty(clientSecret)) {
+        if (TextUtils.isEmpty(apiClientID) || TextUtils.isEmpty(apiSecret)) {
             Log.e(Constants.LOG_TAG, "Please first call init() method!");
             return "";
         }
