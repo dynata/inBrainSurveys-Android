@@ -45,6 +45,7 @@ public class SurveysActivity extends Activity {
     private static final String EXTRA_DATA_POINTS = "15895132";
     private static final String EXTRA_APP_USER_ID = "29678234";
     private static final String EXTRA_DEVICE_ID = "97497286";
+    private static final String EXTRA_S2S = "71263886";
     private static final String EXTRA_LANGUAGE = "51211232";
     private static final String EXTRA_TOOLBAR_TEXT = "64587132";
     private static final String EXTRA_TOOLBAR_COLOR = "67584922";
@@ -59,6 +60,7 @@ public class SurveysActivity extends Activity {
 
     private String clientId;
     private String clientSecret;
+    private boolean isS2S;
     private String sessionUid;
     private HashMap<String, String> dataPoints;
     private String appUserId;
@@ -72,13 +74,15 @@ public class SurveysActivity extends Activity {
     private AlertDialog abortSurveyDialog;
     private boolean finishedFromPage;
 
-    static void start(Context context, boolean stagingMode, String clientId, String clientSecret, String sessionUid,
-                      String appUserId, String deviceId, HashMap<String, String> dataPoints,
-                      String language, String title, int toolbarColor, int backButtonColor) {
+    static void start(Context context, boolean stagingMode, String clientId, String clientSecret,
+                      boolean isS2S, String sessionUid, String appUserId, String deviceId,
+                      HashMap<String, String> dataPoints, String language, String title,
+                      int toolbarColor, int backButtonColor) {
         Intent intent = new Intent(context, SurveysActivity.class);
         intent.putExtra(EXTRA_STAGING_MODE, stagingMode);
         intent.putExtra(EXTRA_CLIENT_ID, clientId);
         intent.putExtra(EXTRA_CLIENT_SECRET, clientSecret);
+        intent.putExtra(EXTRA_S2S, isS2S);
         intent.putExtra(EXTRA_SESSION_UID, sessionUid);
         intent.putExtra(EXTRA_DATA_POINTS, dataPoints);
         intent.putExtra(EXTRA_APP_USER_ID, appUserId);
@@ -122,6 +126,7 @@ public class SurveysActivity extends Activity {
         stagingMode = intent.getBooleanExtra(EXTRA_STAGING_MODE, false);
         clientId = intent.getStringExtra(EXTRA_CLIENT_ID);
         clientSecret = intent.getStringExtra(EXTRA_CLIENT_SECRET);
+        isS2S = intent.getBooleanExtra(EXTRA_S2S, false);
         sessionUid = intent.getStringExtra(EXTRA_SESSION_UID);
         dataPoints = (HashMap<String, String>) intent.getSerializableExtra(EXTRA_DATA_POINTS);
         appUserId = intent.getStringExtra(EXTRA_APP_USER_ID);
@@ -316,6 +321,9 @@ public class SurveysActivity extends Activity {
     }
 
     private void updateRewards(boolean withDelay) {
+        if (isS2S) {
+            return;
+        }
         if (withDelay) {
             updateRewardsHandler.postDelayed(new Runnable() {
                 @Override

@@ -44,6 +44,7 @@ public class InBrain {
 
     private String apiClientID = null;
     private String apiSecret = null;
+    private boolean isS2S = false;
     private List<InBrainCallback> callbacksList = new ArrayList<>();
     private String userID = null;
     private String deviceId = null;
@@ -71,15 +72,20 @@ public class InBrain {
         return instance;
     }
 
-    public void init(Context context, String apiClientID, String apiSecret) {
+    public void setInBrain(Context context, String apiClientID, String apiSecret, boolean isS2S) {
         boolean isUiThread = Looper.getMainLooper().getThread() == Thread.currentThread();
         if (!isUiThread) {
             Log.e(Constants.LOG_TAG, "Method must be called from main thread!");
             return;
         }
         handler = new Handler(Looper.getMainLooper());
-        this.apiClientID = apiClientID;
-        this.apiSecret = apiSecret;
+        if (apiClientID == null || apiSecret == null) {
+            Log.e(Constants.LOG_TAG, "Credentials can't be null!");
+            return;
+        }
+        this.apiClientID = apiClientID.trim();
+        this.apiSecret = apiSecret.trim();
+        this.isS2S = isS2S;
         wrongClientIdError = false;
         preferences = getPreferences(context);
         if (preferences.contains(PREFERENCE_DEVICE_ID)) {
@@ -96,7 +102,7 @@ public class InBrain {
 
     private boolean checkForInit() {
         if (TextUtils.isEmpty(apiClientID) || TextUtils.isEmpty(apiSecret)) {
-            Log.e(Constants.LOG_TAG, "Please first call init() method!");
+            Log.e(Constants.LOG_TAG, "Please first call setInBrain() method!");
             return false;
         }
         if (wrongClientIdError) {
@@ -123,11 +129,8 @@ public class InBrain {
         token = null;
     }
 
-    public void setSessionID(String sessionUid) {
-        this.sessionUid = sessionUid;
-    }
-
-    public void setDataOptions(HashMap<String, String> dataOptions) {
+    public void setInBrainValuesFor(String sessionID, HashMap<String, String> dataOptions) {
+        this.sessionUid = sessionID;
         this.dataOptions = dataOptions;
     }
 
@@ -269,8 +272,9 @@ public class InBrain {
         }
 
         try {
-            SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, sessionUid, userID, deviceId,
-                    dataOptions, language, title, toolbarColor, backButtonColor);
+            SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
+                    sessionUid, userID, deviceId, dataOptions, language, title, toolbarColor,
+                    backButtonColor);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -694,7 +698,7 @@ public class InBrain {
 
     public String getDeviceId() {
         if (TextUtils.isEmpty(apiClientID) || TextUtils.isEmpty(apiSecret)) {
-            Log.e(Constants.LOG_TAG, "Please first call init() method!");
+            Log.e(Constants.LOG_TAG, "Please first call setInBrain() method!");
             return "";
         }
 
