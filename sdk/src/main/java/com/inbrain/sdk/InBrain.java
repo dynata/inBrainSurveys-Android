@@ -34,7 +34,6 @@ import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_3;
 public class InBrain {
     private static final String PREFERENCES = "SharedPreferences_inBrain25930";
     private static final String PREFERENCE_DEVICE_ID = "529826892";
-    private static final String PREFERENCE_APP_USER_ID = "378294761";
     private static final String PREFERENCE_PENDING_REWARDS = "372131_f4lied";
 
     private static InBrain instance;
@@ -72,7 +71,8 @@ public class InBrain {
         return instance;
     }
 
-    public void setInBrain(Context context, String apiClientID, String apiSecret, boolean isS2S) {
+    public void setInBrain(Context context, String apiClientID, String apiSecret, boolean isS2S,
+                           String userID) {
         boolean isUiThread = Looper.getMainLooper().getThread() == Thread.currentThread();
         if (!isUiThread) {
             Log.e(Constants.LOG_TAG, "Method must be called from main thread!");
@@ -83,6 +83,7 @@ public class InBrain {
             Log.e(Constants.LOG_TAG, "Credentials can't be null!");
             return;
         }
+        this.userID = userID;
         this.apiClientID = apiClientID.trim();
         this.apiSecret = apiSecret.trim();
         this.isS2S = isS2S;
@@ -90,9 +91,6 @@ public class InBrain {
         preferences = getPreferences(context);
         if (preferences.contains(PREFERENCE_DEVICE_ID)) {
             deviceId = preferences.getString(PREFERENCE_DEVICE_ID, null);
-        }
-        if (TextUtils.isEmpty(userID) && preferences.contains(PREFERENCE_APP_USER_ID)) {
-            userID = preferences.getString(PREFERENCE_APP_USER_ID, null);
         }
         if (TextUtils.isEmpty(deviceId)) {
             deviceId = UUID.randomUUID().toString();
@@ -118,15 +116,6 @@ public class InBrain {
 
     public void removeCallback(InBrainCallback callback) {
         callbacksList.remove(callback);
-    }
-
-    public void setUserID(String id) {
-        if (!checkForInit()) {
-            return;
-        }
-        userID = id;
-        preferences.edit().putString(PREFERENCE_APP_USER_ID, userID).apply();
-        token = null;
     }
 
     public void setInBrainValuesFor(String sessionID, HashMap<String, String> dataOptions) {
