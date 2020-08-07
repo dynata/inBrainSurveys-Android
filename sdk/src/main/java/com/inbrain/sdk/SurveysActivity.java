@@ -4,11 +4,15 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -73,6 +77,8 @@ public class SurveysActivity extends Activity {
     private AlertDialog inBrainErrorDialog;
     private AlertDialog abortSurveyDialog;
     private boolean finishedFromPage;
+    private NetworkBroadcastReceiver networkStateReceiver;
+    private boolean connectionLost;
 
     static void start(Context context, boolean stagingMode, String clientId, String clientSecret,
                       boolean isS2S, String sessionUid, String appUserId, String deviceId,
@@ -165,6 +171,10 @@ public class SurveysActivity extends Activity {
         }
 
         webView = findViewById(R.id.web_view);
+        networkStateReceiver = new NetworkBroadcastReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(networkStateReceiver, intentFilter);
 
         backImageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -200,18 +210,10 @@ public class SurveysActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 if (url.equals(configurationUrl)) {
-                    try {
-                        String newUrl = getConfigurationUrl();
-                        if (BuildConfig.DEBUG) {
-                            Log.i(LOG_TAG, "URL: " + newUrl);
-                        }
-                        webView.loadUrl(newUrl);
-                    } catch (IOException e) {
-                        if (BuildConfig.DEBUG) {
-                            e.printStackTrace();
-                        }
-                        onFailedToLoadInBrainSurveys();
+                    if (BuildConfig.DEBUG) {
+                        Log.i(LOG_TAG, "Entering configuration loading");
                     }
+                    setConfiguration();
                 }
             }
 
@@ -249,6 +251,21 @@ public class SurveysActivity extends Activity {
         webView.loadUrl(configurationUrl);
 
         updateRewards(false);
+    }
+
+    private void setConfiguration() {
+        try {
+            String newUrl = getConfigurationUrl();
+            if (BuildConfig.DEBUG) {
+                Log.i(LOG_TAG, "URL: " + newUrl);
+            }
+            webView.loadUrl(newUrl);
+        } catch (IOException e) {
+            if (BuildConfig.DEBUG) {
+                e.printStackTrace();
+            }
+            onFailedToLoadInBrainSurveys();
+        }
     }
 
     private void setStatusBarColor(int color) {
@@ -377,6 +394,7 @@ public class SurveysActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        unregisterReceiver(networkStateReceiver);
         updateRewards(true);
         webView.removeJavascriptInterface(INTERFACE_NAME);
         webView.setWebViewClient(null);
@@ -414,6 +432,27 @@ public class SurveysActivity extends Activity {
             if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "dismissWebView");
             finishedFromPage = true;
             finish();
+        }
+    }
+
+    private class NetworkBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getExtras() != null) {
+                ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo ni = connectivityManager.getActiveNetworkInfo();
+                if (ni != null && ni.getState() == NetworkInfo.State.CONNECTED) {
+                    if (connectionLost) {
+                        connectionLost = false;
+                      /*  reset configuration in case network error during loading to avoid infinite blue hud
+                        calling setConfiguration on any other urls is not going to be a problem because it's not defined anywhere other than /configuration url */
+                        setConfiguration();
+                    }
+                } else if (intent.getExtras().getBoolean(ConnectivityManager.EXTRA_NO_CONNECTIVITY, Boolean.FALSE)) {
+                    connectionLost = true;
+                    if (BuildConfig.DEBUG) Log.w(LOG_TAG, "There's no network connectivity");
+                }
+            }
         }
     }
 }
