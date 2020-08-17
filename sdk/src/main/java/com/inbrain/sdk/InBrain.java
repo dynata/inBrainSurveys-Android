@@ -260,6 +260,10 @@ public class InBrain {
             }
         }
 
+        if (TextUtils.isEmpty(userID)) {
+            userID = deviceId;
+        }
+
         try {
             SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
                     sessionUid, userID, deviceId, dataOptions, language, title, toolbarColor,
