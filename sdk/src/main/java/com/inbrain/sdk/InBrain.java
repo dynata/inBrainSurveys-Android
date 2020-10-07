@@ -13,6 +13,7 @@ import android.webkit.WebView;
 import com.inbrain.sdk.callback.GetRewardsCallback;
 import com.inbrain.sdk.callback.InBrainCallback;
 import com.inbrain.sdk.callback.StartSurveysCallback;
+import com.inbrain.sdk.callback.SurveysAvailableCallback;
 import com.inbrain.sdk.model.Reward;
 
 import java.util.ArrayList;
@@ -696,5 +697,99 @@ public class InBrain {
         }
 
         return deviceId;
+    }
+
+    public void areSurveysAvailable(final Context context,
+                                    final SurveysAvailableCallback callback) {
+        if (!checkForInit()) {
+            return;
+        }
+        if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "External check for available surveys");
+        if (TextUtils.isEmpty(token)) {
+            refreshToken(new TokenExecutor.TokenCallback() {
+                @Override
+                public void onGetToken(String token) {
+                    requestSurveysAvailabilityWithTokenUpdate(context, callback, false);
+                }
+
+                @Override
+                public void onFailToLoadToken(Throwable t) {
+                    if (BuildConfig.DEBUG) {
+                        Log.e(Constants.LOG_TAG, "Failed to load token");
+                        t.printStackTrace();
+                    }
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onSurveysAvailable(false);
+                        }
+                    });
+                }
+            });
+        } else {
+            requestSurveysAvailabilityWithTokenUpdate(context, callback, true);
+        }
+    }
+
+    private void requestSurveysAvailabilityWithTokenUpdate(final Context context,
+                                                           final SurveysAvailableCallback callback,
+                                                           final boolean updateToken) {
+        SurveysAvailabilityExecutor surveysAvailabilityExecutor = new SurveysAvailabilityExecutor();
+        surveysAvailabilityExecutor.areSurveysAvailable(context, token, stagingMode,
+                new SurveysAvailabilityExecutor.SurveysAvailableExecutorCallback() {
+                    @Override
+                    public void onSurveysAvailable(boolean available) {
+                        callback.onSurveysAvailable(available);
+                    }
+
+                    @Override
+                    public void onFailToLoadSurveysAvailability(Exception t) {
+                        if (BuildConfig.DEBUG) {
+                            Log.e(Constants.LOG_TAG, "Failed to load surveys availability");
+                            t.printStackTrace();
+                        }
+                        if (t instanceof TokenExpiredException) {
+                            if (BuildConfig.DEBUG) {
+                                Log.e(Constants.LOG_TAG, "Token expired");
+                            }
+                            if (updateToken) {
+                                refreshToken(new TokenExecutor.TokenCallback() {
+                                    @Override
+                                    public void onGetToken(String token) {
+                                        requestSurveysAvailabilityWithTokenUpdate(context, callback, false);
+                                    }
+
+                                    @Override
+                                    public void onFailToLoadToken(final Throwable t) {
+                                        if (BuildConfig.DEBUG) {
+                                            Log.e(Constants.LOG_TAG, "Failed to load token");
+                                            t.printStackTrace();
+                                        }
+                                        handler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                callback.onSurveysAvailable(false);
+                                            }
+                                        });
+                                    }
+                                });
+                            } else {
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        callback.onSurveysAvailable(false);
+                                    }
+                                });
+                            }
+                        } else {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    callback.onSurveysAvailable(false);
+                                }
+                            });
+                        }
+                    }
+                }, userID, deviceId);
     }
 }

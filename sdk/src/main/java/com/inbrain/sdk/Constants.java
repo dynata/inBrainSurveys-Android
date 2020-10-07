@@ -11,13 +11,19 @@ class Constants {
 
     static final String JS_LOG_TAG = LOG_TAG + " JS";
 
-    static final String BASE_URL = "https://api.surveyb.in/api/v1/external-surveys/";
+    static final String BASE_URL = "https://api.surveyb.in/api/v1/";
 
-    static final String STAGING_BASE_URL = "https://inbrain-api-staging.azurewebsites.net/api/v1/external-surveys/";
+    static final String BASE_URL_EXTERNAL_SURVEYS = BASE_URL + "external-surveys/";
+
+    static final String STAGING_BASE_URL = "https://inbrain-api-staging.azurewebsites.net/api/v1/";
+
+    static final String STAGING_BASE_URL_EXTERNAL_SURVEYS = STAGING_BASE_URL + "external-surveys/";
 
     static final String TOKEN_URL = "https://auth.surveyb.in/connect/token";
 
     static final String STAGING_TOKEN_URL = "https://inbrain-auth-staging.azurewebsites.net/connect/token";
+
+    static final String ALLOWED_COUNTRIES_URL = "https://inbrainbackend.blob.core.windows.net/misc/allowedCountries.json";
 
     static final String TOKEN_SCOPE = "inbrain-api:integration";
 
@@ -36,4 +42,13 @@ class Constants {
     static final int MINIMUM_WEBVIEW_VERSION_GROUP_2 = 0;
 
     static final int MINIMUM_WEBVIEW_VERSION_GROUP_3 = 2704;
+
+    public static final String getAreSurveysAvailableUrl(String appUserId, String deviceId) {
+        StringBuilder sb = new StringBuilder("external-panelist/");
+        sb.append(appUserId)
+                .append("/")
+                .append(deviceId)
+                .append("/surveys-available");
+        return sb.toString();
+    }
 }
