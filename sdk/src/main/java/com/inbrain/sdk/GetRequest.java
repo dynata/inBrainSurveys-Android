@@ -9,12 +9,10 @@ import java.net.URL;
 
 import static com.inbrain.sdk.Constants.REQUEST_TIMEOUT_MS;
 
-class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
-    static final int RESPONSE_CODE_UNAUTHORIZED = 401;
-    static final String RESPONSE_MESSAGE_UNAUTHORIZED = "Unauthorized";
+class GetRequest extends AsyncTask<String, Void, String> {
     private final AsyncResponse callback;
 
-    AuthorizedGetRequest(AsyncResponse callback) {
+    GetRequest(AsyncResponse callback) {
         this.callback = callback;
     }
 
@@ -26,14 +24,12 @@ class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... params) {
         String urlString = params[0];
-        String token = params[1];
         try {
             URL obj = new URL(urlString);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
             con.setReadTimeout(REQUEST_TIMEOUT_MS);
             con.setConnectTimeout(REQUEST_TIMEOUT_MS);
             con.setRequestMethod("GET");
-            con.setRequestProperty("Authorization", "Bearer " + token);
             int responseCode = con.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) { // connection ok
                 BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
@@ -44,10 +40,6 @@ class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
                 }
                 in.close();
                 return response.toString();
-            } else if (con.getResponseCode() == RESPONSE_CODE_UNAUTHORIZED
-                    & con.getResponseMessage().equals(RESPONSE_MESSAGE_UNAUTHORIZED)) {
-                callback.onError(new TokenExpiredException(con.getResponseMessage()));
-                return null;
             } else {
                 callback.onError(new IllegalStateException(con.getResponseMessage()));
                 return null;

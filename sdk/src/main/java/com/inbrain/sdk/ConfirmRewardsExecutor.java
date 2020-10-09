@@ -34,9 +34,9 @@ class ConfirmRewardsExecutor {
     private String getConfirmRewardsUrl(boolean stagingMode, String appUserId, String deviceId) {
         String baseUrl;
         if (stagingMode) {
-            baseUrl = Constants.STAGING_BASE_URL;
+            baseUrl = Constants.STAGING_BASE_URL_EXTERNAL_SURVEYS;
         } else {
-            baseUrl = Constants.BASE_URL;
+            baseUrl = Constants.BASE_URL_EXTERNAL_SURVEYS;
         }
         return String.format("%s%s/%s/%s", baseUrl, Constants.CONFIRM_TRANSACTIONS, appUserId, deviceId);
     }
