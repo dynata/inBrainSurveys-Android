@@ -80,8 +80,16 @@ public class InBrain {
             return;
         }
         handler = new Handler(Looper.getMainLooper());
-        if (apiClientID == null || apiSecret == null) {
-            Log.e(Constants.LOG_TAG, "Credentials can't be null!");
+        if (TextUtils.isEmpty(apiClientID)) {
+            Log.e(Constants.LOG_TAG, "API_CLIENT_ID can't be null or empty!");
+            return;
+        }
+        if (TextUtils.isEmpty(apiSecret)) {
+            Log.e(Constants.LOG_TAG, "API_SECRET can't be null or empty!");
+            return;
+        }
+        if (TextUtils.isEmpty(userID)) {
+            Log.e(Constants.LOG_TAG, "userID can't be null or empty!");
             return;
         }
         this.userID = userID;
