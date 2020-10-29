@@ -88,11 +88,6 @@ public class InBrain {
             Log.e(Constants.LOG_TAG, "API_SECRET can't be null or empty!");
             return;
         }
-        if (TextUtils.isEmpty(userID)) {
-            Log.e(Constants.LOG_TAG, "userID can't be null or empty!");
-            return;
-        }
-        this.userID = userID;
         this.apiClientID = apiClientID.trim();
         this.apiSecret = apiSecret.trim();
         this.isS2S = isS2S;
@@ -105,6 +100,11 @@ public class InBrain {
             deviceId = UUID.randomUUID().toString();
         }
         preferences.edit().putString(PREFERENCE_DEVICE_ID, deviceId).apply();
+        if (TextUtils.isEmpty(userID)) {
+            this.userID = deviceId;
+        } else {
+            this.userID = userID;
+        }
     }
 
     private boolean checkForInit() {
