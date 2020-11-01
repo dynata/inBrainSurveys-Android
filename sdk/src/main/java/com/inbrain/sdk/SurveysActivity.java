@@ -49,6 +49,7 @@ public class SurveysActivity extends Activity {
     private static final String EXTRA_DATA_POINTS = "15895132";
     private static final String EXTRA_APP_USER_ID = "29678234";
     private static final String EXTRA_DEVICE_ID = "97497286";
+    private static final String EXTRA_SURVEY_ID = "56238743";
     private static final String EXTRA_S2S = "71263886";
     private static final String EXTRA_LANGUAGE = "51211232";
     private static final String EXTRA_TOOLBAR_TEXT = "64587132";
@@ -69,6 +70,7 @@ public class SurveysActivity extends Activity {
     private HashMap<String, String> dataPoints;
     private String appUserId;
     private String deviceId;
+    private String surveyId;
     private String language;
     private boolean stagingMode;
 
@@ -84,6 +86,28 @@ public class SurveysActivity extends Activity {
                       boolean isS2S, String sessionUid, String appUserId, String deviceId,
                       HashMap<String, String> dataPoints, String language, String title,
                       int toolbarColor, int backButtonColor) {
+        Intent startingIntent = getLaunchingIntent(context, stagingMode, clientId, clientSecret,
+                isS2S, sessionUid, appUserId, deviceId, dataPoints, language, title, toolbarColor,
+                backButtonColor);
+        context.startActivity(startingIntent);
+    }
+
+    public static void start(Context context, boolean stagingMode, String clientId, String clientSecret,
+                             boolean isS2S, String sessionUid, String appUserId, String deviceId,
+                             String surveyId, HashMap<String, String> dataPoints, String language,
+                             String title, int toolbarColor, int backButtonColor) {
+        Intent startingIntent = getLaunchingIntent(context, stagingMode, clientId, clientSecret,
+                isS2S, sessionUid, appUserId, deviceId, dataPoints, language, title, toolbarColor,
+                backButtonColor);
+        startingIntent.putExtra(EXTRA_SURVEY_ID, surveyId);
+        context.startActivity(startingIntent);
+    }
+
+    private static Intent getLaunchingIntent(Context context, boolean stagingMode, String clientId,
+                                             String clientSecret, boolean isS2S, String sessionUid,
+                                             String appUserId, String deviceId,
+                                             HashMap<String, String> dataPoints, String language,
+                                             String title, int toolbarColor, int backButtonColor) {
         Intent intent = new Intent(context, SurveysActivity.class);
         intent.putExtra(EXTRA_STAGING_MODE, stagingMode);
         intent.putExtra(EXTRA_CLIENT_ID, clientId);
@@ -105,7 +129,7 @@ public class SurveysActivity extends Activity {
         if (backButtonColor != 0) {
             intent.putExtra(EXTRA_BACK_BUTTON_COLOR, backButtonColor);
         }
-        context.startActivity(intent);
+        return intent;
     }
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
@@ -137,6 +161,7 @@ public class SurveysActivity extends Activity {
         dataPoints = (HashMap<String, String>) intent.getSerializableExtra(EXTRA_DATA_POINTS);
         appUserId = intent.getStringExtra(EXTRA_APP_USER_ID);
         deviceId = intent.getStringExtra(EXTRA_DEVICE_ID);
+        surveyId = intent.getStringExtra(EXTRA_SURVEY_ID);
 
         if (stagingMode) {
             configurationUrl = STAGING_DOMAIN + "/configuration";
@@ -290,7 +315,7 @@ public class SurveysActivity extends Activity {
 
     private String getConfigurationUrl() throws IOException {
         Configuration configuration = new Configuration(clientId, clientSecret, appUserId, deviceId,
-                sessionUid, dataPoints, language);
+                surveyId, sessionUid, dataPoints, language);
         return String.format("javascript:setConfiguration(%s);", configuration.toJson());
     }
 

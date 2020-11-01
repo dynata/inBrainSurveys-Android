@@ -2,7 +2,9 @@ package com.inbrain.sdk.model;
 
 import android.text.TextUtils;
 
-public class Reward {
+import java.io.Serializable;
+
+public class Reward implements Serializable {
     public long transactionId;
     public float amount;
     public String currency;
