@@ -38,7 +38,7 @@ class SurveysAvailabilityExecutor {
                                        final SurveysAvailableExecutorCallback callback) {
         String surveysAvailableUrl = getSurveysAvailableUrl(stagingMode,
                 Constants.getAreSurveysAvailableUrl(appUserId, deviceId));
-        AuthorizedGetRequest getRewardsRequest = new AuthorizedGetRequest(new AsyncResponse() {
+        AuthorizedGetRequest areSurveysAvailableRequest = new AuthorizedGetRequest(new AsyncResponse() {
             @Override
             public void processFinish(String output) {
                 callback.onSurveysAvailable(true);
@@ -50,7 +50,7 @@ class SurveysAvailabilityExecutor {
             }
         });
         if (BuildConfig.DEBUG) Log.d("SurveysAvailability", "url is:" + surveysAvailableUrl);
-        getRewardsRequest.execute(surveysAvailableUrl, token);
+        areSurveysAvailableRequest.execute(surveysAvailableUrl, token);
     }
 
     private String getSurveysAvailableUrl(boolean stagingMode, String areSurveysAvailableUrl) {

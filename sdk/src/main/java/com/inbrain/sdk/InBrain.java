@@ -10,11 +10,13 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.WebView;
 
+import com.inbrain.sdk.callback.GetNativeSurveysCallback;
 import com.inbrain.sdk.callback.GetRewardsCallback;
 import com.inbrain.sdk.callback.InBrainCallback;
 import com.inbrain.sdk.callback.StartSurveysCallback;
 import com.inbrain.sdk.callback.SurveysAvailableCallback;
 import com.inbrain.sdk.model.Reward;
+import com.inbrain.sdk.model.Survey;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -164,8 +166,64 @@ public class InBrain {
      * Opens survey wall
      */
     public void showSurveys(Context context, final StartSurveysCallback callback) {
-        if (!checkForInit()) {
+        if (!canStartSurveys(context, callback)) {
             return;
+        }
+
+        prepareConfig(context);
+
+        try {
+            SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
+                    sessionUid, userID, deviceId, dataOptions, language, title, toolbarColor,
+                    backButtonColor);
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onSuccess();
+                }
+            });
+        } catch (final Exception ex) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onFail("Failed to start SDK:" + ex);
+                }
+            });
+            return;
+        }
+    }
+
+    public void showNativeSurveyWith(Context context, String surveyId, final StartSurveysCallback callback) {
+        if (!canStartSurveys(context, callback)) {
+            return;
+        }
+
+        prepareConfig(context);
+
+        try {
+            SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
+                    sessionUid, userID, deviceId, surveyId, dataOptions, language, title, toolbarColor,
+                    backButtonColor);
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onSuccess();
+                }
+            });
+        } catch (final Exception ex) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onFail("Failed to start SDK:" + ex);
+                }
+            });
+            return;
+        }
+    }
+
+    private boolean canStartSurveys(Context context, final StartSurveysCallback callback) {
+        if (!checkForInit()) {
+            return false;
         }
         // todo pay attention to minimal required chrome version, old devices may have updates
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
@@ -196,7 +254,7 @@ public class InBrain {
                                     callback.onFail("Android System WebView version isn't supported");
                                 }
                             });
-                            return;
+                            return false;
                         } else if (!group2Matches) {
                             handler.post(new Runnable() {
                                 @Override
@@ -204,7 +262,7 @@ public class InBrain {
                                     callback.onFail("Android System WebView version isn't supported");
                                 }
                             });
-                            return;
+                            return false;
                         }
                     } else {
                         handler.post(new Runnable() {
@@ -213,7 +271,7 @@ public class InBrain {
                                 callback.onFail("Android System WebView version isn't supported");
                             }
                         });
-                        return;
+                        return false;
                     }
                 } else {
                     handler.post(new Runnable() {
@@ -222,7 +280,7 @@ public class InBrain {
                             callback.onFail("Failed to check webview version, can't start SDK");
                         }
                     });
-                    return;
+                    return false;
                 }
             } catch (Exception ex) {
                 handler.post(new Runnable() {
@@ -231,10 +289,13 @@ public class InBrain {
                         callback.onFail("Failed to check webview version, can't start SDK");
                     }
                 });
-                return;
+                return false;
             }
         }
+        return true;
+    }
 
+    private void prepareConfig(Context context) {
         if (language == null) {
             Locale locale;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -267,30 +328,6 @@ public class InBrain {
             } catch (Resources.NotFoundException e) {
                 Log.e(LOG_TAG, "Can't find color resource for back button:" + backButtonColorResId);
             }
-        }
-
-        if (TextUtils.isEmpty(userID)) {
-            userID = deviceId;
-        }
-
-        try {
-            SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
-                    sessionUid, userID, deviceId, dataOptions, language, title, toolbarColor,
-                    backButtonColor);
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onSuccess();
-                }
-            });
-        } catch (final Exception ex) {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onFail("Failed to start SDK:" + ex);
-                }
-            });
-            return;
         }
     }
 
@@ -794,6 +831,98 @@ public class InBrain {
                                 @Override
                                 public void run() {
                                     callback.onSurveysAvailable(false);
+                                }
+                            });
+                        }
+                    }
+                }, userID, deviceId);
+    }
+
+    public void getNativeSurveys(final GetNativeSurveysCallback callback) {
+        if (!checkForInit()) {
+            return;
+        }
+        if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "External get for native surveys");
+        if (TextUtils.isEmpty(token)) {
+            refreshToken(new TokenExecutor.TokenCallback() {
+                @Override
+                public void onGetToken(String token) {
+                    requestNativeSurveysWithTokenUpdate(callback, false);
+                }
+
+                @Override
+                public void onFailToLoadToken(Throwable t) {
+                    if (BuildConfig.DEBUG) {
+                        Log.e(Constants.LOG_TAG, "Failed to load token");
+                        t.printStackTrace();
+                    }
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.nativeSurveysReceived(new ArrayList<Survey>());
+                        }
+                    });
+                }
+            });
+        } else {
+            requestNativeSurveysWithTokenUpdate(callback, true);
+        }
+    }
+
+    private void requestNativeSurveysWithTokenUpdate(final GetNativeSurveysCallback callback,
+                                                     final boolean updateToken) {
+        GetNativeSurveysListExecutor getNativeSurveysListExecutor = new GetNativeSurveysListExecutor();
+        getNativeSurveysListExecutor.getNativeSurveysList(token, stagingMode,
+                new GetNativeSurveysListExecutor.NativeSurveysExecutorCallback() {
+                    @Override
+                    public void onNativeSurveysAvailable(List<Survey> surveys) {
+                        callback.nativeSurveysReceived(surveys);
+                    }
+
+                    @Override
+                    public void onFailToLoadNativeSurveysList(Exception t) {
+                        if (BuildConfig.DEBUG) {
+                            Log.e(Constants.LOG_TAG, "Failed to load native surveys");
+                            t.printStackTrace();
+                        }
+                        if (t instanceof TokenExpiredException) {
+                            if (BuildConfig.DEBUG) {
+                                Log.e(Constants.LOG_TAG, "Token expired");
+                            }
+                            if (updateToken) {
+                                refreshToken(new TokenExecutor.TokenCallback() {
+                                    @Override
+                                    public void onGetToken(String token) {
+                                        requestNativeSurveysWithTokenUpdate(callback, false);
+                                    }
+
+                                    @Override
+                                    public void onFailToLoadToken(final Throwable t) {
+                                        if (BuildConfig.DEBUG) {
+                                            Log.e(Constants.LOG_TAG, "Failed to load token");
+                                            t.printStackTrace();
+                                        }
+                                        handler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                callback.nativeSurveysReceived(new ArrayList<Survey>());
+                                            }
+                                        });
+                                    }
+                                });
+                            } else {
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        callback.nativeSurveysReceived(new ArrayList<Survey>());
+                                    }
+                                });
+                            }
+                        } else {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    callback.nativeSurveysReceived(new ArrayList<Survey>());
                                 }
                             });
                         }
