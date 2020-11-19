@@ -1,0 +1,9 @@
+<resources>
+
+    <style name="InBrainTheme" parent="android:Theme.Material.Light.DarkActionBar">
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowSwipeToDismiss">false</item>
+    </style>
+
+</resources>
