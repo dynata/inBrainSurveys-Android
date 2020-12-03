@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -55,6 +54,10 @@ public class SurveysActivity extends Activity {
     private static final String EXTRA_TOOLBAR_TEXT = "64587132";
     private static final String EXTRA_TOOLBAR_COLOR = "67584922";
     private static final String EXTRA_BACK_BUTTON_COLOR = "13645898";
+    private static final String EXTRA_TITLE_COLOR = "12343214";
+    private static final String EXTRA_STATUS_BAR_COLOR = "89732498";
+    private static final String EXTRA_ENABLE_ELEVATION = "46782388";
+    private static final String EXTRA_LIGHT_STATUS_BAR = "81237412";
     private static final int UPDATE_REWARDS_DELAY_MS = 10000;
 
     private WebView webView;
@@ -72,7 +75,6 @@ public class SurveysActivity extends Activity {
     private String deviceId;
     private String surveyId;
     private String language;
-    private boolean stagingMode;
 
     private boolean surveyActive;
     private Handler updateRewardsHandler = new Handler();
@@ -85,20 +87,22 @@ public class SurveysActivity extends Activity {
     static void start(Context context, boolean stagingMode, String clientId, String clientSecret,
                       boolean isS2S, String sessionUid, String appUserId, String deviceId,
                       HashMap<String, String> dataPoints, String language, String title,
-                      int toolbarColor, int backButtonColor) {
+                      int toolbarColor, int backButtonColor, int titleColor, int statusBarColor,
+                      boolean enableElevation, boolean lightStatusBarColor) {
         Intent startingIntent = getLaunchingIntent(context, stagingMode, clientId, clientSecret,
                 isS2S, sessionUid, appUserId, deviceId, dataPoints, language, title, toolbarColor,
-                backButtonColor);
+                backButtonColor, titleColor, statusBarColor, enableElevation, lightStatusBarColor);
         context.startActivity(startingIntent);
     }
 
     public static void start(Context context, boolean stagingMode, String clientId, String clientSecret,
                              boolean isS2S, String sessionUid, String appUserId, String deviceId,
                              String surveyId, HashMap<String, String> dataPoints, String language,
-                             String title, int toolbarColor, int backButtonColor) {
+                             String title, int toolbarColor, int backButtonColor, int titleColor,
+                             int statusBarColor, boolean enableElevation, boolean lightStatusBarColor) {
         Intent startingIntent = getLaunchingIntent(context, stagingMode, clientId, clientSecret,
                 isS2S, sessionUid, appUserId, deviceId, dataPoints, language, title, toolbarColor,
-                backButtonColor);
+                backButtonColor, titleColor, statusBarColor, enableElevation, lightStatusBarColor);
         startingIntent.putExtra(EXTRA_SURVEY_ID, surveyId);
         context.startActivity(startingIntent);
     }
@@ -107,7 +111,9 @@ public class SurveysActivity extends Activity {
                                              String clientSecret, boolean isS2S, String sessionUid,
                                              String appUserId, String deviceId,
                                              HashMap<String, String> dataPoints, String language,
-                                             String title, int toolbarColor, int backButtonColor) {
+                                             String title, int toolbarColor, int backButtonColor,
+                                             int titleColor, int statusBarColor, boolean enableElevation,
+                                             boolean lightStatusBarColor) {
         Intent intent = new Intent(context, SurveysActivity.class);
         intent.putExtra(EXTRA_STAGING_MODE, stagingMode);
         intent.putExtra(EXTRA_CLIENT_ID, clientId);
@@ -117,18 +123,17 @@ public class SurveysActivity extends Activity {
         intent.putExtra(EXTRA_DATA_POINTS, dataPoints);
         intent.putExtra(EXTRA_APP_USER_ID, appUserId);
         intent.putExtra(EXTRA_DEVICE_ID, deviceId);
+        intent.putExtra(EXTRA_TOOLBAR_TEXT, title);
+        intent.putExtra(EXTRA_TOOLBAR_COLOR, toolbarColor);
+        intent.putExtra(EXTRA_BACK_BUTTON_COLOR, backButtonColor);
+        intent.putExtra(EXTRA_TITLE_COLOR, titleColor);
+        intent.putExtra(EXTRA_STATUS_BAR_COLOR, statusBarColor);
+        intent.putExtra(EXTRA_ENABLE_ELEVATION, enableElevation);
+        intent.putExtra(EXTRA_LIGHT_STATUS_BAR, lightStatusBarColor);
         if (!TextUtils.isEmpty(language)) {
             intent.putExtra(EXTRA_LANGUAGE, language);
         }
-        if (title != null) {
-            intent.putExtra(EXTRA_TOOLBAR_TEXT, title);
-        }
-        if (toolbarColor != 0) {
-            intent.putExtra(EXTRA_TOOLBAR_COLOR, toolbarColor);
-        }
-        if (backButtonColor != 0) {
-            intent.putExtra(EXTRA_BACK_BUTTON_COLOR, backButtonColor);
-        }
+
         return intent;
     }
 
@@ -149,7 +154,7 @@ public class SurveysActivity extends Activity {
         getWindow().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.background)));
 
         Intent intent = getIntent();
-        stagingMode = intent.getBooleanExtra(EXTRA_STAGING_MODE, false);
+        boolean stagingMode = intent.getBooleanExtra(EXTRA_STAGING_MODE, false);
         clientId = intent.getStringExtra(EXTRA_CLIENT_ID);
         clientSecret = intent.getStringExtra(EXTRA_CLIENT_SECRET);
         isS2S = intent.getBooleanExtra(EXTRA_S2S, false);
@@ -175,20 +180,42 @@ public class SurveysActivity extends Activity {
 
         if (intent.hasExtra(EXTRA_TOOLBAR_COLOR)) {
             int color = intent.getIntExtra(EXTRA_TOOLBAR_COLOR, 0);
-            if (color == 0) {
-                setStatusBarColor(getResources().getColor(R.color.background));
-            } else {
-                findViewById(R.id.toolbar).setBackgroundColor(color);
-                setStatusBarColor(color);
-            }
-        } else {
-            setStatusBarColor(R.color.background);
+            findViewById(R.id.toolbar).setBackgroundColor(color);
         }
 
         if (intent.hasExtra(EXTRA_BACK_BUTTON_COLOR)) {
-            int color = intent.getIntExtra(EXTRA_BACK_BUTTON_COLOR, getResources().getColor(android.R.color.black));
+            int color = intent.getIntExtra(EXTRA_BACK_BUTTON_COLOR, getResources().getColor(R.color.main_text));
             backImageView.setColorFilter(color);
+        }
+
+        if (intent.hasExtra(EXTRA_TITLE_COLOR)) {
+            int color = intent.getIntExtra(EXTRA_TITLE_COLOR, getResources().getColor(R.color.main_text));
             toolbarTextView.setTextColor(color);
+        }
+
+        if (intent.hasExtra(EXTRA_STATUS_BAR_COLOR)) {
+            int color = intent.getIntExtra(EXTRA_STATUS_BAR_COLOR, getResources().getColor(R.color.main_text));
+            setStatusBarColor(color);
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (intent.hasExtra(EXTRA_ENABLE_ELEVATION)) {
+                boolean enableElevation = intent.getBooleanExtra(EXTRA_ENABLE_ELEVATION, false);
+                if (enableElevation) {
+                    findViewById(R.id.toolbar).setElevation(getResources().getDimension(R.dimen.elevation));
+                }
+            }
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (intent.hasExtra(EXTRA_LIGHT_STATUS_BAR)) {
+                boolean lightStatusBar = intent.getBooleanExtra(EXTRA_LIGHT_STATUS_BAR, false);
+                if (lightStatusBar) {
+                    int flags = getWindow().getDecorView().getSystemUiVisibility();
+                    flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                    getWindow().getDecorView().setSystemUiVisibility(flags);
+                }
+            }
         }
 
         webView = findViewById(R.id.web_view);
@@ -290,23 +317,9 @@ public class SurveysActivity extends Activity {
     }
 
     private void setStatusBarColor(int color) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            int flags = getWindow().getDecorView().getSystemUiVisibility();
-            if (shouldInvertStatusBarIconsColor(color)) {
-                flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-            }
-            getWindow().getDecorView().setSystemUiVisibility(flags);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setStatusBarColor(color);
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setStatusBarColor(getResources().getColor(R.color.darker_background));
         }
-    }
-
-    private boolean shouldInvertStatusBarIconsColor(int color) {
-        float red = Color.red(color);
-        float green = Color.green(color);
-        float blue = Color.red(color);
-        return (red * 0.299 + green * 0.587 + blue * 0.114) > 186;
     }
 
     private String getConfigurationUrl() throws IOException {
@@ -439,13 +452,6 @@ public class SurveysActivity extends Activity {
             if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "surveyClosed");
             setSurveyActive(false);
             updateRewards(true);
-        }
-
-        @JavascriptInterface
-        public void toggleNativeButtons(String toggle) {
-            boolean visible = Boolean.parseBoolean(toggle);
-            if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "toggleNativeButtons:" + toggle);
-            setToolbarVisible(visible);
         }
 
         @JavascriptInterface

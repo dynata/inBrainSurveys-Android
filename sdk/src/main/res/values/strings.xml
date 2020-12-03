@@ -1,5 +1,5 @@
 <resources>
-    <string name="inbrain_surveys">inBrain Surveys</string>
+    <string name="inbrain_surveys">inBrain.ai Surveys</string>
     <string name="go_back">Go back</string>
     <string name="dont_abandon_the_survey_title">Are you sure you want to Quit?</string>
     <string name="dont_abandon_the_survey_message">Abandonment of this survey will terminate your progress and you will not receive your reward.</string>

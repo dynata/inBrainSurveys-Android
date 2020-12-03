@@ -2,5 +2,6 @@
 <resources>
     <color name="background">#ffeeeeee</color>
     <color name="darker_background">#ffaaaaaa</color>
-    <color name="main_text">@android:color/black</color>
+    <color name="main_text">@android:color/white</color>
+    <color name="default_toolbar">#01A5ED</color>
 </resources>
