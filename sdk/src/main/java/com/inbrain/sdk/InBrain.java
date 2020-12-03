@@ -3,6 +3,7 @@ package com.inbrain.sdk;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -15,6 +16,8 @@ import com.inbrain.sdk.callback.GetRewardsCallback;
 import com.inbrain.sdk.callback.InBrainCallback;
 import com.inbrain.sdk.callback.StartSurveysCallback;
 import com.inbrain.sdk.callback.SurveysAvailableCallback;
+import com.inbrain.sdk.config.StatusBarConfig;
+import com.inbrain.sdk.config.ToolBarConfig;
 import com.inbrain.sdk.model.Reward;
 import com.inbrain.sdk.model.Survey;
 
@@ -59,6 +62,12 @@ public class InBrain {
     private int toolbarColor;
     private int backButtonColorResId;
     private int backButtonColor;
+    private int titleColorResId;
+    private int titleColor;
+    private Boolean enableToolbarElevation;
+    private Boolean lightStatusBarColor;
+    private int statusBarColorResId;
+    private int statusBarColor;
     private String token;
     private boolean wrongClientIdError;
     private boolean stagingMode;
@@ -142,24 +151,29 @@ public class InBrain {
         this.stagingMode = stagingMode;
     }
 
-    public void setToolbarTitle(String title) {
-        this.title = title;
+    public void setToolbarConfig(ToolBarConfig config) {
+        if (config == null) {
+            Log.e(Constants.LOG_TAG, "ToolBarConfig can't be null! Don't call this method if you don't need customization");
+            return;
+        }
+        this.title = config.getTitle();
+        this.toolbarColorResId = config.getToolbarColorResId();
+        this.toolbarColor = config.getToolbarColor();
+        this.backButtonColorResId = config.getBackButtonColorResId();
+        this.backButtonColor = config.getBackButtonColor();
+        this.titleColorResId = config.getTitleColorResId();
+        this.titleColor = config.getTitleColor();
+        this.enableToolbarElevation = config.isElevationEnabled();
     }
 
-    public void setToolbarColorResId(int toolbarColorResId) {
-        this.toolbarColorResId = toolbarColorResId;
-    }
-
-    public void setToolbarColor(int toolbarColor) {
-        this.toolbarColor = toolbarColor;
-    }
-
-    public void setTitleTextColorResId(int backButtonColorResId) {
-        this.backButtonColorResId = backButtonColorResId;
-    }
-
-    public void setTitleTextColor(int backButtonColor) {
-        this.backButtonColor = backButtonColor;
+    public void setStatusBarConfig(StatusBarConfig config) {
+        if (config == null) {
+            Log.e(Constants.LOG_TAG, "StatusBarConfig can't be null! Don't call this method if you don't need customization");
+            return;
+        }
+        this.lightStatusBarColor = config.isLightStatusBar();
+        this.statusBarColorResId = config.getStatusBarColorResId();
+        this.statusBarColor = config.getStatusBarColor();
     }
 
     /**
@@ -175,7 +189,7 @@ public class InBrain {
         try {
             SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
                     sessionUid, userID, deviceId, dataOptions, language, title, toolbarColor,
-                    backButtonColor);
+                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarColor);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -203,7 +217,7 @@ public class InBrain {
         try {
             SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
                     sessionUid, userID, deviceId, surveyId, dataOptions, language, title, toolbarColor,
-                    backButtonColor);
+                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarColor);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -329,6 +343,57 @@ public class InBrain {
                 Log.e(LOG_TAG, "Can't find color resource for back button:" + backButtonColorResId);
             }
         }
+
+        if (titleColorResId != 0) {
+            try {
+                titleColor = context.getResources().getColor(titleColorResId);
+            } catch (Resources.NotFoundException e) {
+                Log.e(LOG_TAG, "Can't find color resource for title text:" + titleColorResId);
+            }
+        }
+
+        if (statusBarColorResId != 0) {
+            try {
+                statusBarColor = context.getResources().getColor(statusBarColorResId);
+            } catch (Resources.NotFoundException e) {
+                Log.e(LOG_TAG, "Can't find color resource for status bar:" + statusBarColorResId);
+            }
+        }
+
+        if (toolbarColor == 0) {
+            toolbarColor = context.getResources().getColor(R.color.default_toolbar);
+        }
+
+        if (backButtonColor == 0) {
+            backButtonColor = context.getResources().getColor(R.color.main_text);
+        }
+
+        if (titleColor == 0) {
+            titleColor = context.getResources().getColor(R.color.main_text);
+        }
+
+        if (statusBarColor == 0) {
+            statusBarColor = context.getResources().getColor(R.color.default_toolbar);
+        }
+
+        if (lightStatusBarColor == null) {
+            lightStatusBarColor = shouldInvertStatusBarIconsColor(statusBarColor);
+        }
+
+        if (enableToolbarElevation == null) {
+            enableToolbarElevation = false;
+        }
+
+        if (title == null) {
+            title = context.getResources().getString(R.string.inbrain_surveys);
+        }
+    }
+
+    private boolean shouldInvertStatusBarIconsColor(int color) {
+        float red = Color.red(color);
+        float green = Color.green(color);
+        float blue = Color.red(color);
+        return (red * 0.299 + green * 0.587 + blue * 0.114) > 186;
     }
 
     /**
