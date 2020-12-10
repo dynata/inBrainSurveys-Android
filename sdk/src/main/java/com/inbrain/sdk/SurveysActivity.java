@@ -66,6 +66,7 @@ public class SurveysActivity extends Activity {
 
     private String configurationUrl;
 
+    private boolean stagingMode;
     private String clientId;
     private String clientSecret;
     private boolean isS2S;
@@ -154,7 +155,7 @@ public class SurveysActivity extends Activity {
         getWindow().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.background)));
 
         Intent intent = getIntent();
-        boolean stagingMode = intent.getBooleanExtra(EXTRA_STAGING_MODE, false);
+        stagingMode = intent.getBooleanExtra(EXTRA_STAGING_MODE, false);
         clientId = intent.getStringExtra(EXTRA_CLIENT_ID);
         clientSecret = intent.getStringExtra(EXTRA_CLIENT_SECRET);
         isS2S = intent.getBooleanExtra(EXTRA_S2S, false);
@@ -164,11 +165,7 @@ public class SurveysActivity extends Activity {
         deviceId = intent.getStringExtra(EXTRA_DEVICE_ID);
         surveyId = intent.getStringExtra(EXTRA_SURVEY_ID);
 
-        if (stagingMode) {
-            configurationUrl = STAGING_DOMAIN + "/configuration";
-        } else {
-            configurationUrl = DOMAIN + "/configuration";
-        }
+        configurationUrl = String.format("%s/configuration", stagingMode ? STAGING_DOMAIN : DOMAIN);
 
         if (intent.hasExtra(EXTRA_LANGUAGE)) {
             language = intent.getStringExtra(EXTRA_LANGUAGE);
@@ -359,16 +356,17 @@ public class SurveysActivity extends Activity {
                 .setPositiveButton(R.string.abort_survey, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        navigateBackToSurveys();
+                        abortSurvey();
                     }
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
-    private void navigateBackToSurveys() {
+    private void abortSurvey() {
         setSurveyActive(false);
-        webView.loadUrl(DOMAIN);
+        String url = String.format("%s/feedback", stagingMode ? STAGING_DOMAIN : DOMAIN);
+        webView.loadUrl(url);
     }
 
     private void updateRewards(boolean withDelay) {
