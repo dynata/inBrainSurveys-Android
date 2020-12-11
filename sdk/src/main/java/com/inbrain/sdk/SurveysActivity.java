@@ -57,7 +57,7 @@ public class SurveysActivity extends Activity {
     private static final String EXTRA_TITLE_COLOR = "12343214";
     private static final String EXTRA_STATUS_BAR_COLOR = "89732498";
     private static final String EXTRA_ENABLE_ELEVATION = "46782388";
-    private static final String EXTRA_LIGHT_STATUS_BAR = "81237412";
+    private static final String EXTRA_LIGHT_STATUS_BAR_ICONS = "81237412";
     private static final int UPDATE_REWARDS_DELAY_MS = 10000;
 
     private WebView webView;
@@ -130,7 +130,7 @@ public class SurveysActivity extends Activity {
         intent.putExtra(EXTRA_TITLE_COLOR, titleColor);
         intent.putExtra(EXTRA_STATUS_BAR_COLOR, statusBarColor);
         intent.putExtra(EXTRA_ENABLE_ELEVATION, enableElevation);
-        intent.putExtra(EXTRA_LIGHT_STATUS_BAR, lightStatusBarColor);
+        intent.putExtra(EXTRA_LIGHT_STATUS_BAR_ICONS, lightStatusBarColor);
         if (!TextUtils.isEmpty(language)) {
             intent.putExtra(EXTRA_LANGUAGE, language);
         }
@@ -205,9 +205,9 @@ public class SurveysActivity extends Activity {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (intent.hasExtra(EXTRA_LIGHT_STATUS_BAR)) {
-                boolean lightStatusBar = intent.getBooleanExtra(EXTRA_LIGHT_STATUS_BAR, false);
-                if (lightStatusBar) {
+            if (intent.hasExtra(EXTRA_LIGHT_STATUS_BAR_ICONS)) {
+                boolean lightStatusBarIcons = intent.getBooleanExtra(EXTRA_LIGHT_STATUS_BAR_ICONS, false);
+                if (!lightStatusBarIcons) {
                     int flags = getWindow().getDecorView().getSystemUiVisibility();
                     flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
                     getWindow().getDecorView().setSystemUiVisibility(flags);

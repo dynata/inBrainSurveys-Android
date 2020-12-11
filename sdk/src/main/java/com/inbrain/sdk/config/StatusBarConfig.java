@@ -3,16 +3,16 @@ package com.inbrain.sdk.config;
 import java.io.Serializable;
 
 public class StatusBarConfig implements Serializable {
-    private Boolean lightStatusBar;
+    private Boolean lightStatusBarIcons;
     private int statusBarColorResId;
     private int statusBarColor;
 
-    public Boolean isLightStatusBar() {
-        return lightStatusBar;
+    public Boolean isStatusBarIconsLight() {
+        return lightStatusBarIcons;
     }
 
-    public StatusBarConfig setLightStatusBar(boolean lightStatusBar) {
-        this.lightStatusBar = lightStatusBar;
+    public StatusBarConfig setStatusBarIconsLight(boolean lightStatusBarIcons) {
+        this.lightStatusBarIcons = lightStatusBarIcons;
         return this;
     }
 

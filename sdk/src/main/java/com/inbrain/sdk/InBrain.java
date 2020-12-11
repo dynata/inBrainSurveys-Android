@@ -3,7 +3,6 @@ package com.inbrain.sdk;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -65,7 +64,7 @@ public class InBrain {
     private int titleColorResId;
     private int titleColor;
     private Boolean enableToolbarElevation;
-    private Boolean lightStatusBarColor;
+    private Boolean lightStatusBarIcons;
     private int statusBarColorResId;
     private int statusBarColor;
     private String token;
@@ -171,7 +170,7 @@ public class InBrain {
             Log.e(Constants.LOG_TAG, "StatusBarConfig can't be null! Don't call this method if you don't need customization");
             return;
         }
-        this.lightStatusBarColor = config.isLightStatusBar();
+        this.lightStatusBarIcons = config.isStatusBarIconsLight();
         this.statusBarColorResId = config.getStatusBarColorResId();
         this.statusBarColor = config.getStatusBarColor();
     }
@@ -189,7 +188,7 @@ public class InBrain {
         try {
             SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
                     sessionUid, userID, deviceId, dataOptions, language, title, toolbarColor,
-                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarColor);
+                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -217,7 +216,7 @@ public class InBrain {
         try {
             SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
                     sessionUid, userID, deviceId, surveyId, dataOptions, language, title, toolbarColor,
-                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarColor);
+                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -376,8 +375,8 @@ public class InBrain {
             statusBarColor = context.getResources().getColor(R.color.default_toolbar);
         }
 
-        if (lightStatusBarColor == null) {
-            lightStatusBarColor = shouldInvertStatusBarIconsColor(statusBarColor);
+        if (lightStatusBarIcons == null) {
+            lightStatusBarIcons = true;
         }
 
         if (enableToolbarElevation == null) {
@@ -387,13 +386,6 @@ public class InBrain {
         if (title == null) {
             title = context.getResources().getString(R.string.inbrain_surveys);
         }
-    }
-
-    private boolean shouldInvertStatusBarIconsColor(int color) {
-        float red = Color.red(color);
-        float green = Color.green(color);
-        float blue = Color.red(color);
-        return (red * 0.299 + green * 0.587 + blue * 0.114) > 186;
     }
 
     /**
