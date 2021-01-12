@@ -455,6 +455,16 @@ public class SurveysActivity extends Activity {
         @JavascriptInterface
         public void dismissWebView() {
             if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "dismissWebView");
+            onSurveysClosed();
+        }
+
+        @JavascriptInterface
+        public void nativeSurveyClosed() {
+            if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "nativeSurveyClosed");
+            onSurveysClosed();
+        }
+
+        private void onSurveysClosed() {
             finishedFromPage = true;
             finish();
         }
