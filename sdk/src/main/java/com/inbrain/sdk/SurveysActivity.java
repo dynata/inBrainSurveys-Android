@@ -15,9 +15,11 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
@@ -60,7 +62,9 @@ public class SurveysActivity extends Activity {
     private static final String EXTRA_LIGHT_STATUS_BAR_ICONS = "81237412";
     private static final int UPDATE_REWARDS_DELAY_MS = 10000;
 
-    private WebView webView;
+    private ViewGroup webViewsContainer;
+    private WebView mainWebView;
+    private WebView secondaryWebView;
     private ImageView backImageView;
     private TextView toolbarTextView;
 
@@ -215,7 +219,8 @@ public class SurveysActivity extends Activity {
             }
         }
 
-        webView = findViewById(R.id.web_view);
+        webViewsContainer = findViewById(R.id.web_views_container);
+        mainWebView = findViewById(R.id.web_view);
         networkStateReceiver = new NetworkBroadcastReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
@@ -228,30 +233,8 @@ public class SurveysActivity extends Activity {
             }
         });
 
-        webView.setLongClickable(false);
-        webView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                return true;
-            }
-        });
-
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
-        webView.getSettings().setDomStorageEnabled(true);
-        if (BuildConfig.DEBUG) {
-            webView.setWebChromeClient(new WebChromeClient() {
-                @Override
-                public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-                    Log.i(LOG_TAG, consoleMessage.message());
-                    return true;
-                }
-            });
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                WebView.setWebContentsDebuggingEnabled(true);
-            }
-        }
-        webView.setWebViewClient(new WebViewClient() {
+        setupWebView(mainWebView);
+        mainWebView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
                 if (url.equals(configurationUrl)) {
@@ -289,13 +272,32 @@ public class SurveysActivity extends Activity {
                 onFailedToLoadInBrainSurveys();
             }
         });
-        webView.addJavascriptInterface(new SurveyJavaScriptInterface(), INTERFACE_NAME);
+        mainWebView.addJavascriptInterface(new SurveyJavaScriptInterface(), INTERFACE_NAME);
 
-        webView.clearHistory();
+        mainWebView.clearHistory();
 
-        webView.loadUrl(configurationUrl);
+        mainWebView.loadUrl(configurationUrl);
 
         updateRewards(false);
+    }
+
+    private boolean onCreateWebviewWindow(WebView view) {
+        WebView.HitTestResult result = view.getHitTestResult();
+        String url = result.getExtra();
+        if (TextUtils.isEmpty(url)) {
+            return false;
+        }
+        if (BuildConfig.DEBUG) {
+            Log.i(LOG_TAG, "onCreateWebviewWindow with url: " + url);
+        }
+        if (secondaryWebView == null) {
+            secondaryWebView = new WebView(this);
+            setupWebView(secondaryWebView);
+            secondaryWebView.setWebViewClient(new WebViewClient());
+            webViewsContainer.addView(secondaryWebView);
+        }
+        secondaryWebView.loadUrl(url);
+        return true;
     }
 
     private void setConfiguration() {
@@ -304,7 +306,7 @@ public class SurveysActivity extends Activity {
             if (BuildConfig.DEBUG) {
                 Log.i(LOG_TAG, "URL: " + newUrl);
             }
-            webView.loadUrl(newUrl);
+            mainWebView.loadUrl(newUrl);
         } catch (IOException e) {
             if (BuildConfig.DEBUG) {
                 e.printStackTrace();
@@ -366,7 +368,7 @@ public class SurveysActivity extends Activity {
     private void abortSurvey() {
         setSurveyActive(false);
         String url = String.format("%s/feedback", stagingMode ? STAGING_DOMAIN : DOMAIN);
-        webView.loadUrl(url);
+        mainWebView.loadUrl(url);
     }
 
     private void updateRewards(boolean withDelay) {
@@ -391,6 +393,12 @@ public class SurveysActivity extends Activity {
     }
 
     private void handleBackButton(boolean hardware) {
+        if (secondaryWebView != null) {
+            webViewsContainer.removeView(secondaryWebView);
+            destroyWebView(secondaryWebView);
+            secondaryWebView = null;
+            return;
+        }
         if (surveyActive) {
             if (hardware) {
                 return;
@@ -403,7 +411,7 @@ public class SurveysActivity extends Activity {
     }
 
     private void onFailedToLoadInBrainSurveys() {
-        webView.setVisibility(View.INVISIBLE);
+        mainWebView.setVisibility(View.INVISIBLE);
         showInBrainErrorDialog();
     }
 
@@ -424,18 +432,67 @@ public class SurveysActivity extends Activity {
                 .show();
     }
 
+    private void setupWebView(WebView webView) {
+        webView.setLongClickable(false);
+        webView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                return true;
+            }
+        });
+
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
+        webView.getSettings().setDomStorageEnabled(true);
+        webView.getSettings().setSupportMultipleWindows(true);
+
+        if (BuildConfig.DEBUG) {
+            webView.setWebChromeClient(new WebChromeClient() {
+                @Override
+                public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                    Log.i(LOG_TAG, consoleMessage.message());
+                    return true;
+                }
+
+                @Override
+                public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture,
+                                              Message resultMsg) {
+                    return onCreateWebviewWindow(view);
+                }
+            });
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                WebView.setWebContentsDebuggingEnabled(true);
+            }
+        } else {
+            webView.setWebChromeClient(new WebChromeClient() {
+                @Override
+                public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture,
+                                              Message resultMsg) {
+                    return onCreateWebviewWindow(view);
+                }
+            });
+        }
+    }
+
     @Override
     protected void onDestroy() {
         unregisterReceiver(networkStateReceiver);
         updateRewards(true);
-        webView.removeJavascriptInterface(INTERFACE_NAME);
+        if (secondaryWebView != null) {
+            destroyWebView(secondaryWebView);
+        }
+        mainWebView.removeJavascriptInterface(INTERFACE_NAME);
+        destroyWebView(mainWebView);
+        super.onDestroy();
+        InBrain.getInstance().onClosed(finishedFromPage);
+    }
+
+    private void destroyWebView(WebView webView) {
         webView.setWebViewClient(null);
         webView.clearView();
         webView.freeMemory();
         webView.removeAllViews();
         webView.destroy();
-        super.onDestroy();
-        InBrain.getInstance().onClosed(finishedFromPage);
     }
 
     private class SurveyJavaScriptInterface {
