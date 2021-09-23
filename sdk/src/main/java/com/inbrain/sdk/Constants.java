@@ -1,7 +1,9 @@
 package com.inbrain.sdk;
 
+import android.text.TextUtils;
+
 class Constants {
-    static final String STAGING_DOMAIN = "https://inbrainwebview-staging.azureedge.net";
+    static final String STAGING_DOMAIN = "https://inbrainwebview-qa.azureedge.net";
 
     static final String DOMAIN = "https://www.surveyb.in";
 
@@ -15,13 +17,13 @@ class Constants {
 
     static final String BASE_URL_EXTERNAL_SURVEYS = BASE_URL + "external-surveys/";
 
-    static final String STAGING_BASE_URL = "https://inbrain-api-staging.azurewebsites.net/api/v1/";
+    static final String STAGING_BASE_URL = "https://inbrain-api-qa.azurewebsites.net/api/v1/";
 
     static final String STAGING_BASE_URL_EXTERNAL_SURVEYS = STAGING_BASE_URL + "external-surveys/";
 
     static final String TOKEN_URL = "https://auth.surveyb.in/connect/token";
 
-    static final String STAGING_TOKEN_URL = "https://inbrain-auth-staging.azurewebsites.net/connect/token";
+    static final String STAGING_TOKEN_URL = "https://inbrain-auth-qa.azurewebsites.net/connect/token";
 
     static final String ALLOWED_COUNTRIES_URL = "https://inbrainbackend.blob.core.windows.net/misc/allowedCountries.json";
 
@@ -52,12 +54,14 @@ class Constants {
         return sb.toString();
     }
 
-    public static String getNativeSurveysUrl(String appUserId, String deviceId) {
+    public static String getNativeSurveysUrl(String appUserId, String deviceId, String placeId) {
         StringBuilder sb = new StringBuilder("external-panelist/");
         sb.append(appUserId)
                 .append("/")
                 .append(deviceId)
                 .append("/native-surveys");
+        if (!TextUtils.isEmpty(placeId))
+            sb.append("?placementId=").append(placeId);
         return sb.toString();
     }
 }

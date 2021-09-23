@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -51,6 +52,7 @@ public class SurveysActivity extends Activity {
     private static final String EXTRA_APP_USER_ID = "29678234";
     private static final String EXTRA_DEVICE_ID = "97497286";
     private static final String EXTRA_SURVEY_ID = "56238743";
+    private static final String EXTRA_PLACE_ID = "56238744";
     private static final String EXTRA_S2S = "71263886";
     private static final String EXTRA_LANGUAGE = "51211232";
     private static final String EXTRA_TOOLBAR_TEXT = "64587132";
@@ -79,6 +81,7 @@ public class SurveysActivity extends Activity {
     private String appUserId;
     private String deviceId;
     private String surveyId;
+    private String placeId;
     private String language;
 
     private boolean surveyActive;
@@ -102,13 +105,15 @@ public class SurveysActivity extends Activity {
 
     public static void start(Context context, boolean stagingMode, String clientId, String clientSecret,
                              boolean isS2S, String sessionUid, String appUserId, String deviceId,
-                             String surveyId, HashMap<String, String> dataPoints, String language,
+                             String surveyId, String placeId, HashMap<String, String> dataPoints, String language,
                              String title, int toolbarColor, int backButtonColor, int titleColor,
                              int statusBarColor, boolean enableElevation, boolean lightStatusBarColor) {
         Intent startingIntent = getLaunchingIntent(context, stagingMode, clientId, clientSecret,
                 isS2S, sessionUid, appUserId, deviceId, dataPoints, language, title, toolbarColor,
                 backButtonColor, titleColor, statusBarColor, enableElevation, lightStatusBarColor);
         startingIntent.putExtra(EXTRA_SURVEY_ID, surveyId);
+        if (!TextUtils.isEmpty(placeId))
+            startingIntent.putExtra(EXTRA_PLACE_ID, placeId);
         context.startActivity(startingIntent);
     }
 
@@ -168,6 +173,7 @@ public class SurveysActivity extends Activity {
         appUserId = intent.getStringExtra(EXTRA_APP_USER_ID);
         deviceId = intent.getStringExtra(EXTRA_DEVICE_ID);
         surveyId = intent.getStringExtra(EXTRA_SURVEY_ID);
+        placeId = intent.getStringExtra(EXTRA_PLACE_ID);
 
         configurationUrl = String.format("%s/configuration", stagingMode ? STAGING_DOMAIN : DOMAIN);
 
@@ -237,6 +243,16 @@ public class SurveysActivity extends Activity {
         mainWebView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
+                if (BuildConfig.DEBUG) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        view.evaluateJavascript("javascript:window.localStorage.getItem('app-placement');", new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String value) {
+                                Log.i(LOG_TAG, "app-placement: " + value);
+                            }
+                        });
+                    }
+                }
                 if (url.equals(configurationUrl)) {
                     if (BuildConfig.DEBUG) {
                         Log.i(LOG_TAG, "Entering configuration loading");
@@ -304,7 +320,7 @@ public class SurveysActivity extends Activity {
         try {
             String newUrl = getConfigurationUrl();
             if (BuildConfig.DEBUG) {
-                Log.i(LOG_TAG, "URL: " + newUrl);
+                Log.i(LOG_TAG, "Configuration URL: " + newUrl);
             }
             mainWebView.loadUrl(newUrl);
         } catch (IOException e) {
@@ -323,7 +339,7 @@ public class SurveysActivity extends Activity {
 
     private String getConfigurationUrl() throws IOException {
         Configuration configuration = new Configuration(clientId, clientSecret, appUserId, deviceId,
-                surveyId, sessionUid, dataPoints, language);
+                surveyId, placeId, sessionUid, dataPoints, language);
         return String.format("javascript:setConfiguration(%s);", configuration.toJson());
     }
 

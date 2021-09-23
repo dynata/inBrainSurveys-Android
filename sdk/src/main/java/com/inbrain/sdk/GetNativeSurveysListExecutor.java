@@ -1,5 +1,7 @@
 package com.inbrain.sdk;
 
+import android.util.Log;
+
 import com.inbrain.sdk.model.Survey;
 
 import org.json.JSONArray;
@@ -12,9 +14,11 @@ import java.util.List;
 class GetNativeSurveysListExecutor {
     void getNativeSurveysList(final String token, final boolean stagingMode,
                               final NativeSurveysExecutorCallback callback, final String appUserId,
-                              final String deviceId) {
+                              final String deviceId, final String placeId) {
         String nativeSurveysUrl = getNativeSurveysUrl(stagingMode,
-                Constants.getNativeSurveysUrl(appUserId, deviceId));
+                Constants.getNativeSurveysUrl(appUserId, deviceId, placeId));
+        if (BuildConfig.DEBUG)
+            Log.d(Constants.LOG_TAG, "getNativeSurveysList() url: " + nativeSurveysUrl);
         AuthorizedGetRequest getNativeSurveysRequest = new AuthorizedGetRequest(new AsyncResponse() {
             @Override
             public void processFinish(String output) {
@@ -41,6 +45,8 @@ class GetNativeSurveysListExecutor {
 
     private void onNativeSurveysReceived(NativeSurveysExecutorCallback callback, String output) {
         try {
+            if (BuildConfig.DEBUG)
+                Log.d(Constants.LOG_TAG, "onNativeSurveysReceived: " + output);
             callback.onNativeSurveysAvailable(parseSurveys(output));
         } catch (JSONException e) {
             callback.onFailToLoadNativeSurveysList(e);

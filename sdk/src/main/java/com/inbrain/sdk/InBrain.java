@@ -202,7 +202,6 @@ public class InBrain {
                     callback.onFail("Failed to start SDK:" + ex);
                 }
             });
-            return;
         }
     }
 
@@ -215,7 +214,7 @@ public class InBrain {
 
         try {
             SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
-                    sessionUid, userID, deviceId, surveyId, dataOptions, language, title, toolbarColor,
+                    sessionUid, userID, deviceId, surveyId, null, dataOptions, language, title, toolbarColor,
                     backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
             handler.post(new Runnable() {
                 @Override
@@ -230,7 +229,33 @@ public class InBrain {
                     callback.onFail("Failed to start SDK:" + ex);
                 }
             });
+        }
+    }
+
+    public void showNativeSurveyWith(Context context, String surveyId, String placeId, final StartSurveysCallback callback) {
+        if (!canStartSurveys(context, callback)) {
             return;
+        }
+
+        prepareConfig(context);
+
+        try {
+            SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
+                    sessionUid, userID, deviceId, surveyId, placeId, dataOptions, language, title, toolbarColor,
+                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onSuccess();
+                }
+            });
+        } catch (final Exception ex) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onFail("Failed to start SDK:" + ex);
+                }
+            });
         }
     }
 
@@ -309,7 +334,7 @@ public class InBrain {
     }
 
     private void prepareConfig(Context context) {
-        if (language == null) {
+//        if (language == null) {
             Locale locale;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 locale = context.getResources().getConfiguration().getLocales().get(0);
@@ -324,8 +349,10 @@ public class InBrain {
                     String country = locale.getCountry().toLowerCase();
                     language = lang + "-" + country;
                 }
+                if (BuildConfig.DEBUG)
+                    Log.d(LOG_TAG, "lang=" + language);
             }
-        }
+//        }
 
         if (toolbarColorResId != 0) {
             try {
@@ -904,7 +931,7 @@ public class InBrain {
             refreshToken(new TokenExecutor.TokenCallback() {
                 @Override
                 public void onGetToken(String token) {
-                    requestNativeSurveysWithTokenUpdate(callback, false);
+                    requestNativeSurveysWithTokenUpdate(null, callback, false);
                 }
 
                 @Override
@@ -922,11 +949,44 @@ public class InBrain {
                 }
             });
         } else {
-            requestNativeSurveysWithTokenUpdate(callback, true);
+            requestNativeSurveysWithTokenUpdate(null, callback, true);
         }
     }
 
-    private void requestNativeSurveysWithTokenUpdate(final GetNativeSurveysCallback callback,
+    public void getNativeSurveys(final String placeId, final GetNativeSurveysCallback callback) {
+        if (!checkForInit()) {
+            return;
+        }
+        if (BuildConfig.DEBUG)
+            Log.d(Constants.LOG_TAG, "External get for native surveys, token: " + token);
+        if (TextUtils.isEmpty(token)) {
+            refreshToken(new TokenExecutor.TokenCallback() {
+                @Override
+                public void onGetToken(String token) {
+                    Log.d(Constants.LOG_TAG, "onGetToken: " + token);
+                    requestNativeSurveysWithTokenUpdate(placeId, callback, false);
+                }
+
+                @Override
+                public void onFailToLoadToken(Throwable t) {
+                    if (BuildConfig.DEBUG) {
+                        Log.e(Constants.LOG_TAG, "Failed to load token");
+                        t.printStackTrace();
+                    }
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.nativeSurveysReceived(new ArrayList<Survey>());
+                        }
+                    });
+                }
+            });
+        } else {
+            requestNativeSurveysWithTokenUpdate(placeId, callback, true);
+        }
+    }
+
+    private void requestNativeSurveysWithTokenUpdate(final String placeId, final GetNativeSurveysCallback callback,
                                                      final boolean updateToken) {
         GetNativeSurveysListExecutor getNativeSurveysListExecutor = new GetNativeSurveysListExecutor();
         getNativeSurveysListExecutor.getNativeSurveysList(token, stagingMode,
@@ -939,7 +999,7 @@ public class InBrain {
                     @Override
                     public void onFailToLoadNativeSurveysList(Exception t) {
                         if (BuildConfig.DEBUG) {
-                            Log.e(Constants.LOG_TAG, "Failed to load native surveys");
+                            Log.e(Constants.LOG_TAG, "Failed to load native surveys: " + t);
                             t.printStackTrace();
                         }
                         if (t instanceof TokenExpiredException) {
@@ -950,7 +1010,7 @@ public class InBrain {
                                 refreshToken(new TokenExecutor.TokenCallback() {
                                     @Override
                                     public void onGetToken(String token) {
-                                        requestNativeSurveysWithTokenUpdate(callback, false);
+                                        requestNativeSurveysWithTokenUpdate(placeId, callback, false);
                                     }
 
                                     @Override
@@ -984,6 +1044,6 @@ public class InBrain {
                             });
                         }
                     }
-                }, userID, deviceId);
+                }, userID, deviceId, placeId);
     }
 }

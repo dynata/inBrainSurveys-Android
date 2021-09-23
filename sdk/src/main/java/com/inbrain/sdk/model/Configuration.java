@@ -14,18 +14,20 @@ public class Configuration {
     final String appUserId;
     final String deviceId;
     final String surveyId;
+    final String placeId;
     final String sessionUid;
     final HashMap<String, String> dataPoints;
     final String language;
 
     public Configuration(String clientId, String clientSecret, String appUserId, String deviceId,
-                         String surveyId, String sessionUid, HashMap<String, String> dataPoints,
+                         String surveyId, String placeId, String sessionUid, HashMap<String, String> dataPoints,
                          String language) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.appUserId = appUserId;
         this.deviceId = deviceId;
         this.surveyId = surveyId;
+        this.placeId = placeId;
         this.sessionUid = sessionUid;
         this.dataPoints = dataPoints;
         this.language = language;
@@ -47,6 +49,9 @@ public class Configuration {
         writer.name("device_id").value(deviceId);
         if (!TextUtils.isEmpty(surveyId)) {
             writer.name("survey_id").value(surveyId);
+        }
+        if (!TextUtils.isEmpty(placeId)) {
+            writer.name("placement_id").value(placeId);
         }
         if (!TextUtils.isEmpty(sessionUid)) {
             writer.name("session_uid").value(sessionUid);
