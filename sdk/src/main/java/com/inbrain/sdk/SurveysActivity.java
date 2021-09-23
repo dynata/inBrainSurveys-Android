@@ -85,7 +85,7 @@ public class SurveysActivity extends Activity {
     private String language;
 
     private boolean surveyActive;
-    private Handler updateRewardsHandler = new Handler();
+    private final Handler updateRewardsHandler = new Handler();
     private AlertDialog inBrainErrorDialog;
     private AlertDialog abortSurveyDialog;
     private boolean finishedFromPage;
@@ -448,6 +448,7 @@ public class SurveysActivity extends Activity {
                 .show();
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private void setupWebView(WebView webView) {
         webView.setLongClickable(false);
         webView.setOnLongClickListener(new View.OnLongClickListener() {
