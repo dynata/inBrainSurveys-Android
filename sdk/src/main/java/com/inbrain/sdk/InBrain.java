@@ -1,5 +1,10 @@
 package com.inbrain.sdk;
 
+import static com.inbrain.sdk.Constants.LOG_TAG;
+import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_1;
+import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_2;
+import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_3;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -30,11 +35,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.inbrain.sdk.Constants.LOG_TAG;
-import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_1;
-import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_2;
-import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_3;
 
 public class InBrain {
     private static final String PREFERENCES = "SharedPreferences_inBrain25930";
@@ -206,30 +206,7 @@ public class InBrain {
     }
 
     public void showNativeSurveyWith(Context context, String surveyId, final StartSurveysCallback callback) {
-        if (!canStartSurveys(context, callback)) {
-            return;
-        }
-
-        prepareConfig(context);
-
-        try {
-            SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
-                    sessionUid, userID, deviceId, surveyId, null, dataOptions, language, title, toolbarColor,
-                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onSuccess();
-                }
-            });
-        } catch (final Exception ex) {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onFail("Failed to start SDK:" + ex);
-                }
-            });
-        }
+        showNativeSurveyWith(context, surveyId, null, callback);
     }
 
     public void showNativeSurveyWith(Context context, String surveyId, String placeId, final StartSurveysCallback callback) {
@@ -335,23 +312,23 @@ public class InBrain {
 
     private void prepareConfig(Context context) {
 //        if (language == null) {
-            Locale locale;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                locale = context.getResources().getConfiguration().getLocales().get(0);
+        Locale locale;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            locale = context.getResources().getConfiguration().getLocales().get(0);
+        } else {
+            locale = context.getResources().getConfiguration().locale;
+        }
+        if (locale != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                language = locale.toLanguageTag().toLowerCase();
             } else {
-                locale = context.getResources().getConfiguration().locale;
+                String lang = locale.getLanguage();
+                String country = locale.getCountry().toLowerCase();
+                language = lang + "-" + country;
             }
-            if (locale != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    language = locale.toLanguageTag().toLowerCase();
-                } else {
-                    String lang = locale.getLanguage();
-                    String country = locale.getCountry().toLowerCase();
-                    language = lang + "-" + country;
-                }
-                if (BuildConfig.DEBUG)
-                    Log.d(LOG_TAG, "lang=" + language);
-            }
+            if (BuildConfig.DEBUG)
+                Log.d(LOG_TAG, "lang=" + language);
+        }
 //        }
 
         if (toolbarColorResId != 0) {
@@ -923,34 +900,7 @@ public class InBrain {
     }
 
     public void getNativeSurveys(final GetNativeSurveysCallback callback) {
-        if (!checkForInit()) {
-            return;
-        }
-        if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "External get for native surveys");
-        if (TextUtils.isEmpty(token)) {
-            refreshToken(new TokenExecutor.TokenCallback() {
-                @Override
-                public void onGetToken(String token) {
-                    requestNativeSurveysWithTokenUpdate(null, callback, false);
-                }
-
-                @Override
-                public void onFailToLoadToken(Throwable t) {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(Constants.LOG_TAG, "Failed to load token");
-                        t.printStackTrace();
-                    }
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.nativeSurveysReceived(new ArrayList<Survey>());
-                        }
-                    });
-                }
-            });
-        } else {
-            requestNativeSurveysWithTokenUpdate(null, callback, true);
-        }
+        getNativeSurveys(null, callback);
     }
 
     public void getNativeSurveys(final String placeId, final GetNativeSurveysCallback callback) {
@@ -1010,6 +960,9 @@ public class InBrain {
                                 refreshToken(new TokenExecutor.TokenCallback() {
                                     @Override
                                     public void onGetToken(String token) {
+                                        if (BuildConfig.DEBUG) {
+                                            Log.d(Constants.LOG_TAG, "onGetToken: " + token);
+                                        }
                                         requestNativeSurveysWithTokenUpdate(placeId, callback, false);
                                     }
 

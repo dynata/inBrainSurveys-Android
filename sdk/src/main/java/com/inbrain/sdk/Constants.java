@@ -60,8 +60,9 @@ class Constants {
                 .append("/")
                 .append(deviceId)
                 .append("/native-surveys");
-        if (!TextUtils.isEmpty(placeId))
+        if (!TextUtils.isEmpty(placeId)) {
             sb.append("?placementId=").append(placeId);
+        }
         return sb.toString();
     }
 }

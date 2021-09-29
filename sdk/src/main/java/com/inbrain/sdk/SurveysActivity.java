@@ -112,8 +112,9 @@ public class SurveysActivity extends Activity {
                 isS2S, sessionUid, appUserId, deviceId, dataPoints, language, title, toolbarColor,
                 backButtonColor, titleColor, statusBarColor, enableElevation, lightStatusBarColor);
         startingIntent.putExtra(EXTRA_SURVEY_ID, surveyId);
-        if (!TextUtils.isEmpty(placeId))
+        if (!TextUtils.isEmpty(placeId)) {
             startingIntent.putExtra(EXTRA_PLACE_ID, placeId);
+        }
         context.startActivity(startingIntent);
     }
 
@@ -173,7 +174,9 @@ public class SurveysActivity extends Activity {
         appUserId = intent.getStringExtra(EXTRA_APP_USER_ID);
         deviceId = intent.getStringExtra(EXTRA_DEVICE_ID);
         surveyId = intent.getStringExtra(EXTRA_SURVEY_ID);
-        placeId = intent.getStringExtra(EXTRA_PLACE_ID);
+        if (intent.hasExtra(EXTRA_PLACE_ID)) {
+            placeId = intent.getStringExtra(EXTRA_PLACE_ID);
+        }
 
         configurationUrl = String.format("%s/configuration", stagingMode ? STAGING_DOMAIN : DOMAIN);
 
