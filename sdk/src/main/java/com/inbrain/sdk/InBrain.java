@@ -56,6 +56,7 @@ public class InBrain {
     private String sessionUid;
     private HashMap<String, String> dataOptions;
     private String language;
+    private boolean langManuallySet = false;
     private String title;
     private int toolbarColorResId;
     private int toolbarColor;
@@ -144,6 +145,7 @@ public class InBrain {
 
     public void setLanguage(String language) {
         this.language = language;
+        this.langManuallySet = true;
     }
 
     public void setStagingMode(boolean stagingMode) {
@@ -311,25 +313,25 @@ public class InBrain {
     }
 
     private void prepareConfig(Context context) {
-//        if (language == null) {
-        Locale locale;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            locale = context.getResources().getConfiguration().getLocales().get(0);
-        } else {
-            locale = context.getResources().getConfiguration().locale;
-        }
-        if (locale != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                language = locale.toLanguageTag().toLowerCase();
+        if (!langManuallySet || language == null) {
+            Locale locale;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                locale = context.getResources().getConfiguration().getLocales().get(0);
             } else {
-                String lang = locale.getLanguage();
-                String country = locale.getCountry().toLowerCase();
-                language = lang + "-" + country;
+                locale = context.getResources().getConfiguration().locale;
             }
-            if (BuildConfig.DEBUG)
-                Log.d(LOG_TAG, "lang=" + language);
+            if (locale != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    language = locale.toLanguageTag().toLowerCase();
+                } else {
+                    String lang = locale.getLanguage();
+                    String country = locale.getCountry().toLowerCase();
+                    language = lang + "-" + country;
+                }
+                if (BuildConfig.DEBUG)
+                    Log.d(LOG_TAG, "lang=" + language);
+            }
         }
-//        }
 
         if (toolbarColorResId != 0) {
             try {
