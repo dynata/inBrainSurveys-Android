@@ -246,6 +246,7 @@ public class SurveysActivity extends Activity {
         mainWebView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
+                if (view.getProgress() < 100 || !url.equals(configurationUrl))  { return; } // blank screen issue fix
                 if (BuildConfig.DEBUG) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                         view.evaluateJavascript("javascript:window.localStorage.getItem('app-placement');", new ValueCallback<String>() {
