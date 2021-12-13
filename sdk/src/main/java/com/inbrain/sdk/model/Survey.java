@@ -9,12 +9,16 @@ public class Survey implements Serializable {
     public long rank;
     public long time;
     public float value;
+    public boolean currencySale;
+    public float multiplier;
 
-    public Survey(String id, long rank, long time, float value) {
+    public Survey(String id, long rank, long time, float value, boolean currencySale, float multiplier) {
         this.id = id;
         this.rank = rank;
         this.time = time;
         this.value = value;
+        this.currencySale = currencySale;
+        this.multiplier = multiplier;
     }
 
     @Override
@@ -26,7 +30,9 @@ public class Survey implements Serializable {
         return TextUtils.equals(reward.id, id) &&
                 reward.rank == rank &&
                 reward.time == time &&
-                reward.value == value;
+                reward.value == value &&
+                reward.currencySale == currencySale &&
+                reward.multiplier == multiplier;
     }
 
     @Override

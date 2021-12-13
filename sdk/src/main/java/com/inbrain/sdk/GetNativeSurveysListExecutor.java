@@ -64,7 +64,9 @@ class GetNativeSurveysListExecutor {
             long rank = jsonobject.getLong("rank");
             long time = jsonobject.getLong("time");
             float value = (float) jsonobject.getDouble("value");
-            surveys.add(new Survey(id, rank, time, value));
+            boolean currencySale = jsonobject.getBoolean("currencySale");
+            float multiplier = (float) jsonobject.getDouble("multiplier");
+            surveys.add(new Survey(id, rank, time, value, currencySale, multiplier));
         }
         return surveys;
     }
