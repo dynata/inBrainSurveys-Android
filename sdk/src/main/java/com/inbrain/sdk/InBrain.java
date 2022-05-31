@@ -143,6 +143,14 @@ public class InBrain {
         this.dataOptions = dataOptions;
     }
 
+    public String getSessionUid() {
+        return this.sessionUid;
+    }
+
+    public HashMap<String, String> getDataOptions() {
+        return this.dataOptions;
+    }
+
     public void setLanguage(String language) {
         this.language = language;
         this.langManuallySet = true;
