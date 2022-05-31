@@ -43,13 +43,13 @@ public class InBrain {
 
     private static InBrain instance;
 
-    private Set<Long> confirmedRewardsIds = new HashSet<>();
+    private final Set<Long> confirmedRewardsIds = new HashSet<>();
     private Set<Reward> lastReceivedRewards = new HashSet<>();
 
     private String apiClientID = null;
     private String apiSecret = null;
     private boolean isS2S = false;
-    private List<InBrainCallback> callbacksList = new ArrayList<>();
+    private final List<InBrainCallback> callbacksList = new ArrayList<>();
     private String userID = null;
     private String deviceId = null;
     private SharedPreferences preferences;
@@ -199,19 +199,9 @@ public class InBrain {
             SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
                     sessionUid, userID, deviceId, dataOptions, language, title, toolbarColor,
                     backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onSuccess();
-                }
-            });
+            handler.post(callback::onSuccess);
         } catch (final Exception ex) {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onFail("Failed to start SDK:" + ex);
-                }
-            });
+            handler.post(() -> callback.onFail("Failed to start SDK:" + ex));
         }
     }
 
@@ -230,19 +220,9 @@ public class InBrain {
             SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
                     sessionUid, userID, deviceId, surveyId, placeId, dataOptions, language, title, toolbarColor,
                     backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onSuccess();
-                }
-            });
+            handler.post(callback::onSuccess);
         } catch (final Exception ex) {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onFail("Failed to start SDK:" + ex);
-                }
-            });
+            handler.post(() -> callback.onFail("Failed to start SDK:" + ex));
         }
     }
 
@@ -273,47 +253,22 @@ public class InBrain {
                     boolean group2Matches = group2 >= MINIMUM_WEBVIEW_VERSION_GROUP_3;
                     if (group0Matches) {
                         if (!group1Matches) {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    callback.onFail("Android System WebView version isn't supported");
-                                }
-                            });
+                            handler.post(() -> callback.onFail("Android System WebView version isn't supported"));
                             return false;
                         } else if (!group2Matches) {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    callback.onFail("Android System WebView version isn't supported");
-                                }
-                            });
+                            handler.post(() -> callback.onFail("Android System WebView version isn't supported"));
                             return false;
                         }
                     } else {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                callback.onFail("Android System WebView version isn't supported");
-                            }
-                        });
+                        handler.post(() -> callback.onFail("Android System WebView version isn't supported"));
                         return false;
                     }
                 } else {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.onFail("Failed to check webview version, can't start SDK");
-                        }
-                    });
+                    handler.post(() -> callback.onFail("Failed to check webview version, can't start SDK"));
                     return false;
                 }
             } catch (Exception ex) {
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onFail("Failed to check webview version, can't start SDK");
-                    }
-                });
+                handler.post(() -> callback.onFail("Failed to check webview version, can't start SDK"));
                 return false;
             }
         }
@@ -425,12 +380,7 @@ public class InBrain {
                         Log.e(Constants.LOG_TAG, "Failed to load token");
                         t.printStackTrace();
                     }
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.onFailToLoadRewards(t);
-                        }
-                    });
+                    handler.post(() -> callback.onFailToLoadRewards(t));
                 }
             });
         } else {
@@ -469,29 +419,14 @@ public class InBrain {
                                     Log.e(Constants.LOG_TAG, "Failed to load token");
                                     t.printStackTrace();
                                 }
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        callback.onFailToLoadRewards(t);
-                                    }
-                                });
+                                handler.post(() -> callback.onFailToLoadRewards(t));
                             }
                         });
                     } else {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                callback.onFailToLoadRewards(t);
-                            }
-                        });
+                        handler.post(() -> callback.onFailToLoadRewards(t));
                     }
                 } else {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.onFailToLoadRewards(t);
-                        }
-                    });
+                    handler.post(() -> callback.onFailToLoadRewards(t));
                 }
             }
         }, userID, deviceId);
@@ -788,19 +723,9 @@ public class InBrain {
         if (!callbacksList.isEmpty()) {
             for (final InBrainCallback callback : callbacksList) {
                 if (finishedFromPage) {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.surveysClosedFromPage();
-                        }
-                    });
+                    handler.post(callback::surveysClosedFromPage);
                 } else {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.surveysClosed();
-                        }
-                    });
+                    handler.post(callback::surveysClosed);
                 }
             }
         }
@@ -834,12 +759,7 @@ public class InBrain {
                         Log.e(Constants.LOG_TAG, "Failed to load token");
                         t.printStackTrace();
                     }
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.onSurveysAvailable(false);
-                        }
-                    });
+                    handler.post(() -> callback.onSurveysAvailable(false));
                 }
             });
         } else {
@@ -881,29 +801,14 @@ public class InBrain {
                                             Log.e(Constants.LOG_TAG, "Failed to load token");
                                             t.printStackTrace();
                                         }
-                                        handler.post(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                callback.onSurveysAvailable(false);
-                                            }
-                                        });
+                                        handler.post(() -> callback.onSurveysAvailable(false));
                                     }
                                 });
                             } else {
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        callback.onSurveysAvailable(false);
-                                    }
-                                });
+                                handler.post(() -> callback.onSurveysAvailable(false));
                             }
                         } else {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    callback.onSurveysAvailable(false);
-                                }
-                            });
+                            handler.post(() -> callback.onSurveysAvailable(false));
                         }
                     }
                 }, userID, deviceId);
@@ -933,12 +838,7 @@ public class InBrain {
                         Log.e(Constants.LOG_TAG, "Failed to load token");
                         t.printStackTrace();
                     }
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.nativeSurveysReceived(new ArrayList<Survey>());
-                        }
-                    });
+                    handler.post(() -> callback.nativeSurveysReceived(new ArrayList<>()));
                 }
             });
         } else {
@@ -982,29 +882,14 @@ public class InBrain {
                                             Log.e(Constants.LOG_TAG, "Failed to load token");
                                             t.printStackTrace();
                                         }
-                                        handler.post(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                callback.nativeSurveysReceived(new ArrayList<Survey>());
-                                            }
-                                        });
+                                        handler.post(() -> callback.nativeSurveysReceived(new ArrayList<>()));
                                     }
                                 });
                             } else {
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        callback.nativeSurveysReceived(new ArrayList<Survey>());
-                                    }
-                                });
+                                handler.post(() -> callback.nativeSurveysReceived(new ArrayList<>()));
                             }
                         } else {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    callback.nativeSurveysReceived(new ArrayList<Survey>());
-                                }
-                            });
+                            handler.post(() -> callback.nativeSurveysReceived(new ArrayList<>()));
                         }
                     }
                 }, userID, deviceId, placeId);

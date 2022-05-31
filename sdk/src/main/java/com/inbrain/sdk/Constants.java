@@ -46,12 +46,11 @@ class Constants {
     static final int MINIMUM_WEBVIEW_VERSION_GROUP_3 = 2704;
 
     public static String getAreSurveysAvailableUrl(String appUserId, String deviceId) {
-        StringBuilder sb = new StringBuilder("external-panelist/");
-        sb.append(appUserId)
-                .append("/")
-                .append(deviceId)
-                .append("/surveys-available");
-        return sb.toString();
+        return "external-panelist/" +
+                appUserId +
+                "/" +
+                deviceId +
+                "/surveys-available";
     }
 
     public static String getNativeSurveysUrl(String appUserId, String deviceId, String placeId) {

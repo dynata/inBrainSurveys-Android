@@ -1,12 +1,17 @@
 package com.inbrain.sdk;
 
+import static com.inbrain.sdk.Constants.DOMAIN;
+import static com.inbrain.sdk.Constants.INTERFACE_NAME;
+import static com.inbrain.sdk.Constants.JS_LOG_TAG;
+import static com.inbrain.sdk.Constants.LOG_TAG;
+import static com.inbrain.sdk.Constants.STAGING_DOMAIN;
+
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.ColorDrawable;
@@ -23,7 +28,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
-import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -36,12 +40,6 @@ import com.inbrain.sdk.model.Configuration;
 
 import java.io.IOException;
 import java.util.HashMap;
-
-import static com.inbrain.sdk.Constants.DOMAIN;
-import static com.inbrain.sdk.Constants.INTERFACE_NAME;
-import static com.inbrain.sdk.Constants.JS_LOG_TAG;
-import static com.inbrain.sdk.Constants.LOG_TAG;
-import static com.inbrain.sdk.Constants.STAGING_DOMAIN;
 
 public class SurveysActivity extends Activity {
     private static final String EXTRA_STAGING_MODE = "15213412";
@@ -235,26 +233,19 @@ public class SurveysActivity extends Activity {
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(networkStateReceiver, intentFilter);
 
-        backImageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                handleBackButton(false);
-            }
-        });
+        backImageView.setOnClickListener(v -> handleBackButton(false));
 
         setupWebView(mainWebView);
         mainWebView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                if (view.getProgress() < 100 || !url.equals(configurationUrl))  { return; } // blank screen issue fix
+                if (view.getProgress() < 100 || !url.equals(configurationUrl)) { // blank screen issue fix
+                    return;
+                }
                 if (BuildConfig.DEBUG) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                        view.evaluateJavascript("javascript:window.localStorage.getItem('app-placement');", new ValueCallback<String>() {
-                            @Override
-                            public void onReceiveValue(String value) {
-                                Log.i(LOG_TAG, "app-placement: " + value);
-                            }
-                        });
+                        view.evaluateJavascript("javascript:window.localStorage.getItem('app-placement');",
+                                value -> Log.i(LOG_TAG, "app-placement: " + value));
                     }
                 }
                 if (url.equals(configurationUrl)) {
@@ -349,22 +340,16 @@ public class SurveysActivity extends Activity {
 
     private void setSurveyActive(final boolean surveyActive) {
         this.surveyActive = surveyActive;
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (surveyActive) setToolbarVisible(true);
-                toolbarTextView.setVisibility(surveyActive ? View.GONE : View.VISIBLE);
-            }
+        runOnUiThread(() -> {
+            if (surveyActive) setToolbarVisible(true);
+            toolbarTextView.setVisibility(surveyActive ? View.GONE : View.VISIBLE);
         });
     }
 
     private void setToolbarVisible(final boolean visible) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                backImageView.setVisibility(visible ? View.VISIBLE : View.GONE);
-                toolbarTextView.setVisibility(visible ? View.VISIBLE : View.GONE);
-            }
+        runOnUiThread(() -> {
+            backImageView.setVisibility(visible ? View.VISIBLE : View.GONE);
+            toolbarTextView.setVisibility(visible ? View.VISIBLE : View.GONE);
         });
     }
 
@@ -375,12 +360,7 @@ public class SurveysActivity extends Activity {
         abortSurveyDialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.dont_abandon_the_survey_title)
                 .setMessage(getString(R.string.dont_abandon_the_survey_message))
-                .setPositiveButton(R.string.abort_survey, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        abortSurvey();
-                    }
-                })
+                .setPositiveButton(R.string.abort_survey, (dialog, which) -> abortSurvey())
                 .setNegativeButton(R.string.cancel, null)
                 .show();
     }
@@ -396,12 +376,7 @@ public class SurveysActivity extends Activity {
             return;
         }
         if (withDelay) {
-            updateRewardsHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    InBrain.getInstance().getRewards();
-                }
-            }, UPDATE_REWARDS_DELAY_MS);
+            updateRewardsHandler.postDelayed(() -> InBrain.getInstance().getRewards(), UPDATE_REWARDS_DELAY_MS);
         } else {
             InBrain.getInstance().getRewards();
         }
@@ -442,12 +417,7 @@ public class SurveysActivity extends Activity {
         inBrainErrorDialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.error_inbrain_unavailable_title)
                 .setMessage(getString(R.string.error_inbrain_unavailable_message))
-                .setPositiveButton(R.string.quit, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        finish();
-                    }
-                })
+                .setPositiveButton(R.string.quit, (dialog, which) -> finish())
                 .setCancelable(false)
                 .show();
     }
@@ -455,12 +425,7 @@ public class SurveysActivity extends Activity {
     @SuppressLint("SetJavaScriptEnabled")
     private void setupWebView(WebView webView) {
         webView.setLongClickable(false);
-        webView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                return true;
-            }
-        });
+        webView.setOnLongClickListener(v -> true);
 
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
