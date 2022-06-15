@@ -64,4 +64,8 @@ class Constants {
         }
         return sb.toString();
     }
+
+    public static String getCurrencySaleUrl() {
+        return "external-panelist/publisher/currency-sale";
+    }
 }

@@ -15,6 +15,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.WebView;
 
+import com.inbrain.sdk.callback.GetCurrencySaleCallback;
 import com.inbrain.sdk.callback.GetNativeSurveysCallback;
 import com.inbrain.sdk.callback.GetRewardsCallback;
 import com.inbrain.sdk.callback.InBrainCallback;
@@ -22,6 +23,7 @@ import com.inbrain.sdk.callback.StartSurveysCallback;
 import com.inbrain.sdk.callback.SurveysAvailableCallback;
 import com.inbrain.sdk.config.StatusBarConfig;
 import com.inbrain.sdk.config.ToolBarConfig;
+import com.inbrain.sdk.model.CurrencySale;
 import com.inbrain.sdk.model.Reward;
 import com.inbrain.sdk.model.Survey;
 
@@ -893,5 +895,81 @@ public class InBrain {
                         }
                     }
                 }, userID, deviceId, placeId);
+    }
+
+    public void getCurrencySale(final GetCurrencySaleCallback callback) {
+        if (!checkForInit()) {
+            return;
+        }
+        if (BuildConfig.DEBUG)
+            Log.d(Constants.LOG_TAG, "External get for ongoing currency sale data, token: " + token);
+        if (TextUtils.isEmpty(token)) {
+            refreshToken(new TokenExecutor.TokenCallback() {
+                @Override
+                public void onGetToken(String token) {
+                    Log.d(Constants.LOG_TAG, "onGetToken: " + token);
+                    fetchCurrencySaleWithTokenUpdate(callback, false);
+                }
+
+                @Override
+                public void onFailToLoadToken(Throwable t) {
+                    if (BuildConfig.DEBUG) {
+                        Log.e(Constants.LOG_TAG, "Failed to load token");
+                        t.printStackTrace();
+                    }
+                    handler.post(() -> callback.currencySaleReceived(null));
+                }
+            });
+        } else {
+            fetchCurrencySaleWithTokenUpdate(callback, true);
+        }
+    }
+
+    private void fetchCurrencySaleWithTokenUpdate(final GetCurrencySaleCallback callback, final boolean updateToken) {
+        FetchCurrencySaleExecutor fetchCurrencySaleExecutor = new FetchCurrencySaleExecutor();
+        fetchCurrencySaleExecutor.fetchCurrencySale(token, stagingMode,
+                new FetchCurrencySaleExecutor.CurrencySaleExecutorCallback() {
+                    @Override
+                    public void onCurrencySaleAvailable(CurrencySale currencySale) {
+                        callback.currencySaleReceived(currencySale);
+                    }
+
+                    @Override
+                    public void onFailedToFetchCurrencySale(Exception t) {
+                        if (BuildConfig.DEBUG) {
+                            Log.e(Constants.LOG_TAG, "Failed to fetch currency sale: " + t);
+                            t.printStackTrace();
+                        }
+                        if (t instanceof TokenExpiredException) {
+                            if (BuildConfig.DEBUG) {
+                                Log.e(Constants.LOG_TAG, "Token expired");
+                            }
+                            if (updateToken) {
+                                refreshToken(new TokenExecutor.TokenCallback() {
+                                    @Override
+                                    public void onGetToken(String token) {
+                                        if (BuildConfig.DEBUG) {
+                                            Log.d(Constants.LOG_TAG, "onGetToken: " + token);
+                                        }
+                                        fetchCurrencySaleWithTokenUpdate(callback, false);
+                                    }
+
+                                    @Override
+                                    public void onFailToLoadToken(final Throwable t) {
+                                        if (BuildConfig.DEBUG) {
+                                            Log.e(Constants.LOG_TAG, "Failed to load token");
+                                            t.printStackTrace();
+                                        }
+                                        handler.post(() -> callback.currencySaleReceived(null));
+                                    }
+                                });
+                            } else {
+                                handler.post(() -> callback.currencySaleReceived(null));
+                            }
+                        } else {
+                            handler.post(() -> callback.currencySaleReceived(null));
+                        }
+                    }
+                });
     }
 }

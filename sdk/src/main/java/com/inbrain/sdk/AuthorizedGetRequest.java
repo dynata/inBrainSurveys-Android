@@ -15,6 +15,7 @@ class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
     private final AsyncResponse callback;
 
     AuthorizedGetRequest(AsyncResponse callback) {
+        super();
         this.callback = callback;
     }
 
@@ -38,7 +39,7 @@ class AuthorizedGetRequest extends AsyncTask<String, Void, String> {
             if (responseCode == HttpURLConnection.HTTP_OK) { // connection ok
                 BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 String inputLine;
-                StringBuffer response = new StringBuffer();
+                StringBuilder response = new StringBuilder();
                 while ((inputLine = in.readLine()) != null) {
                     response.append(inputLine);
                 }
