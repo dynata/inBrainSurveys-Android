@@ -11,14 +11,16 @@ public class Survey implements Serializable {
     public float value;
     public boolean currencySale;
     public float multiplier;
+    public int conversionThreshold;
 
-    public Survey(String id, long rank, long time, float value, boolean currencySale, float multiplier) {
+    public Survey(String id, long rank, long time, float value, boolean currencySale, float multiplier, int convThreshold) {
         this.id = id;
         this.rank = rank;
         this.time = time;
         this.value = value;
         this.currencySale = currencySale;
         this.multiplier = multiplier;
+        this.conversionThreshold = convThreshold;
     }
 
     @Override
@@ -32,7 +34,8 @@ public class Survey implements Serializable {
                 reward.time == time &&
                 reward.value == value &&
                 reward.currencySale == currencySale &&
-                reward.multiplier == multiplier;
+                reward.multiplier == multiplier &&
+                reward.conversionThreshold == conversionThreshold;
     }
 
     @Override

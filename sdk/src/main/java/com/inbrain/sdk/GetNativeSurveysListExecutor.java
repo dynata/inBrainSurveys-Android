@@ -66,7 +66,8 @@ class GetNativeSurveysListExecutor {
             float value = (float) jsonobject.getDouble("value");
             boolean currencySale = jsonobject.getBoolean("currencySale");
             float multiplier = (float) jsonobject.getDouble("multiplier");
-            surveys.add(new Survey(id, rank, time, value, currencySale, multiplier));
+            int conversionThreshold = jsonobject.getInt("conversionThreshold");
+            surveys.add(new Survey(id, rank, time, value, currencySale, multiplier, conversionThreshold));
         }
         return surveys;
     }
