@@ -34,6 +34,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.inbrain.sdk.model.Configuration;
@@ -65,6 +66,7 @@ public class SurveysActivity extends Activity {
     private ViewGroup webViewsContainer;
     private WebView mainWebView;
     private WebView secondaryWebView;
+    private ProgressBar loadingIndicator;
     private ImageView backImageView;
     private TextView toolbarTextView;
 
@@ -226,6 +228,9 @@ public class SurveysActivity extends Activity {
             }
         }
 
+        loadingIndicator = findViewById(R.id.progress_loader);
+        loadingIndicator.setVisibility(View.VISIBLE);
+
         webViewsContainer = findViewById(R.id.web_views_container);
         mainWebView = findViewById(R.id.web_view);
         networkStateReceiver = new NetworkBroadcastReceiver();
@@ -239,21 +244,20 @@ public class SurveysActivity extends Activity {
         mainWebView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                if (view.getProgress() < 100 || !url.equals(configurationUrl)) { // blank screen issue fix
+                if (view.getProgress() < 100) {
                     return;
                 }
+
+                loadingIndicator.setVisibility(View.GONE);
+
+                if (!url.equals(configurationUrl)) {
+                    return;
+                }
+
                 if (BuildConfig.DEBUG) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                        view.evaluateJavascript("javascript:window.localStorage.getItem('app-placement');",
-                                value -> Log.i(LOG_TAG, "app-placement: " + value));
-                    }
+                    Log.i(LOG_TAG, "Entering configuration loading");
                 }
-                if (url.equals(configurationUrl)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.i(LOG_TAG, "Entering configuration loading");
-                    }
-                    setConfiguration();
-                }
+                setConfiguration();
             }
 
             @TargetApi(Build.VERSION_CODES.M)

@@ -230,6 +230,7 @@ public class InBrain {
 
     private boolean canStartSurveys(Context context, final StartSurveysCallback callback) {
         if (!checkForInit()) {
+            handler.post(() -> callback.onFail("SDK not initialized"));
             return false;
         }
         // todo pay attention to minimal required chrome version, old devices may have updates
