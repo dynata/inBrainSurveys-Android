@@ -364,14 +364,14 @@ public class SurveysActivity extends Activity {
         abortSurveyDialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.dont_abandon_the_survey_title)
                 .setMessage(getString(R.string.dont_abandon_the_survey_message))
-                .setPositiveButton(R.string.abort_survey, (dialog, which) -> abortSurvey())
-                .setNegativeButton(R.string.cancel, null)
+                .setNegativeButton(R.string.abort_survey, (dialog, which) -> abortSurvey())
+                .setPositiveButton(R.string.cancel, null)
                 .show();
     }
 
     private void abortSurvey() {
         setSurveyActive(false);
-        String url = String.format("%s/feedback", stagingMode ? STAGING_DOMAIN : DOMAIN);
+        String url = String.format("%s/survey-broken", stagingMode ? STAGING_DOMAIN : DOMAIN);
         mainWebView.loadUrl(url);
     }
 

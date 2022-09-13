@@ -2,8 +2,8 @@
     <string name="inbrain_surveys">inBrain.ai Surveys</string>
     <string name="go_back">Go back</string>
     <string name="dont_abandon_the_survey_title">Are you sure you want to Quit?</string>
-    <string name="dont_abandon_the_survey_message">Abandonment of this survey will terminate your progress and you will not receive your reward.</string>
-    <string name="abort_survey">Abandon Survey and Forfeit Reward</string>
+    <string name="dont_abandon_the_survey_message">You will not be able to complete this survey at a later time and you will forfeit your reward.</string>
+    <string name="abort_survey">Forfeit Reward</string>
     <string name="cancel">Continue Survey</string>
     <string name="error_inbrain_unavailable_title">inBrain is unavailable</string>
     <string name="error_inbrain_unavailable_message">Sorry, inBrain is unavailable right now. Please try again later.</string>
