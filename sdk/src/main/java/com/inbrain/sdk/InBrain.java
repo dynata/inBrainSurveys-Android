@@ -822,6 +822,14 @@ public class InBrain {
     }
 
     public void getNativeSurveys(final String placeId, final GetNativeSurveysCallback callback) {
+        getNativeSurveys(placeId, null, callback);
+    }
+
+    public void getNativeSurveys(final String placeId, final int[] includeCategoryIds, final GetNativeSurveysCallback callback) {
+        getNativeSurveys(placeId, includeCategoryIds, null, callback);
+    }
+
+    public void getNativeSurveys(final String placeId, final int[] includeCategoryIds, final int[] excludeCategoryIds, final GetNativeSurveysCallback callback) {
         if (!checkForInit()) {
             return;
         }
@@ -832,7 +840,7 @@ public class InBrain {
                 @Override
                 public void onGetToken(String token) {
                     Log.d(Constants.LOG_TAG, "onGetToken: " + token);
-                    requestNativeSurveysWithTokenUpdate(placeId, callback, false);
+                    requestNativeSurveysWithTokenUpdate(placeId, includeCategoryIds, excludeCategoryIds, callback, false);
                 }
 
                 @Override
@@ -845,12 +853,12 @@ public class InBrain {
                 }
             });
         } else {
-            requestNativeSurveysWithTokenUpdate(placeId, callback, true);
+            requestNativeSurveysWithTokenUpdate(placeId, includeCategoryIds, excludeCategoryIds, callback, true);
         }
     }
 
-    private void requestNativeSurveysWithTokenUpdate(final String placeId, final GetNativeSurveysCallback callback,
-                                                     final boolean updateToken) {
+    private void requestNativeSurveysWithTokenUpdate(final String placeId, final int[] includeCategoryIds, final int[] excludeCategoryIds,
+                                                     final GetNativeSurveysCallback callback, final boolean updateToken) {
         GetNativeSurveysListExecutor getNativeSurveysListExecutor = new GetNativeSurveysListExecutor();
         getNativeSurveysListExecutor.getNativeSurveysList(token, stagingMode,
                 new GetNativeSurveysListExecutor.NativeSurveysExecutorCallback() {
@@ -876,7 +884,7 @@ public class InBrain {
                                         if (BuildConfig.DEBUG) {
                                             Log.d(Constants.LOG_TAG, "onGetToken: " + token);
                                         }
-                                        requestNativeSurveysWithTokenUpdate(placeId, callback, false);
+                                        requestNativeSurveysWithTokenUpdate(placeId, includeCategoryIds, excludeCategoryIds, callback, false);
                                     }
 
                                     @Override
@@ -895,7 +903,7 @@ public class InBrain {
                             handler.post(() -> callback.nativeSurveysReceived(new ArrayList<>()));
                         }
                     }
-                }, userID, deviceId, placeId);
+                }, userID, deviceId, placeId, includeCategoryIds, excludeCategoryIds);
     }
 
     public void getCurrencySale(final GetCurrencySaleCallback callback) {
@@ -972,5 +980,56 @@ public class InBrain {
                         }
                     }
                 });
+    }
+
+    public enum SurveyCategory {
+        Automotive(1),
+        BeveragesAlcoholic(2),
+        BeveragesNonAlcoholic(3),
+        Business(4),
+        ChildrenAndParenting(5),
+        CoalitionLoyaltyPrograms(6),
+        DestinationsAndTourism(7),
+        Education(8),
+        ElectronicsComputerSoftware(9),
+        EntertainmentAndLeisure(10),
+        FinanceBankingInvestingAndInsurance(11),
+        Food(12),
+        GamblingLottery(13),
+        GovernmentAndPolitics(14),
+        HealthCare(15),
+        Home(16),
+        MediaAndPublishing(17),
+        PersonalCare(18),
+        Restaurants(19),
+        SensitiveExplicitContent(20),
+        SmokingTobacco(21),
+        SocialResearch(22),
+        SportsRecreationFitness(23),
+        Telecommunications(24),
+        Transportation(25),
+        TravelAirlines(26),
+        TravelHotels(27),
+        TravelServicesAgencyBooking(28),
+        CreditCards(29),
+        VideoGames(30),
+        FashionAndClothingOther(31),
+        FashionAndClothingDepartmentStore(32),
+        ;
+
+        private final int id;
+
+        SurveyCategory(int id) {
+            this.id = id;
+        }
+
+        public static SurveyCategory fromId(int id) {
+            for (SurveyCategory category : values()) {
+                if (category.id == id) {
+                    return category;
+                }
+            }
+            return null;
+        }
     }
 }

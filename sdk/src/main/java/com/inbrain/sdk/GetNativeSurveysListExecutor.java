@@ -13,10 +13,10 @@ import java.util.List;
 
 class GetNativeSurveysListExecutor {
     void getNativeSurveysList(final String token, final boolean stagingMode,
-                              final NativeSurveysExecutorCallback callback, final String appUserId,
-                              final String deviceId, final String placeId) {
+                              final NativeSurveysExecutorCallback callback, final String appUserId, final String deviceId,
+                              final String placeId, final int[] includeCategoryIds, final int[] excludeCategoryIds) {
         String nativeSurveysUrl = getNativeSurveysUrl(stagingMode,
-                Constants.getNativeSurveysUrl(appUserId, deviceId, placeId));
+                Constants.getNativeSurveysUrl(appUserId, deviceId, placeId, includeCategoryIds, excludeCategoryIds));
         if (BuildConfig.DEBUG) {
             Log.d(Constants.LOG_TAG, "getNativeSurveysList() url: " + nativeSurveysUrl);
         }
@@ -37,9 +37,9 @@ class GetNativeSurveysListExecutor {
     private String getNativeSurveysUrl(boolean stagingMode, String areSurveysAvailableUrl) {
         String baseUrl;
         if (stagingMode) {
-            baseUrl = Constants.STAGING_BASE_URL;
+            baseUrl = Constants.STAGING_BASE_URL_V2;
         } else {
-            baseUrl = Constants.BASE_URL;
+            baseUrl = Constants.BASE_URL_V2;
         }
         return String.format("%s%s", baseUrl, areSurveysAvailableUrl);
     }

@@ -15,9 +15,13 @@ class Constants {
 
     static final String BASE_URL = "https://api.surveyb.in/api/v1/";
 
+    static final String BASE_URL_V2 = "https://api.surveyb.in/api/v2/";
+
     static final String BASE_URL_EXTERNAL_SURVEYS = BASE_URL + "external-surveys/";
 
     static final String STAGING_BASE_URL = "https://inbrain-api-qa.azurewebsites.net/api/v1/";
+
+    static final String STAGING_BASE_URL_V2 = "https://inbrain-api-qa.azurewebsites.net/api/v2/";
 
     static final String STAGING_BASE_URL_EXTERNAL_SURVEYS = STAGING_BASE_URL + "external-surveys/";
 
@@ -53,7 +57,8 @@ class Constants {
                 "/surveys-available";
     }
 
-    public static String getNativeSurveysUrl(String appUserId, String deviceId, String placeId) {
+    public static String getNativeSurveysUrl(String appUserId, String deviceId,
+                                             String placeId, int[] includeCategoryIds, int[] excludeCategoryIds) {
         StringBuilder sb = new StringBuilder("external-panelist/");
         sb.append(appUserId)
                 .append("/")
@@ -61,6 +66,18 @@ class Constants {
                 .append("/native-surveys");
         if (!TextUtils.isEmpty(placeId)) {
             sb.append("?placementId=").append(placeId);
+        }
+        if (includeCategoryIds != null && includeCategoryIds.length > 0) {
+            sb.append("&categoryIds=").append(includeCategoryIds[0]);
+            for (int i = 1; i < includeCategoryIds.length; i++) {
+                sb.append(",").append(includeCategoryIds[i]);
+            }
+        }
+        if (excludeCategoryIds != null && excludeCategoryIds.length > 0) {
+            sb.append("&excludeCategoryIds=").append(excludeCategoryIds[0]);
+            for (int i = 1; i < excludeCategoryIds.length; i++) {
+                sb.append(",").append(excludeCategoryIds[i]);
+            }
         }
         return sb.toString();
     }
