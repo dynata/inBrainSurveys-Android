@@ -3,6 +3,7 @@ package com.inbrain.sdk;
 import android.util.Log;
 
 import com.inbrain.sdk.model.Survey;
+import com.inbrain.sdk.InBrain.SurveyCategory;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -57,7 +58,9 @@ class GetNativeSurveysListExecutor {
 
     private List<Survey> parseSurveys(String data) throws JSONException {
         List<Survey> surveys = new ArrayList<>();
-        JSONArray jsonarray = new JSONArray(data);
+        JSONObject jsonObject = new JSONObject(data);
+        int searchId = jsonObject.getInt("searchId");
+        JSONArray jsonarray = (JSONArray) jsonObject.get("surveys");
         for (int i = 0; i < jsonarray.length(); i++) {
             JSONObject jsonobject = jsonarray.getJSONObject(i);
             String id = jsonobject.getString("id");
@@ -67,7 +70,12 @@ class GetNativeSurveysListExecutor {
             boolean currencySale = jsonobject.getBoolean("currencySale");
             float multiplier = (float) jsonobject.getDouble("multiplier");
             int conversionThreshold = jsonobject.getInt("conversionThreshold");
-            surveys.add(new Survey(id, rank, time, value, currencySale, multiplier, conversionThreshold));
+            JSONArray idsArray = (JSONArray) jsonobject.get("categoryIds");
+            List<SurveyCategory> categories = new ArrayList<>();
+            for (int j = 0; i < idsArray.length(); i++) {
+                categories.add(SurveyCategory.fromId(idsArray.getInt(j)));
+            }
+            surveys.add(new Survey(id, rank, time, value, currencySale, multiplier, conversionThreshold, searchId, categories));
         }
         return surveys;
     }

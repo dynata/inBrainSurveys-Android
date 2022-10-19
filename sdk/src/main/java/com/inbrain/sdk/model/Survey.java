@@ -2,7 +2,10 @@ package com.inbrain.sdk.model;
 
 import android.text.TextUtils;
 
+import com.inbrain.sdk.InBrain.SurveyCategory;
+
 import java.io.Serializable;
+import java.util.List;
 
 public class Survey implements Serializable {
     public String id;
@@ -12,8 +15,11 @@ public class Survey implements Serializable {
     public boolean currencySale;
     public float multiplier;
     public int conversionThreshold;
+    public int searchId;
+    public List<SurveyCategory> categories;
 
-    public Survey(String id, long rank, long time, float value, boolean currencySale, float multiplier, int convThreshold) {
+    public Survey(String id, long rank, long time, float value, boolean currencySale, float multiplier, int convThreshold,
+                  int searchId, List<SurveyCategory> categories) {
         this.id = id;
         this.rank = rank;
         this.time = time;
@@ -21,6 +27,8 @@ public class Survey implements Serializable {
         this.currencySale = currencySale;
         this.multiplier = multiplier;
         this.conversionThreshold = convThreshold;
+        this.categories = categories;
+        this.searchId = searchId;
     }
 
     @Override
