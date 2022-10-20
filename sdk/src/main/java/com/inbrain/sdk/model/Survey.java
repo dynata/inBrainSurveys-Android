@@ -2,8 +2,6 @@ package com.inbrain.sdk.model;
 
 import android.text.TextUtils;
 
-import com.inbrain.sdk.InBrain.SurveyCategory;
-
 import java.io.Serializable;
 import java.util.List;
 

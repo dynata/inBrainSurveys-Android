@@ -2,6 +2,10 @@ package com.inbrain.sdk;
 
 import android.text.TextUtils;
 
+import com.inbrain.sdk.model.SurveyCategory;
+
+import java.util.List;
+
 class Constants {
     static final String STAGING_DOMAIN = "https://inbrainwebview-qa.azureedge.net";
 
@@ -58,25 +62,28 @@ class Constants {
     }
 
     public static String getNativeSurveysUrl(String appUserId, String deviceId,
-                                             String placeId, int[] includeCategoryIds, int[] excludeCategoryIds) {
+                                             String placeId, List<SurveyCategory> includeCategoryIds, List<SurveyCategory> excludeCategoryIds) {
+        String separator = "?";
         StringBuilder sb = new StringBuilder("external-panelist/");
         sb.append(appUserId)
                 .append("/")
                 .append(deviceId)
                 .append("/native-surveys");
         if (!TextUtils.isEmpty(placeId)) {
-            sb.append("?placementId=").append(placeId);
+            sb.append(separator).append("placementId=").append(placeId);
+            separator = "&";
         }
-        if (includeCategoryIds != null && includeCategoryIds.length > 0) {
-            sb.append("&categoryIds=").append(includeCategoryIds[0]);
-            for (int i = 1; i < includeCategoryIds.length; i++) {
-                sb.append(",").append(includeCategoryIds[i]);
+        if (includeCategoryIds != null && includeCategoryIds.size() > 0) {
+            sb.append(separator).append("categoryIds=").append(includeCategoryIds.get(0).getId());
+            for (int i = 1; i < includeCategoryIds.size(); i++) {
+                sb.append(",").append(includeCategoryIds.get(i).getId());
             }
+            separator = "&";
         }
-        if (excludeCategoryIds != null && excludeCategoryIds.length > 0) {
-            sb.append("&excludeCategoryIds=").append(excludeCategoryIds[0]);
-            for (int i = 1; i < excludeCategoryIds.length; i++) {
-                sb.append(",").append(excludeCategoryIds[i]);
+        if (excludeCategoryIds != null && excludeCategoryIds.size() > 0) {
+            sb.append(separator).append("excludeCategoryIds=").append(excludeCategoryIds.get(0).getId());
+            for (int i = 1; i < excludeCategoryIds.size(); i++) {
+                sb.append(",").append(excludeCategoryIds.get(i).getId());
             }
         }
         return sb.toString();

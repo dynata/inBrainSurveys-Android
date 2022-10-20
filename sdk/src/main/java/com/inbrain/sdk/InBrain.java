@@ -26,6 +26,8 @@ import com.inbrain.sdk.config.ToolBarConfig;
 import com.inbrain.sdk.model.CurrencySale;
 import com.inbrain.sdk.model.Reward;
 import com.inbrain.sdk.model.Survey;
+import com.inbrain.sdk.model.SurveyCategory;
+import com.inbrain.sdk.model.SurveyFilter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -821,15 +823,15 @@ public class InBrain {
         getNativeSurveys(null, callback);
     }
 
-    public void getNativeSurveys(final String placeId, final GetNativeSurveysCallback callback) {
-        getNativeSurveys(placeId, null, callback);
+    public void getNativeSurveys(final SurveyFilter filter, final GetNativeSurveysCallback callback) {
+        if (filter == null)
+            getNativeSurveys(null, null, null, callback);
+        else
+            getNativeSurveys(filter.placementId, filter.includeCategories, filter.excludeCategories, callback);
     }
 
-    public void getNativeSurveys(final String placeId, final int[] includeCategoryIds, final GetNativeSurveysCallback callback) {
-        getNativeSurveys(placeId, includeCategoryIds, null, callback);
-    }
-
-    public void getNativeSurveys(final String placeId, final int[] includeCategoryIds, final int[] excludeCategoryIds, final GetNativeSurveysCallback callback) {
+    private void getNativeSurveys(final String placeId, final List<SurveyCategory> includeCategoryIds, final List<SurveyCategory> excludeCategoryIds,
+                                  final GetNativeSurveysCallback callback) {
         if (!checkForInit()) {
             return;
         }
@@ -857,7 +859,7 @@ public class InBrain {
         }
     }
 
-    private void requestNativeSurveysWithTokenUpdate(final String placeId, final int[] includeCategoryIds, final int[] excludeCategoryIds,
+    private void requestNativeSurveysWithTokenUpdate(final String placeId, final List<SurveyCategory> includeCategoryIds, final List<SurveyCategory> excludeCategoryIds,
                                                      final GetNativeSurveysCallback callback, final boolean updateToken) {
         GetNativeSurveysListExecutor getNativeSurveysListExecutor = new GetNativeSurveysListExecutor();
         getNativeSurveysListExecutor.getNativeSurveysList(token, stagingMode,
@@ -980,56 +982,5 @@ public class InBrain {
                         }
                     }
                 });
-    }
-
-    public enum SurveyCategory {
-        Automotive(1),
-        BeveragesAlcoholic(2),
-        BeveragesNonAlcoholic(3),
-        Business(4),
-        ChildrenAndParenting(5),
-        CoalitionLoyaltyPrograms(6),
-        DestinationsAndTourism(7),
-        Education(8),
-        ElectronicsComputerSoftware(9),
-        EntertainmentAndLeisure(10),
-        FinanceBankingInvestingAndInsurance(11),
-        Food(12),
-        GamblingLottery(13),
-        GovernmentAndPolitics(14),
-        HealthCare(15),
-        Home(16),
-        MediaAndPublishing(17),
-        PersonalCare(18),
-        Restaurants(19),
-        SensitiveExplicitContent(20),
-        SmokingTobacco(21),
-        SocialResearch(22),
-        SportsRecreationFitness(23),
-        Telecommunications(24),
-        Transportation(25),
-        TravelAirlines(26),
-        TravelHotels(27),
-        TravelServicesAgencyBooking(28),
-        CreditCards(29),
-        VideoGames(30),
-        FashionAndClothingOther(31),
-        FashionAndClothingDepartmentStore(32),
-        ;
-
-        private final int id;
-
-        SurveyCategory(int id) {
-            this.id = id;
-        }
-
-        public static SurveyCategory fromId(int id) {
-            for (SurveyCategory category : values()) {
-                if (category.id == id) {
-                    return category;
-                }
-            }
-            return null;
-        }
     }
 }

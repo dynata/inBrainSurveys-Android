@@ -3,7 +3,7 @@ package com.inbrain.sdk;
 import android.util.Log;
 
 import com.inbrain.sdk.model.Survey;
-import com.inbrain.sdk.InBrain.SurveyCategory;
+import com.inbrain.sdk.model.SurveyCategory;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -15,7 +15,7 @@ import java.util.List;
 class GetNativeSurveysListExecutor {
     void getNativeSurveysList(final String token, final boolean stagingMode,
                               final NativeSurveysExecutorCallback callback, final String appUserId, final String deviceId,
-                              final String placeId, final int[] includeCategoryIds, final int[] excludeCategoryIds) {
+                              final String placeId, final List<SurveyCategory> includeCategoryIds, final List<SurveyCategory> excludeCategoryIds) {
         String nativeSurveysUrl = getNativeSurveysUrl(stagingMode,
                 Constants.getNativeSurveysUrl(appUserId, deviceId, placeId, includeCategoryIds, excludeCategoryIds));
         if (BuildConfig.DEBUG) {
@@ -70,10 +70,16 @@ class GetNativeSurveysListExecutor {
             boolean currencySale = jsonobject.getBoolean("currencySale");
             float multiplier = (float) jsonobject.getDouble("multiplier");
             int conversionThreshold = jsonobject.getInt("conversionThreshold");
-            JSONArray idsArray = (JSONArray) jsonobject.get("categoryIds");
+            JSONArray idsArray = null;
+            Object categoryIdsObj = jsonobject.get("categoryIds");
+            if (categoryIdsObj instanceof JSONArray) {
+                idsArray = (JSONArray) categoryIdsObj;
+            }
             List<SurveyCategory> categories = new ArrayList<>();
-            for (int j = 0; i < idsArray.length(); i++) {
-                categories.add(SurveyCategory.fromId(idsArray.getInt(j)));
+            if (idsArray != null) {
+                for (int j = 0; i < idsArray.length(); i++) {
+                    categories.add(SurveyCategory.fromId(idsArray.getInt(j)));
+                }
             }
             surveys.add(new Survey(id, rank, time, value, currencySale, multiplier, conversionThreshold, searchId, categories));
         }
