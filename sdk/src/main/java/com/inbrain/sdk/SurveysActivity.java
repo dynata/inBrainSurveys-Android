@@ -51,7 +51,7 @@ public class SurveysActivity extends Activity {
     private static final String EXTRA_APP_USER_ID = "29678234";
     private static final String EXTRA_DEVICE_ID = "97497286";
     private static final String EXTRA_SURVEY_ID = "56238743";
-    private static final String EXTRA_PLACE_ID = "56238744";
+    private static final String EXTRA_SEARCH_ID = "56238744";
     private static final String EXTRA_S2S = "71263886";
     private static final String EXTRA_LANGUAGE = "51211232";
     private static final String EXTRA_TOOLBAR_TEXT = "64587132";
@@ -81,7 +81,7 @@ public class SurveysActivity extends Activity {
     private String appUserId;
     private String deviceId;
     private String surveyId;
-    private String placeId;
+    private int searchId;
     private String language;
 
     private boolean surveyActive;
@@ -105,16 +105,14 @@ public class SurveysActivity extends Activity {
 
     public static void start(Context context, boolean stagingMode, String clientId, String clientSecret,
                              boolean isS2S, String sessionUid, String appUserId, String deviceId,
-                             String surveyId, String placeId, HashMap<String, String> dataPoints, String language,
+                             String surveyId, int searchId, HashMap<String, String> dataPoints, String language,
                              String title, int toolbarColor, int backButtonColor, int titleColor,
                              int statusBarColor, boolean enableElevation, boolean lightStatusBarColor) {
         Intent startingIntent = getLaunchingIntent(context, stagingMode, clientId, clientSecret,
                 isS2S, sessionUid, appUserId, deviceId, dataPoints, language, title, toolbarColor,
                 backButtonColor, titleColor, statusBarColor, enableElevation, lightStatusBarColor);
         startingIntent.putExtra(EXTRA_SURVEY_ID, surveyId);
-        if (!TextUtils.isEmpty(placeId)) {
-            startingIntent.putExtra(EXTRA_PLACE_ID, placeId);
-        }
+        startingIntent.putExtra(EXTRA_SEARCH_ID, searchId);
         context.startActivity(startingIntent);
     }
 
@@ -174,9 +172,7 @@ public class SurveysActivity extends Activity {
         appUserId = intent.getStringExtra(EXTRA_APP_USER_ID);
         deviceId = intent.getStringExtra(EXTRA_DEVICE_ID);
         surveyId = intent.getStringExtra(EXTRA_SURVEY_ID);
-        if (intent.hasExtra(EXTRA_PLACE_ID)) {
-            placeId = intent.getStringExtra(EXTRA_PLACE_ID);
-        }
+        searchId = intent.getIntExtra(EXTRA_SEARCH_ID, -1);
 
         configurationUrl = String.format("%s/configuration", stagingMode ? STAGING_DOMAIN : DOMAIN);
 
@@ -338,7 +334,7 @@ public class SurveysActivity extends Activity {
 
     private String getConfigurationUrl() throws IOException {
         Configuration configuration = new Configuration(clientId, clientSecret, appUserId, deviceId,
-                surveyId, placeId, sessionUid, dataPoints, language);
+                surveyId, searchId, sessionUid, dataPoints, language);
         return String.format("javascript:setConfiguration(%s);", configuration.toJson());
     }
 

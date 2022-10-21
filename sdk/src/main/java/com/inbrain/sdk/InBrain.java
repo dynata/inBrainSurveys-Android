@@ -209,11 +209,11 @@ public class InBrain {
         }
     }
 
-    public void showNativeSurveyWith(Context context, String surveyId, final StartSurveysCallback callback) {
-        showNativeSurveyWith(context, surveyId, null, callback);
+    public void showNativeSurvey(Context context, Survey survey, final StartSurveysCallback callback) {
+        showNativeSurveyWith(context, survey.id, survey.searchId, callback);
     }
 
-    public void showNativeSurveyWith(Context context, String surveyId, String placeId, final StartSurveysCallback callback) {
+    public void showNativeSurveyWith(Context context, String surveyId, int searchId, final StartSurveysCallback callback) {
         if (!canStartSurveys(context, callback)) {
             return;
         }
@@ -222,7 +222,7 @@ public class InBrain {
 
         try {
             SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
-                    sessionUid, userID, deviceId, surveyId, placeId, dataOptions, language, title, toolbarColor,
+                    sessionUid, userID, deviceId, surveyId, searchId, dataOptions, language, title, toolbarColor,
                     backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
             handler.post(callback::onSuccess);
         } catch (final Exception ex) {
