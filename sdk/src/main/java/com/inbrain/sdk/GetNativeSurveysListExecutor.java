@@ -77,7 +77,7 @@ class GetNativeSurveysListExecutor {
             }
             List<SurveyCategory> categories = new ArrayList<>();
             if (idsArray != null) {
-                for (int j = 0; i < idsArray.length(); i++) {
+                for (int j = 0; j < idsArray.length(); j++) {
                     categories.add(SurveyCategory.fromId(idsArray.getInt(j)));
                 }
             }
