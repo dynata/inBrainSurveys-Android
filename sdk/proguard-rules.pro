@@ -10,3 +10,5 @@
 -keep interface com.inbrain.sdk.callback.** { *; }
 -keep class com.inbrain.sdk.model.** { *; }
 -keep class com.inbrain.sdk.config.** { *; }
+
+-keeppackagenames com.inbrain.sdk
