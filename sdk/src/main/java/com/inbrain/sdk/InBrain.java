@@ -213,7 +213,7 @@ public class InBrain {
         showNativeSurveyWith(context, survey.id, survey.searchId, callback);
     }
 
-    public void showNativeSurveyWith(Context context, String surveyId, int searchId, final StartSurveysCallback callback) {
+    public void showNativeSurveyWith(Context context, String surveyId, String searchId, final StartSurveysCallback callback) {
         if (!canStartSurveys(context, callback)) {
             return;
         }

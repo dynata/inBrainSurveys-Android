@@ -14,13 +14,13 @@ public class Configuration {
     final String appUserId;
     final String deviceId;
     final String surveyId;
-    final int searchId;
+    final String searchId;
     final String sessionUid;
     final HashMap<String, String> dataPoints;
     final String language;
 
     public Configuration(String clientId, String clientSecret, String appUserId, String deviceId,
-                         String surveyId, int searchId, String sessionUid, HashMap<String, String> dataPoints,
+                         String surveyId, String searchId, String sessionUid, HashMap<String, String> dataPoints,
                          String language) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
@@ -50,7 +50,7 @@ public class Configuration {
         if (!TextUtils.isEmpty(surveyId)) {
             writer.name("survey_id").value(surveyId);
         }
-        if (searchId != -1) {
+        if (!TextUtils.isEmpty(searchId)) {
             writer.name("search_id").value(searchId);
         }
         if (!TextUtils.isEmpty(sessionUid)) {

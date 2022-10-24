@@ -81,7 +81,7 @@ class GetNativeSurveysListExecutor {
                     categories.add(SurveyCategory.fromId(idsArray.getInt(j)));
                 }
             }
-            surveys.add(new Survey(id, rank, time, value, currencySale, multiplier, conversionThreshold, searchId, categories));
+            surveys.add(new Survey(id, rank, time, value, currencySale, multiplier, conversionThreshold, String.valueOf(searchId), categories));
         }
         return surveys;
     }

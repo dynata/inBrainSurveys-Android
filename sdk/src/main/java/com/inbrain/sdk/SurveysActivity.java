@@ -81,7 +81,7 @@ public class SurveysActivity extends Activity {
     private String appUserId;
     private String deviceId;
     private String surveyId;
-    private int searchId;
+    private String searchId;
     private String language;
 
     private boolean surveyActive;
@@ -105,7 +105,7 @@ public class SurveysActivity extends Activity {
 
     public static void start(Context context, boolean stagingMode, String clientId, String clientSecret,
                              boolean isS2S, String sessionUid, String appUserId, String deviceId,
-                             String surveyId, int searchId, HashMap<String, String> dataPoints, String language,
+                             String surveyId, String searchId, HashMap<String, String> dataPoints, String language,
                              String title, int toolbarColor, int backButtonColor, int titleColor,
                              int statusBarColor, boolean enableElevation, boolean lightStatusBarColor) {
         Intent startingIntent = getLaunchingIntent(context, stagingMode, clientId, clientSecret,
@@ -172,7 +172,7 @@ public class SurveysActivity extends Activity {
         appUserId = intent.getStringExtra(EXTRA_APP_USER_ID);
         deviceId = intent.getStringExtra(EXTRA_DEVICE_ID);
         surveyId = intent.getStringExtra(EXTRA_SURVEY_ID);
-        searchId = intent.getIntExtra(EXTRA_SEARCH_ID, -1);
+        searchId = intent.getStringExtra(EXTRA_SEARCH_ID);
 
         configurationUrl = String.format("%s/configuration", stagingMode ? STAGING_DOMAIN : DOMAIN);
 

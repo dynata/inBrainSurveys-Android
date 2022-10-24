@@ -13,11 +13,11 @@ public class Survey implements Serializable {
     public boolean currencySale;
     public float multiplier;
     public int conversionThreshold;
-    public int searchId;
+    public String searchId;
     public List<SurveyCategory> categories;
 
     public Survey(String id, long rank, long time, float value, boolean currencySale, float multiplier, int convThreshold,
-                  int searchId, List<SurveyCategory> categories) {
+                  String searchId, List<SurveyCategory> categories) {
         this.id = id;
         this.rank = rank;
         this.time = time;
