@@ -110,19 +110,7 @@ public class InBrain {
         this.apiSecret = apiSecret.trim();
         this.isS2S = isS2S;
         wrongClientIdError = false;
-        preferences = getPreferences(context);
-        if (preferences.contains(PREFERENCE_DEVICE_ID)) {
-            deviceId = preferences.getString(PREFERENCE_DEVICE_ID, null);
-        }
-        if (TextUtils.isEmpty(deviceId)) {
-            deviceId = UUID.randomUUID().toString();
-        }
-        preferences.edit().putString(PREFERENCE_DEVICE_ID, deviceId).apply();
-        if (TextUtils.isEmpty(userID)) {
-            this.userID = deviceId;
-        } else {
-            this.userID = userID;
-        }
+        setUserID(context, userID);
     }
 
     public void setUserID(Context context, String userID) {
@@ -132,8 +120,8 @@ public class InBrain {
         }
         if (TextUtils.isEmpty(deviceId)) {
             deviceId = UUID.randomUUID().toString();
+            preferences.edit().putString(PREFERENCE_DEVICE_ID, deviceId).apply();
         }
-        preferences.edit().putString(PREFERENCE_DEVICE_ID, deviceId).apply();
         if (TextUtils.isEmpty(userID)) {
             this.userID = deviceId;
         } else {
