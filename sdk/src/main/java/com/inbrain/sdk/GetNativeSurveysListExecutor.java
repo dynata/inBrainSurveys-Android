@@ -2,7 +2,7 @@ package com.inbrain.sdk;
 
 import android.util.Log;
 
-import com.inbrain.sdk.model.Survey;
+import com.inbrain.sdk.model.InBrainNativeSurvey;
 import com.inbrain.sdk.model.SurveyCategory;
 
 import org.json.JSONArray;
@@ -56,8 +56,8 @@ class GetNativeSurveysListExecutor {
         }
     }
 
-    private List<Survey> parseSurveys(String data) throws JSONException {
-        List<Survey> surveys = new ArrayList<>();
+    private List<InBrainNativeSurvey> parseSurveys(String data) throws JSONException {
+        List<InBrainNativeSurvey> surveys = new ArrayList<>();
         JSONObject jsonObject = new JSONObject(data);
         int searchId = jsonObject.getInt("searchId");
         JSONArray jsonarray = (JSONArray) jsonObject.get("surveys");
@@ -81,13 +81,13 @@ class GetNativeSurveysListExecutor {
                     categories.add(SurveyCategory.fromId(idsArray.getInt(j)));
                 }
             }
-            surveys.add(new Survey(id, rank, time, value, currencySale, multiplier, conversionThreshold, String.valueOf(searchId), categories));
+            surveys.add(new InBrainNativeSurvey(id, rank, time, value, currencySale, multiplier, conversionThreshold, String.valueOf(searchId), categories));
         }
         return surveys;
     }
 
     public interface NativeSurveysExecutorCallback {
-        void onNativeSurveysAvailable(List<Survey> surveys);
+        void onNativeSurveysAvailable(List<InBrainNativeSurvey> surveys);
 
         void onFailToLoadNativeSurveysList(Exception ex);
     }

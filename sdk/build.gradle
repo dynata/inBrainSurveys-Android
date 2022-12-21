@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
     compileSdk 33
@@ -38,4 +39,5 @@ afterEvaluate {
 }
 
 dependencies {
+    implementation 'androidx.core:core-ktx:1.9.0'
 }

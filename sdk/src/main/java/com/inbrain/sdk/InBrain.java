@@ -24,8 +24,8 @@ import com.inbrain.sdk.callback.SurveysAvailableCallback;
 import com.inbrain.sdk.config.StatusBarConfig;
 import com.inbrain.sdk.config.ToolBarConfig;
 import com.inbrain.sdk.model.CurrencySale;
+import com.inbrain.sdk.model.InBrainNativeSurvey;
 import com.inbrain.sdk.model.Reward;
-import com.inbrain.sdk.model.Survey;
 import com.inbrain.sdk.model.SurveyCategory;
 import com.inbrain.sdk.model.SurveyFilter;
 
@@ -209,8 +209,8 @@ public class InBrain {
         }
     }
 
-    public void showNativeSurvey(Context context, Survey survey, final StartSurveysCallback callback) {
-        showNativeSurveyWith(context, survey.id, survey.searchId, callback);
+    public void showNativeSurvey(Context context, InBrainNativeSurvey survey, final StartSurveysCallback callback) {
+        showNativeSurveyWith(context, survey.getId(), survey.getSearchId(), callback);
     }
 
     public void showNativeSurveyWith(Context context, String surveyId, String searchId, final StartSurveysCallback callback) {
@@ -865,7 +865,7 @@ public class InBrain {
         getNativeSurveysListExecutor.getNativeSurveysList(token, stagingMode,
                 new GetNativeSurveysListExecutor.NativeSurveysExecutorCallback() {
                     @Override
-                    public void onNativeSurveysAvailable(List<Survey> surveys) {
+                    public void onNativeSurveysAvailable(List<InBrainNativeSurvey> surveys) {
                         callback.nativeSurveysReceived(surveys);
                     }
 
