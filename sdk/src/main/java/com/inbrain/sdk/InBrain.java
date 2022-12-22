@@ -87,8 +87,11 @@ public class InBrain {
         return instance;
     }
 
-    public void setInBrain(Context context, String apiClientID, String apiSecret, boolean isS2S,
-                           String userID) {
+    public void setInBrain(Context context, String apiClientID, String apiSecret, boolean isS2S) {
+        setInBrain(context, apiClientID, apiSecret, isS2S, null);
+    }
+
+    public void setInBrain(Context context, String apiClientID, String apiSecret, boolean isS2S, String userID) {
         boolean isUiThread = Looper.getMainLooper().getThread() == Thread.currentThread();
         if (!isUiThread) {
             Log.e(Constants.LOG_TAG, "Method must be called from main thread!");
@@ -107,14 +110,18 @@ public class InBrain {
         this.apiSecret = apiSecret.trim();
         this.isS2S = isS2S;
         wrongClientIdError = false;
+        setUserID(context, userID);
+    }
+
+    public void setUserID(Context context, String userID) {
         preferences = getPreferences(context);
         if (preferences.contains(PREFERENCE_DEVICE_ID)) {
             deviceId = preferences.getString(PREFERENCE_DEVICE_ID, null);
         }
         if (TextUtils.isEmpty(deviceId)) {
             deviceId = UUID.randomUUID().toString();
+            preferences.edit().putString(PREFERENCE_DEVICE_ID, deviceId).apply();
         }
-        preferences.edit().putString(PREFERENCE_DEVICE_ID, deviceId).apply();
         if (TextUtils.isEmpty(userID)) {
             this.userID = deviceId;
         } else {
