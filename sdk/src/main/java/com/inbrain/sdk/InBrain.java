@@ -149,26 +149,39 @@ public class InBrain {
         callbacksList.remove(callback);
     }
 
+    /**
+     * @deprecated(forRemoval=true) This method has been deprecated.
+     * Please build a habit to set sessionID and dataOptions separately using {@link #setSessionId(String)} and {@link #setDataOptions(HashMap)}
+     */
+    @Deprecated
     public void setInBrainValuesFor(String sessionID, HashMap<String, String> dataOptions) {
         this.sessionUid = sessionID;
         this.dataOptions = dataOptions;
     }
 
-    public String getSessionUid() {
+    public void setSessionId(String sessionID) {
+        this.sessionUid = sessionID;
+    }
+
+    public String getSessionId() {
         return this.sessionUid;
+    }
+
+    public void setDataOptions(HashMap<String, String> dataOptions) {
+        this.dataOptions = dataOptions;
     }
 
     public HashMap<String, String> getDataOptions() {
         return this.dataOptions;
     }
 
+    /**
+     * @deprecated(forRemoval=true) This method has been deprecated.
+     */
+    @Deprecated
     public void setLanguage(String language) {
         this.language = language;
         this.langManuallySet = true;
-    }
-
-    public void setStagingMode(boolean stagingMode) {
-        this.stagingMode = stagingMode;
     }
 
     public void setToolbarConfig(ToolBarConfig config) {
