@@ -12,9 +12,15 @@ public class Survey implements Serializable {
     public float value;
     public boolean currencySale;
     public float multiplier;
-    public int conversionThreshold;
+    public SurveyConversionLevel conversionLevel;
     public String searchId;
     public List<SurveyCategory> categories;
+
+    /**
+     * @deprecated(forRemoval=true) Use {@link #conversionLevel} instead.
+     */
+    @Deprecated
+    public int conversionThreshold;
 
     public Survey(String id, long rank, long time, float value, boolean currencySale, float multiplier, int convThreshold,
                   String searchId, List<SurveyCategory> categories) {
@@ -25,6 +31,21 @@ public class Survey implements Serializable {
         this.currencySale = currencySale;
         this.multiplier = multiplier;
         this.conversionThreshold = convThreshold;
+        this.conversionLevel = SurveyConversionLevel.Companion.fromLevel(convThreshold);
+        this.categories = categories;
+        this.searchId = searchId;
+    }
+
+    public Survey(String id, long rank, long time, float value, boolean currencySale, float multiplier, SurveyConversionLevel convLevel,
+                  String searchId, List<SurveyCategory> categories) {
+        this.id = id;
+        this.rank = rank;
+        this.time = time;
+        this.value = value;
+        this.currencySale = currencySale;
+        this.multiplier = multiplier;
+        this.conversionLevel = convLevel;
+        this.conversionThreshold = convLevel.getLevel();
         this.categories = categories;
         this.searchId = searchId;
     }
@@ -41,7 +62,8 @@ public class Survey implements Serializable {
                 reward.value == value &&
                 reward.currencySale == currencySale &&
                 reward.multiplier == multiplier &&
-                reward.conversionThreshold == conversionThreshold;
+                (reward.conversionThreshold == conversionThreshold
+                        || reward.conversionLevel.getLevel() == conversionLevel.getLevel());
     }
 
     @Override
