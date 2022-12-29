@@ -617,11 +617,33 @@ public class InBrain {
         confirmRewardsById(rewardsIds);
     }
 
+    /**
+     * Confirms rewards manually.
+     *
+     * @param transactionIds list of transactionIds which need to be confirmed
+     */
+    public void confirmRewards(final long[] transactionIds) {
+        if (!checkForInit()) {
+            return;
+        }
+        Set<Long> rewardsIds = getRewardsIds(transactionIds);
+        confirmRewardsById(rewardsIds);
+    }
+
     private Set<Long> getRewardsIds(List<Reward> rewards) {
         Set<Long> rewardsIds = new HashSet<>(rewards.size());
         for (Reward reward : rewards) {
             if (confirmedRewardsIds.contains(reward.transactionId)) continue;
             rewardsIds.add(reward.transactionId);
+        }
+        return rewardsIds;
+    }
+
+    private Set<Long> getRewardsIds(long[] transactionIds) {
+        Set<Long> rewardsIds = new HashSet<>(transactionIds.length);
+        for (long transactionId : transactionIds) {
+            if (confirmedRewardsIds.contains(transactionId)) continue;
+            rewardsIds.add(transactionId);
         }
         return rewardsIds;
     }
