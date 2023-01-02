@@ -7,7 +7,7 @@ import com.inbrain.sdk.model.SurveyCategory;
 import java.util.List;
 
 class Constants {
-    static final String STAGING_DOMAIN = "https://inbrainwebview-qa.azureedge.net";
+    static final String STAGING_DOMAIN = "https://qa.surveyb.in";
 
     static final String DOMAIN = "https://www.surveyb.in";
 

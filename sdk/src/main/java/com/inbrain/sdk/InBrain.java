@@ -24,6 +24,7 @@ import com.inbrain.sdk.callback.SurveysAvailableCallback;
 import com.inbrain.sdk.config.StatusBarConfig;
 import com.inbrain.sdk.config.ToolBarConfig;
 import com.inbrain.sdk.model.CurrencySale;
+import com.inbrain.sdk.model.InBrainSurveyReward;
 import com.inbrain.sdk.model.Reward;
 import com.inbrain.sdk.model.Survey;
 import com.inbrain.sdk.model.SurveyCategory;
@@ -35,6 +36,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -87,8 +89,11 @@ public class InBrain {
         return instance;
     }
 
-    public void setInBrain(Context context, String apiClientID, String apiSecret, boolean isS2S,
-                           String userID) {
+    public void setInBrain(Context context, String apiClientID, String apiSecret, boolean isS2S) {
+        setInBrain(context, apiClientID, apiSecret, isS2S, null);
+    }
+
+    public void setInBrain(Context context, String apiClientID, String apiSecret, boolean isS2S, String userID) {
         boolean isUiThread = Looper.getMainLooper().getThread() == Thread.currentThread();
         if (!isUiThread) {
             Log.e(Constants.LOG_TAG, "Method must be called from main thread!");
@@ -107,14 +112,18 @@ public class InBrain {
         this.apiSecret = apiSecret.trim();
         this.isS2S = isS2S;
         wrongClientIdError = false;
+        setUserID(context, userID);
+    }
+
+    public void setUserID(Context context, String userID) {
         preferences = getPreferences(context);
         if (preferences.contains(PREFERENCE_DEVICE_ID)) {
             deviceId = preferences.getString(PREFERENCE_DEVICE_ID, null);
         }
         if (TextUtils.isEmpty(deviceId)) {
             deviceId = UUID.randomUUID().toString();
+            preferences.edit().putString(PREFERENCE_DEVICE_ID, deviceId).apply();
         }
-        preferences.edit().putString(PREFERENCE_DEVICE_ID, deviceId).apply();
         if (TextUtils.isEmpty(userID)) {
             this.userID = deviceId;
         } else {
@@ -142,26 +151,39 @@ public class InBrain {
         callbacksList.remove(callback);
     }
 
+    /**
+     * @deprecated(forRemoval=true) This method has been deprecated.
+     * Please build a habit to set sessionID and dataOptions separately using {@link #setSessionId(String)} and {@link #setDataOptions(HashMap)}
+     */
+    @Deprecated
     public void setInBrainValuesFor(String sessionID, HashMap<String, String> dataOptions) {
         this.sessionUid = sessionID;
         this.dataOptions = dataOptions;
     }
 
-    public String getSessionUid() {
+    public void setSessionId(String sessionID) {
+        this.sessionUid = sessionID;
+    }
+
+    public String getSessionId() {
         return this.sessionUid;
+    }
+
+    public void setDataOptions(HashMap<String, String> dataOptions) {
+        this.dataOptions = dataOptions;
     }
 
     public HashMap<String, String> getDataOptions() {
         return this.dataOptions;
     }
 
+    /**
+     * @deprecated(forRemoval=true) This method has been deprecated.
+     */
+    @Deprecated
     public void setLanguage(String language) {
         this.language = language;
         this.langManuallySet = true;
-    }
-
-    public void setStagingMode(boolean stagingMode) {
-        this.stagingMode = stagingMode;
     }
 
     public void setToolbarConfig(ToolBarConfig config) {
@@ -597,11 +619,33 @@ public class InBrain {
         confirmRewardsById(rewardsIds);
     }
 
+    /**
+     * Confirms rewards manually.
+     *
+     * @param transactionIds list of transactionIds which need to be confirmed
+     */
+    public void confirmRewards(final long[] transactionIds) {
+        if (!checkForInit()) {
+            return;
+        }
+        Set<Long> rewardsIds = getRewardsIds(transactionIds);
+        confirmRewardsById(rewardsIds);
+    }
+
     private Set<Long> getRewardsIds(List<Reward> rewards) {
         Set<Long> rewardsIds = new HashSet<>(rewards.size());
         for (Reward reward : rewards) {
             if (confirmedRewardsIds.contains(reward.transactionId)) continue;
             rewardsIds.add(reward.transactionId);
+        }
+        return rewardsIds;
+    }
+
+    private Set<Long> getRewardsIds(long[] transactionIds) {
+        Set<Long> rewardsIds = new HashSet<>(transactionIds.length);
+        for (long transactionId : transactionIds) {
+            if (confirmedRewardsIds.contains(transactionId)) continue;
+            rewardsIds.add(transactionId);
         }
         return rewardsIds;
     }
@@ -724,14 +768,17 @@ public class InBrain {
         return context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
     }
 
-    void onClosed(boolean finishedFromPage) {
-        if (!callbacksList.isEmpty()) {
-            for (final InBrainCallback callback : callbacksList) {
-                if (finishedFromPage) {
-                    handler.post(callback::surveysClosedFromPage);
-                } else {
-                    handler.post(callback::surveysClosed);
-                }
+    void onClosed(boolean byWebView, Optional<List<InBrainSurveyReward>> rewards) {
+        if (callbacksList.isEmpty()) { return; }
+
+        for (final InBrainCallback callback : callbacksList) {
+            handler.post(() -> callback.surveysClosed(byWebView, rewards));
+
+            //deprecated functions support
+            if (byWebView) {
+                handler.post(callback::surveysClosedFromPage);
+            } else {
+                handler.post(callback::surveysClosed);
             }
         }
     }

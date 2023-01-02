@@ -38,9 +38,13 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.inbrain.sdk.model.Configuration;
+import com.inbrain.sdk.model.InBrainSurveyReward;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 
 public class SurveysActivity extends Activity {
     private static final String EXTRA_STAGING_MODE = "15213412";
@@ -88,9 +92,11 @@ public class SurveysActivity extends Activity {
     private final Handler updateRewardsHandler = new Handler();
     private AlertDialog inBrainErrorDialog;
     private AlertDialog abortSurveyDialog;
-    private boolean finishedFromPage;
     private NetworkBroadcastReceiver networkStateReceiver;
     private boolean connectionLost;
+
+    private boolean finishedFromPage;
+    private Optional<List<InBrainSurveyReward>> rewards;
 
     static void start(Context context, boolean stagingMode, String clientId, String clientSecret,
                       boolean isS2S, String sessionUid, String appUserId, String deviceId,
@@ -470,7 +476,7 @@ public class SurveysActivity extends Activity {
         mainWebView.removeJavascriptInterface(INTERFACE_NAME);
         destroyWebView(mainWebView);
         super.onDestroy();
-        InBrain.getInstance().onClosed(finishedFromPage);
+        InBrain.getInstance().onClosed(finishedFromPage, rewards);
     }
 
     private void destroyWebView(WebView webView) {
@@ -493,6 +499,17 @@ public class SurveysActivity extends Activity {
             if (BuildConfig.DEBUG) Log.i(JS_LOG_TAG, "surveyClosed");
             setSurveyActive(false);
             updateRewards(true);
+        }
+
+        @JavascriptInterface
+        public void surveyOutcome(String outcome) {
+            Log.d("MainActivity", "surveyOutcome");
+            InBrainSurveyReward reward = new InBrainSurveyReward(outcome);
+
+            if (rewards == null) {
+                rewards = Optional.of(new ArrayList<InBrainSurveyReward>());
+            }
+            rewards.get().add(reward);
         }
 
         @JavascriptInterface
