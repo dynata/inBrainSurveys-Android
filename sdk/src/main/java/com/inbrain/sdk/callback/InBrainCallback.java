@@ -1,22 +1,25 @@
 package com.inbrain.sdk.callback;
 
+import com.inbrain.sdk.model.InBrainSurveyReward;
 import com.inbrain.sdk.model.Reward;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Callback which is used for notifying your application about new events
  */
 public interface InBrainCallback {
     /**
-     * Called when InBrain Activity is finished.
-     */
-    void surveysClosed();
+     Called upon dismissal of inBrainWebView.
+     If you are using Native Surveys - please, ensure the surveys reloaded after some survey(s) completed.
 
-    /**
-     * Called when InBrain Activity is finished from JS interface.
+     @param byWebView: **true** means closed by WebView's command; **false** - closed by user;
+     @param rewards: **NOTE:** At the moment only first** Native Survey reward is delivered.
+            That means if the user complete a Native Survey, proceed to Survey Wall and complete one more survey - only first
+            reward will be delivered. In case of Survey Wall usage only - no rewards will be delivered.
      */
-    void surveysClosedFromPage();
+    void surveysClosed(boolean byWebView, Optional<List<InBrainSurveyReward>> rewards);
 
     /**
      * Notifies the application about new rewards.
@@ -30,4 +33,18 @@ public interface InBrainCallback {
      *         false otherwise
      */
     boolean didReceiveInBrainRewards(List<Reward> rewards);
+
+    //region -DEPRECATED---------------
+    /**
+     * @deprecated(forRemoval=true) Use {@link #surveysClosed(boolean, List)} instead.
+     */
+    @Deprecated
+    default void surveysClosed() {};
+
+    /**
+     * @deprecated(forRemoval=true) Use {@link #surveysClosed(boolean, List)} instead.
+     */
+    @Deprecated
+    default void surveysClosedFromPage() {};
+    //endregion
 }

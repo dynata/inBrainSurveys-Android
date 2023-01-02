@@ -24,6 +24,7 @@ import com.inbrain.sdk.callback.SurveysAvailableCallback;
 import com.inbrain.sdk.config.StatusBarConfig;
 import com.inbrain.sdk.config.ToolBarConfig;
 import com.inbrain.sdk.model.CurrencySale;
+import com.inbrain.sdk.model.InBrainSurveyReward;
 import com.inbrain.sdk.model.Reward;
 import com.inbrain.sdk.model.Survey;
 import com.inbrain.sdk.model.SurveyCategory;
@@ -35,6 +36,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -766,14 +768,17 @@ public class InBrain {
         return context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
     }
 
-    void onClosed(boolean finishedFromPage) {
-        if (!callbacksList.isEmpty()) {
-            for (final InBrainCallback callback : callbacksList) {
-                if (finishedFromPage) {
-                    handler.post(callback::surveysClosedFromPage);
-                } else {
-                    handler.post(callback::surveysClosed);
-                }
+    void onClosed(boolean byWebView, Optional<List<InBrainSurveyReward>> rewards) {
+        if (callbacksList.isEmpty()) { return; }
+
+        for (final InBrainCallback callback : callbacksList) {
+            handler.post(() -> callback.surveysClosed(byWebView, rewards));
+
+            //deprecated functions support
+            if (byWebView) {
+                handler.post(callback::surveysClosedFromPage);
+            } else {
+                handler.post(callback::surveysClosed);
             }
         }
     }
