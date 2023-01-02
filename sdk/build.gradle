@@ -3,7 +3,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
-    compileSdk 33
+    compileSdkVersion 33
 
     defaultConfig {
         minSdkVersion 16
