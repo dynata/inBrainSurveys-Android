@@ -44,7 +44,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 public class SurveysActivity extends Activity {
     private static final String EXTRA_STAGING_MODE = "15213412";
@@ -96,7 +95,7 @@ public class SurveysActivity extends Activity {
     private boolean connectionLost;
 
     private boolean finishedFromPage;
-    private Optional<List<InBrainSurveyReward>> rewards;
+    private List<InBrainSurveyReward> rewards = null;
 
     static void start(Context context, boolean stagingMode, String clientId, String clientSecret,
                       boolean isS2S, String sessionUid, String appUserId, String deviceId,
@@ -507,9 +506,9 @@ public class SurveysActivity extends Activity {
             InBrainSurveyReward reward = new InBrainSurveyReward(outcome);
 
             if (rewards == null) {
-                rewards = Optional.of(new ArrayList<InBrainSurveyReward>());
+                rewards = new ArrayList<InBrainSurveyReward>();
             }
-            rewards.get().add(reward);
+            rewards.add(reward);
         }
 
         @JavascriptInterface
