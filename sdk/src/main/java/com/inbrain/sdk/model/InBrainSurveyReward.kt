@@ -29,8 +29,8 @@ class InBrainSurveyReward(var json: String) {
         placementId = jsonObject.optString("placementId")
         userReward = jsonObject.getDouble("userReward")
 
-        val otcome = jsonObject.getInt("outcomeType")
-        outcomeType = SurveyOutcomeType.Companion.fromType(otcome)
+        val outcome = jsonObject.getInt("outcomeType")
+        outcomeType = SurveyOutcomeType.Companion.fromType(outcome)
 
         val categoryIds = jsonObject.optJSONArray("categoryIds")
         if (categoryIds != null && categoryIds.length() > 0) {

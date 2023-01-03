@@ -4,7 +4,6 @@ import com.inbrain.sdk.model.InBrainSurveyReward;
 import com.inbrain.sdk.model.Reward;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Callback which is used for notifying your application about new events
@@ -19,7 +18,7 @@ public interface InBrainCallback {
             That means if the user complete a Native Survey, proceed to Survey Wall and complete one more survey - only first
             reward will be delivered. In case of Survey Wall usage only - no rewards will be delivered.
      */
-    void surveysClosed(boolean byWebView, Optional<List<InBrainSurveyReward>> rewards);
+    void surveysClosed(boolean byWebView, List<InBrainSurveyReward> rewards);
 
     /**
      * Notifies the application about new rewards.

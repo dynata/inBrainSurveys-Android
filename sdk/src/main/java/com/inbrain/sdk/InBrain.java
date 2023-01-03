@@ -36,7 +36,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -768,7 +767,7 @@ public class InBrain {
         return context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
     }
 
-    void onClosed(boolean byWebView, Optional<List<InBrainSurveyReward>> rewards) {
+    void onClosed(boolean byWebView, List<InBrainSurveyReward> rewards) {
         if (callbacksList.isEmpty()) { return; }
 
         for (final InBrainCallback callback : callbacksList) {
