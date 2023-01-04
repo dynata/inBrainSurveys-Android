@@ -3,6 +3,10 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+repositories {
+    maven { url "https://jitpack.io" }
+}
+
 android {
     namespace 'com.inbrain.example'
     compileSdk 33
