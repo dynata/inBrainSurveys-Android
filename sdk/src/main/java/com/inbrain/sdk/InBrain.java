@@ -42,6 +42,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class InBrain {
+    private static final boolean stagingMode = false;
+
     private static final String PREFERENCES = "SharedPreferences_inBrain25930";
     private static final String PREFERENCE_DEVICE_ID = "529826892";
     private static final String PREFERENCE_PENDING_REWARDS = "372131_f4lied";
@@ -75,7 +77,6 @@ public class InBrain {
     private int statusBarColor;
     private String token;
     private boolean wrongClientIdError;
-    private boolean stagingMode;
     private Handler handler;
 
     private InBrain() {
@@ -768,7 +769,9 @@ public class InBrain {
     }
 
     void onClosed(boolean byWebView, List<InBrainSurveyReward> rewards) {
-        if (callbacksList.isEmpty()) { return; }
+        if (callbacksList.isEmpty()) {
+            return;
+        }
 
         for (final InBrainCallback callback : callbacksList) {
             handler.post(() -> callback.surveysClosed(byWebView, rewards));

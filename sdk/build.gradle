@@ -38,5 +38,6 @@ afterEvaluate {
 }
 
 dependencies {
+    //noinspection GradleDynamicVersion
     implementation 'androidx.core:core-ktx:+'
 }

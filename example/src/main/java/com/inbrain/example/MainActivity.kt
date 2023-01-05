@@ -17,31 +17,30 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val QA = !BuildConfig.DEBUG // Set to {true} if you want to test on QA
+    companion object {
+        /**
+         * Set this to {true} if you want to test with QA credentials.
+         * Also, make sure InBrain.stagingMode is set to true as well, so the sdk indicates QA BE correctly.
+         */
+        private const val QA = false
 
-    private val API_CLIENT_ID: String = if (QA) BuildConfig.QA_CLIENT_ID else BuildConfig.PROD_CLIENT_ID // Client Id
+        private const val LOG_TAG = "InBrainExample"
+    }
 
-    private val API_SECRET: String = if (QA) BuildConfig.QA_CLIENT_SECRET else BuildConfig.PROD_CLIENT_SECRET // Client Secret
+    private val apiClientKey: String = if (QA) BuildConfig.QA_CLIENT_ID else BuildConfig.PROD_CLIENT_ID // Client Id
 
-    private val USER_ID: String = if (QA) BuildConfig.QA_USER_ID else BuildConfig.PROD_USER_ID // Unique User_id provided by your app
+    private val apiSecret: String = if (QA) BuildConfig.QA_CLIENT_SECRET else BuildConfig.PROD_CLIENT_SECRET // Client Secret
 
-    private val PLACEMENT_ID: String? = null // Used for custom placements with Native Surveys
+    private val userId: String = if (QA) BuildConfig.QA_USER_ID else BuildConfig.PROD_USER_ID // Unique User_id provided by your app
+
+    private val placementId: String? = null // Used for custom placements with Native Surveys
 
 
-    private lateinit var nativeSurveys: List<Survey>
+    private var nativeSurveys: List<Survey>? = null
 
     private val callback: InBrainCallback = object : InBrainCallback {
-        override fun surveysClosed(b: Boolean, list: List<InBrainSurveyReward>) {
-            /**
-             * Called upon dismissal of inBrainWebView.
-             * If you are using Native Surveys - please, ensure the surveys reloaded after some survey(s) completed.
-             *
-             * @param byWebView: **true** means closed by WebView's command; **false** - closed by user;
-             * @param rewards: **NOTE:** At the moment only first** Native Survey reward is delivered.
-             * That means if the user complete a Native Survey, proceed to Survey Wall and complete one more survey - only first
-             * reward will be delivered. In case of Survey Wall usage only - no rewards will be delivered.
-             */
-            Log.d("MainActivity", "Surveys closed")
+        override fun surveysClosed(byWebView: Boolean, rewards: MutableList<InBrainSurveyReward>?) {
+            Log.d(LOG_TAG, "Surveys closed")
             getInBrainRewards()
         }
 
@@ -68,25 +67,27 @@ class MainActivity : AppCompatActivity() {
 
         // (1) Fetch Native Surveys from inBrain
         // ============================================
-        /*InBrain.getInstance().getNativeSurveys(surveyList -> {
-            nativeSurveys = surveyList;
-            Log.d("MainActivity", "Count of Native Surveys returned:" + surveyList.size());
-        });*/
+//        InBrain.getInstance().getNativeSurveys {
+//            nativeSurveys = it
+//            if (nativeSurveys != null) {
+//                Log.d(LOG_TAG, "Count of Native Surveys returned:" + nativeSurveys!!.size)
+//            }
+//        }
 
         // (2) Fetch Native Surveys from inBrain based on the given SurveyFilter
         // ============================================
-        val incCategories: List<SurveyCategory> = ArrayList<SurveyCategory>()
-        //        incCategories.add(SurveyCategory.Home);
-//        incCategories.add(SurveyCategory.PersonalCare);
-        val excCategories: List<SurveyCategory> = ArrayList<SurveyCategory>()
-        /*excCategories.add(SurveyCategory.SmokingTobacco);*/
+        val incCategories: MutableList<SurveyCategory> = ArrayList<SurveyCategory>()
+//        incCategories.add(SurveyCategory.Home)
+//        incCategories.add(SurveyCategory.PersonalCare)
+        val excCategories: MutableList<SurveyCategory> = ArrayList<SurveyCategory>()
+//        excCategories.add(SurveyCategory.SmokingTobacco)
         val filter = SurveyFilter()
-        filter.placementId = PLACEMENT_ID
+        filter.placementId = placementId
         filter.includeCategories = incCategories
         filter.excludeCategories = excCategories
         InBrain.getInstance().getNativeSurveys(filter) { surveyList: List<Survey> ->
             nativeSurveys = surveyList
-            Log.d("MainActivity", "Count of Native Surveys returned:" + surveyList.size)
+            Log.d(LOG_TAG, "Count of Native Surveys returned:" + surveyList.size)
         }
     }
 
@@ -97,7 +98,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun initInBrain() {
         //this line must be called prior to utilizing any other inBrain functions
-        InBrain.getInstance().setInBrain(this, API_CLIENT_ID, API_SECRET, false, USER_ID)
+        InBrain.getInstance().setInBrain(this, apiClientKey, apiSecret, false, userId)
+
         InBrain.getInstance().addCallback(callback) // subscribe to events and new rewards
 
         //Here we are applying some custom UI settings for inBrain
@@ -106,7 +108,7 @@ class MainActivity : AppCompatActivity() {
         //Checking if Surveys are Available
         InBrain.getInstance().areSurveysAvailable(this) { available: Boolean ->
             Log.d(
-                "MainActivity",
+                LOG_TAG,
                 "Surveys available:$available"
             )
         }
@@ -118,11 +120,11 @@ class MainActivity : AppCompatActivity() {
     private fun openSurveyWall() {
         InBrain.getInstance().showSurveys(this, object : StartSurveysCallback {
             override fun onSuccess() {
-                Log.d("MainActivity", "Survey Wall Display Successfully")
+                Log.d(LOG_TAG, "Survey Wall Display Successfully")
             }
 
             override fun onFail(message: String) {
-                Log.e("MainActivity", "Failed to Show inBrain Survey Wall: $message")
+                Log.e(LOG_TAG, "Failed to Show inBrain Survey Wall: $message")
                 Toast.makeText(
                     this@MainActivity,  // show some message or dialog to user
                     "Sorry, something went wrong!",
@@ -154,7 +156,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun showNativeSurveys() {
         //Checking if there are any nativeSurveys returned
-        if (nativeSurveys.isEmpty()) {
+        if (nativeSurveys == null || nativeSurveys!!.isEmpty()) {
             Toast.makeText(this@MainActivity, "Sorry, no native surveys available", Toast.LENGTH_LONG).show()
             return
         }
@@ -172,18 +174,18 @@ class MainActivity : AppCompatActivity() {
             override fun surveyClicked(survey: Survey) {
                 showNativeSurvey(survey)
             }
-        }, nativeSurveys)
+        }, nativeSurveys!!)
         recyclerView.adapter = adapter
     }
 
     private fun showNativeSurvey(survey: Survey) {
         InBrain.getInstance().showNativeSurvey(this, survey, object : StartSurveysCallback {
             override fun onSuccess() {
-                Log.d("MainActivity", "Successfully started InBrain")
+                Log.d(LOG_TAG, "Successfully started InBrain")
             }
 
             override fun onFail(message: String) {
-                Log.e("MainActivity", "Failed to start inBrain:$message")
+                Log.e(LOG_TAG, "Failed to start inBrain:$message")
                 Toast.makeText(
                     this@MainActivity,  // show some message or dialog to user
                     "Sorry, InBrain isn't supported on your device", Toast.LENGTH_LONG
@@ -198,13 +200,13 @@ class MainActivity : AppCompatActivity() {
     private fun getInBrainRewards() {
         InBrain.getInstance().getRewards(object : GetRewardsCallback {
             override fun handleRewards(rewards: List<Reward>): Boolean {
-                Log.d("MainActivity", "Received rewards:" + rewards.toTypedArray().contentToString())
+                Log.d(LOG_TAG, "Received rewards:" + rewards.toTypedArray().contentToString())
                 processRewards(rewards)
                 return true //be sure to return true here. This will automatically confirm rewards on the inBrain server side
             }
 
             override fun onFailToLoadRewards(t: Throwable) {
-                Log.e("MainActivity", "onFailToLoadRewards:$t")
+                Log.e(LOG_TAG, "onFailToLoadRewards:$t")
             }
         })
     }
@@ -215,11 +217,7 @@ class MainActivity : AppCompatActivity() {
             total += reward.amount
         }
         if (rewards.isEmpty()) {
-            Toast.makeText(
-                this@MainActivity,
-                "You have no new rewards!",
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(this@MainActivity, "You have no new rewards!", Toast.LENGTH_LONG).show()
         } else {
             Toast.makeText(
                 this@MainActivity,
@@ -241,11 +239,12 @@ class MainActivity : AppCompatActivity() {
         val useResourceId = false
         if (useResourceId) {
             toolBarConfig.setToolbarColorResId(R.color.colorAccent) // set toolbar color with status bar
-                .setBackButtonColorResId(R.color.white).titleColorResId = R.color.white //  set toolbar text
+                .setBackButtonColorResId(R.color.white)
+                .titleColorResId = R.color.white //  set toolbar text
         } else {
             toolBarConfig.setToolbarColor(ContextCompat.getColor(this, R.color.colorAccent))
-                .setBackButtonColor(ContextCompat.getColor(this, R.color.white)).titleColor =
-                ContextCompat.getColor(this, R.color.white)
+                .setBackButtonColor(ContextCompat.getColor(this, R.color.white))
+                .titleColor = ContextCompat.getColor(this, R.color.white)
         }
         toolBarConfig.isElevationEnabled = false
         InBrain.getInstance().setToolbarConfig(toolBarConfig)

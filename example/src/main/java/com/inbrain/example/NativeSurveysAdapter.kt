@@ -45,7 +45,7 @@ class NativeSurveysAdapter(private val listener: NativeSurveysClickListener, pri
             timeTextView.text = "Time: " + survey.time
             currencySaleTextView.text = "CurrencySale: " + survey.currencySale
             multiplierTextView.text = "Multiplier: " + survey.multiplier
-            conversionTextView.text = "Conversion: " + survey.conversionThreshold
+            conversionTextView.text = "Conversion: " + survey.conversionLevel
             categoriesTextView.text = "Categories: " + survey.categories
             searchIdTextView.text = "SearchID: " + survey.searchId
             rootView.setOnClickListener { listener.surveyClicked(survey) }
