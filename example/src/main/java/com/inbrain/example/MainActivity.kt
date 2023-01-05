@@ -5,27 +5,33 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.inbrain.sdk.InBrain
+import com.inbrain.sdk.callback.*
+import com.inbrain.sdk.config.StatusBarConfig
+import com.inbrain.sdk.config.ToolBarConfig
+import com.inbrain.sdk.model.*
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
-    companion object {
-        private const val QA = BuildConfig.DEBUG // Set to {true} if you want to test on QA
 
-        private const val API_CLIENT_ID: String = if (QA) BuildConfig.QA_CLIENT_ID else BuildConfig.PROD_CLIENT_ID // Client Id
+    private val QA = !BuildConfig.DEBUG // Set to {true} if you want to test on QA
 
-        private const val API_SECRET: String = if (QA) BuildConfig.QA_CLIENT_SECRET else BuildConfig.PROD_CLIENT_SECRET // Client Secret
+    private val API_CLIENT_ID: String = if (QA) BuildConfig.QA_CLIENT_ID else BuildConfig.PROD_CLIENT_ID // Client Id
 
-        private const val USER_ID: String = if (QA) BuildConfig.QA_USER_ID else BuildConfig.PROD_USER_ID // Unique User_id provided by your app
+    private val API_SECRET: String = if (QA) BuildConfig.QA_CLIENT_SECRET else BuildConfig.PROD_CLIENT_SECRET // Client Secret
 
-        private const val PLACEMENT_ID: String? = null // Used for custom placements with Native Surveys
-    }
+    private val USER_ID: String = if (QA) BuildConfig.QA_USER_ID else BuildConfig.PROD_USER_ID // Unique User_id provided by your app
 
-    private var nativeSurveys: List<Survey>? = null
+    private val PLACEMENT_ID: String? = null // Used for custom placements with Native Surveys
 
-    private val callback: InBrainCallback = object : InBrainCallback() {
-        fun surveysClosed(b: Boolean, list: List<InBrainSurveyReward>) {
+
+    private lateinit var nativeSurveys: List<Survey>
+
+    private val callback: InBrainCallback = object : InBrainCallback {
+        override fun surveysClosed(b: Boolean, list: List<InBrainSurveyReward>) {
             /**
              * Called upon dismissal of inBrainWebView.
              * If you are using Native Surveys - please, ensure the surveys reloaded after some survey(s) completed.
@@ -39,7 +45,7 @@ class MainActivity : AppCompatActivity() {
             getInBrainRewards()
         }
 
-        fun didReceiveInBrainRewards(rewards: List<Reward>): Boolean {
+        override fun didReceiveInBrainRewards(rewards: List<Reward>): Boolean {
             // THIS METHOD IS DEPRECATED...USE getInBrainRewards() INSTEAD
             // note: this method can be called during SDK usage while your activity is in 'onStop' state
             return false //this should always be false
@@ -75,13 +81,13 @@ class MainActivity : AppCompatActivity() {
         val excCategories: List<SurveyCategory> = ArrayList<SurveyCategory>()
         /*excCategories.add(SurveyCategory.SmokingTobacco);*/
         val filter = SurveyFilter()
-        filter.placementId = MainActivity.PLACEMENT_ID
+        filter.placementId = PLACEMENT_ID
         filter.includeCategories = incCategories
         filter.excludeCategories = excCategories
-        InBrain.getInstance().getNativeSurveys(filter, GetNativeSurveysCallback { surveyList: List<Survey?> ->
+        InBrain.getInstance().getNativeSurveys(filter) { surveyList: List<Survey> ->
             nativeSurveys = surveyList
             Log.d("MainActivity", "Count of Native Surveys returned:" + surveyList.size)
-        })
+        }
     }
 
     override fun onDestroy() {
@@ -91,31 +97,31 @@ class MainActivity : AppCompatActivity() {
 
     private fun initInBrain() {
         //this line must be called prior to utilizing any other inBrain functions
-        InBrain.getInstance().setInBrain(this, MainActivity.API_CLIENT_ID, MainActivity.API_SECRET, false, MainActivity.USER_ID)
+        InBrain.getInstance().setInBrain(this, API_CLIENT_ID, API_SECRET, false, USER_ID)
         InBrain.getInstance().addCallback(callback) // subscribe to events and new rewards
 
         //Here we are applying some custom UI settings for inBrain
         applyUiCustomization()
 
         //Checking if Surveys are Available
-        InBrain.getInstance().areSurveysAvailable(this, SurveysAvailableCallback { available: Boolean ->
+        InBrain.getInstance().areSurveysAvailable(this) { available: Boolean ->
             Log.d(
                 "MainActivity",
                 "Surveys available:$available"
             )
-        })
+        }
     }
 
     /**
      * Open the Survey Wall
      */
     private fun openSurveyWall() {
-        InBrain.getInstance().showSurveys(this, object : StartSurveysCallback() {
-            fun onSuccess() {
+        InBrain.getInstance().showSurveys(this, object : StartSurveysCallback {
+            override fun onSuccess() {
                 Log.d("MainActivity", "Survey Wall Display Successfully")
             }
 
-            fun onFail(message: String) {
+            override fun onFail(message: String) {
                 Log.e("MainActivity", "Failed to Show inBrain Survey Wall: $message")
                 Toast.makeText(
                     this@MainActivity,  // show some message or dialog to user
@@ -130,7 +136,7 @@ class MainActivity : AppCompatActivity() {
      * Fetch ongoing currency sale details
      */
     private fun fetchCurrencySale() {
-        InBrain.getInstance().getCurrencySale(GetCurrencySaleCallback { currencySale: CurrencySale? ->
+        InBrain.getInstance().getCurrencySale { currencySale: CurrencySale? ->
             if (currencySale == null) {
                 Toast.makeText(this, "There's no ongoing currency sale now.", Toast.LENGTH_SHORT).show()
             } else {
@@ -140,7 +146,7 @@ class MainActivity : AppCompatActivity() {
                         + "\n" + currencySale.multiplier)
                 Toast.makeText(this, currencySaleInfo, Toast.LENGTH_SHORT).show()
             }
-        })
+        }
     }
 
     /**
@@ -148,7 +154,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun showNativeSurveys() {
         //Checking if there are any nativeSurveys returned
-        if (nativeSurveys == null || nativeSurveys.isEmpty()) {
+        if (nativeSurveys.isEmpty()) {
             Toast.makeText(this@MainActivity, "Sorry, no native surveys available", Toast.LENGTH_LONG).show()
             return
         }
@@ -162,17 +168,21 @@ class MainActivity : AppCompatActivity() {
         recyclerView.layoutManager = layoutManager
 
         //THIS IS THE LINE THAT CALLS showNativeSurveys private function to load the Survey via inBrain function
-        val adapter = NativeSurveysAdapter({ survey: Survey? -> this.showNativeSurvey(survey) }, nativeSurveys)
+        val adapter = NativeSurveysAdapter(object : NativeSurveysAdapter.NativeSurveysClickListener {
+            override fun surveyClicked(survey: Survey) {
+                showNativeSurvey(survey)
+            }
+        }, nativeSurveys)
         recyclerView.adapter = adapter
     }
 
     private fun showNativeSurvey(survey: Survey) {
-        InBrain.getInstance().showNativeSurvey(this, survey, object : StartSurveysCallback() {
-            fun onSuccess() {
+        InBrain.getInstance().showNativeSurvey(this, survey, object : StartSurveysCallback {
+            override fun onSuccess() {
                 Log.d("MainActivity", "Successfully started InBrain")
             }
 
-            fun onFail(message: String) {
+            override fun onFail(message: String) {
                 Log.e("MainActivity", "Failed to start inBrain:$message")
                 Toast.makeText(
                     this@MainActivity,  // show some message or dialog to user
@@ -186,14 +196,14 @@ class MainActivity : AppCompatActivity() {
      * Use this if you need to force check for rewards that may not have been returned in delegate method
      */
     private fun getInBrainRewards() {
-        InBrain.getInstance().getRewards(object : GetRewardsCallback() {
-            fun handleRewards(rewards: List<Reward>): Boolean {
-                Log.d("MainActivity", "Received rewards:" + Arrays.toString(rewards.toTypedArray()))
+        InBrain.getInstance().getRewards(object : GetRewardsCallback {
+            override fun handleRewards(rewards: List<Reward>): Boolean {
+                Log.d("MainActivity", "Received rewards:" + rewards.toTypedArray().contentToString())
                 processRewards(rewards)
                 return true //be sure to return true here. This will automatically confirm rewards on the inBrain server side
             }
 
-            fun onFailToLoadRewards(t: Throwable) {
+            override fun onFailToLoadRewards(t: Throwable) {
                 Log.e("MainActivity", "onFailToLoadRewards:$t")
             }
         })
@@ -227,25 +237,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun applyUiCustomization() {
         val toolBarConfig = ToolBarConfig()
-        toolBarConfig.setTitle(getString(R.string.app_name)) // set title
+        toolBarConfig.title = getString(R.string.app_name) // set title
         val useResourceId = false
         if (useResourceId) {
             toolBarConfig.setToolbarColorResId(R.color.colorAccent) // set toolbar color with status bar
-                .setBackButtonColorResId(android.R.color.white) // set icon color
-                .setTitleColorResId(android.R.color.white) //  set toolbar text
+                .setBackButtonColorResId(R.color.white).titleColorResId = R.color.white //  set toolbar text
         } else {
-            toolBarConfig.setToolbarColor(resources.getColor(R.color.colorAccent))
-                .setBackButtonColor(resources.getColor(android.R.color.white))
-                .setTitleColor(resources.getColor(android.R.color.white))
+            toolBarConfig.setToolbarColor(ContextCompat.getColor(this, R.color.colorAccent))
+                .setBackButtonColor(ContextCompat.getColor(this, R.color.white)).titleColor =
+                ContextCompat.getColor(this, R.color.white)
         }
-        toolBarConfig.setElevationEnabled(false)
+        toolBarConfig.isElevationEnabled = false
         InBrain.getInstance().setToolbarConfig(toolBarConfig)
         val statusBarConfig = StatusBarConfig()
         if (useResourceId) {
-            statusBarConfig.setStatusBarColorResId(android.R.color.white)
+            statusBarConfig.setStatusBarColorResId(R.color.white)
                 .setStatusBarIconsLight(false)
         } else {
-            statusBarConfig.setStatusBarColor(resources.getColor(android.R.color.white))
+            statusBarConfig.setStatusBarColor(ContextCompat.getColor(this, R.color.white))
                 .setStatusBarIconsLight(false)
         }
         InBrain.getInstance().setStatusBarConfig(statusBarConfig)

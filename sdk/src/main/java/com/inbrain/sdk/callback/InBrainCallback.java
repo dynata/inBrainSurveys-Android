@@ -35,13 +35,13 @@ public interface InBrainCallback {
 
     //region -DEPRECATED---------------
     /**
-     * @deprecated(forRemoval=true) Use {@link #surveysClosed(boolean, Optional)} instead.
+     * @deprecated(forRemoval=true) Use {@link #surveysClosed(boolean, List)}} instead.
      */
     @Deprecated
     default void surveysClosed() {};
 
     /**
-     * @deprecated(forRemoval=true) Use {@link #surveysClosed(boolean, Optional)} instead.
+     * @deprecated(forRemoval=true) Use {@link #surveysClosed(boolean, List)} instead.
      */
     @Deprecated
     default void surveysClosedFromPage() {};
