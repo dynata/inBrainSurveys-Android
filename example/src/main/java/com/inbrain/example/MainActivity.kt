@@ -9,7 +9,9 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.inbrain.sdk.InBrain
-import com.inbrain.sdk.callback.*
+import com.inbrain.sdk.callback.GetRewardsCallback
+import com.inbrain.sdk.callback.InBrainCallback
+import com.inbrain.sdk.callback.StartSurveysCallback
 import com.inbrain.sdk.config.StatusBarConfig
 import com.inbrain.sdk.config.ToolBarConfig
 import com.inbrain.sdk.model.*
@@ -41,6 +43,18 @@ class MainActivity : AppCompatActivity() {
     private val callback: InBrainCallback = object : InBrainCallback {
         override fun surveysClosed(byWebView: Boolean, rewards: MutableList<InBrainSurveyReward>?) {
             Log.d(LOG_TAG, "Surveys closed")
+
+            val outText = StringBuilder("Survey outcome from callback:")
+            if (rewards != null) {
+                for (reward in rewards) {
+                    if (outText.isNotEmpty())
+                        outText.append("\n")
+                    outText.append("Survey(" + reward.surveyId + ") has been " + reward.outcomeType.name + " with reward " + reward.userReward + ".")
+                }
+                Toast.makeText(this@MainActivity, outText.toString(), Toast.LENGTH_LONG).show()
+            }
+
+            // Manually check rewards received
             getInBrainRewards()
         }
 
@@ -217,13 +231,13 @@ class MainActivity : AppCompatActivity() {
             total += reward.amount
         }
         if (rewards.isEmpty()) {
-            Toast.makeText(this@MainActivity, "You have no new rewards!", Toast.LENGTH_LONG).show()
+            Toast.makeText(this@MainActivity, "Force check rewards:\nYou have no new rewards!", Toast.LENGTH_LONG).show()
         } else {
             Toast.makeText(
                 this@MainActivity,
                 String.format(
                     Locale.getDefault(),
-                    "You have received %d new rewards for a total of %.1f %s!",
+                    "Force check rewards:\nYou have received %d new rewards for a total of %.1f %s!",
                     rewards.size,
                     total,
                     rewards[0].currency

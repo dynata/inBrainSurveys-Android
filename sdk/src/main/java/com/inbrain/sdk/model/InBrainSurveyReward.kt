@@ -15,7 +15,7 @@ enum class SurveyOutcomeType(val type: Int) {
     }
 }
 
-class InBrainSurveyReward(var json: String) {
+class InBrainSurveyReward(json: String) {
     var surveyId: String
     var placementId: String?
     var userReward: Double
@@ -30,7 +30,7 @@ class InBrainSurveyReward(var json: String) {
         userReward = jsonObject.getDouble("userReward")
 
         val outcome = jsonObject.getInt("outcomeType")
-        outcomeType = SurveyOutcomeType.Companion.fromType(outcome)
+        outcomeType = SurveyOutcomeType.fromType(outcome)
 
         val categoryIds = jsonObject.optJSONArray("categoryIds")
         if (categoryIds != null && categoryIds.length() > 0) {
