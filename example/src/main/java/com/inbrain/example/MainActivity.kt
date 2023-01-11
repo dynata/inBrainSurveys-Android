@@ -118,34 +118,41 @@ class MainActivity : AppCompatActivity() {
 
         //Here we are applying some custom UI settings for inBrain
         applyUiCustomization()
-
-        //Checking if Surveys are Available
-        InBrain.getInstance().areSurveysAvailable(this) { available: Boolean ->
-            Log.d(
-                LOG_TAG,
-                "Surveys available:$available"
-            )
-        }
     }
 
     /**
      * Open the Survey Wall
      */
     private fun openSurveyWall() {
-        InBrain.getInstance().showSurveys(this, object : StartSurveysCallback {
-            override fun onSuccess() {
-                Log.d(LOG_TAG, "Survey Wall Display Successfully")
-            }
+        //Checking if Surveys are Available
+        InBrain.getInstance().areSurveysAvailable(this) { available: Boolean ->
+            Log.d(
+                LOG_TAG,
+                "Surveys available:$available"
+            )
+            if (available) {
+                InBrain.getInstance().showSurveys(this, object : StartSurveysCallback {
+                    override fun onSuccess() {
+                        Log.d(LOG_TAG, "Survey Wall Display Successfully")
+                    }
 
-            override fun onFail(message: String) {
-                Log.e(LOG_TAG, "Failed to Show inBrain Survey Wall: $message")
+                    override fun onFail(message: String) {
+                        Log.e(LOG_TAG, "Failed to Show inBrain Survey Wall: $message")
+                        Toast.makeText(
+                            this@MainActivity,  // show some message or dialog to user
+                            "Sorry, something went wrong!",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                })
+            } else {
                 Toast.makeText(
                     this@MainActivity,  // show some message or dialog to user
-                    "Sorry, something went wrong!",
+                    "Oops... No surveys available right now!",
                     Toast.LENGTH_LONG
                 ).show()
             }
-        })
+        }
     }
 
     /**
