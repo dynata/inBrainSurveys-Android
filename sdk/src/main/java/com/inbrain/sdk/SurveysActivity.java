@@ -26,7 +26,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
