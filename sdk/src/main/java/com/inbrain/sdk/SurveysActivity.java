@@ -26,6 +26,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
@@ -221,10 +223,18 @@ public class SurveysActivity extends Activity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (intent.hasExtra(EXTRA_LIGHT_STATUS_BAR_ICONS)) {
                 boolean lightStatusBarIcons = intent.getBooleanExtra(EXTRA_LIGHT_STATUS_BAR_ICONS, false);
-                if (!lightStatusBarIcons) {
-                    int flags = getWindow().getDecorView().getSystemUiVisibility();
-                    flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                    getWindow().getDecorView().setSystemUiVisibility(flags);
+                if (lightStatusBarIcons) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        WindowInsetsController controller = getWindow().getInsetsController();
+                        if(controller != null) {
+                            controller.setSystemBarsAppearance(WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
+                                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
+                        }
+                    } else {
+                        int flags = getWindow().getDecorView().getSystemUiVisibility();
+                        flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                        getWindow().getDecorView().setSystemUiVisibility(flags);
+                    }
                 }
             }
         }

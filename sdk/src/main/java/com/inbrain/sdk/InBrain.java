@@ -352,7 +352,7 @@ public class InBrain {
         }
 
         if (toolbarColor == 0) {
-            toolbarColor = context.getResources().getColor(R.color.default_toolbar);
+            toolbarColor = context.getResources().getColor(R.color.azure);
         }
 
         if (backButtonColor == 0) {
@@ -364,18 +364,18 @@ public class InBrain {
         }
 
         if (statusBarColor == 0) {
-            statusBarColor = context.getResources().getColor(R.color.default_toolbar);
+            statusBarColor = context.getResources().getColor(R.color.azure);
         }
 
         if (lightStatusBarIcons == null) {
-            lightStatusBarIcons = true;
+            lightStatusBarIcons = false;
         }
 
         if (enableToolbarElevation == null) {
             enableToolbarElevation = false;
         }
 
-        if (title == null) {
+        if (TextUtils.isEmpty(title)) {
             title = context.getResources().getString(R.string.inbrain_surveys);
         }
     }

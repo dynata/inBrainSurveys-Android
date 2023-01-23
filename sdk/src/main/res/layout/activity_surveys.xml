@@ -9,7 +9,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/background"
+        android:background="@color/azure"
         android:gravity="center_vertical"
         tools:ignore="UseCompoundDrawables"
         tools:targetApi="lollipop">
@@ -23,7 +23,8 @@
             android:contentDescription="@string/go_back"
             android:focusable="true"
             android:padding="@dimen/big_padding"
-            android:src="@drawable/ic_back" />
+            android:src="@drawable/ic_back"
+            android:tint="@color/main_text" />
 
         <TextView
             android:id="@+id/toolbar_title_text"
@@ -34,7 +35,6 @@
             android:text="@string/inbrain_surveys"
             android:textColor="@color/main_text"
             android:textSize="@dimen/header_text" />
-
     </LinearLayout>
 
     <FrameLayout
