@@ -29,21 +29,23 @@ public interface InBrainCallback {
      *
      * @param rewards new rewards to handle (including previous unconfirmed rewards)
      * @return true if rewards were handled by the app and should be confirmed automatically,
-     *         false otherwise
+     * false otherwise
      */
-    boolean didReceiveInBrainRewards(List<Reward> rewards);
+    default boolean didReceiveInBrainRewards(List<Reward> rewards) {
+        return false;
+    }
 
     //region -DEPRECATED---------------
     /**
      * @deprecated(forRemoval=true) Use {@link #surveysClosed(boolean, List)}} instead.
      */
     @Deprecated
-    default void surveysClosed() {};
+    default void surveysClosed() {}
 
     /**
      * @deprecated(forRemoval=true) Use {@link #surveysClosed(boolean, List)} instead.
      */
     @Deprecated
-    default void surveysClosedFromPage() {};
+    default void surveysClosedFromPage() {}
     //endregion
 }

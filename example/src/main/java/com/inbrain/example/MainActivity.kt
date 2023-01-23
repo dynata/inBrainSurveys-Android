@@ -40,29 +40,21 @@ class MainActivity : AppCompatActivity() {
 
     private var nativeSurveys: List<Survey>? = null
 
-    private val callback: InBrainCallback = object : InBrainCallback {
-        override fun surveysClosed(byWebView: Boolean, rewards: MutableList<InBrainSurveyReward>?) {
-            Log.d(LOG_TAG, "Surveys closed")
+    private val callback: InBrainCallback = InBrainCallback { _, rewards ->
+        Log.d(LOG_TAG, "Surveys closed")
 
-            val outText = StringBuilder("Survey outcome from callback:")
-            if (rewards != null) {
-                for (reward in rewards) {
-                    if (outText.isNotEmpty())
-                        outText.append("\n")
-                    outText.append("Survey(" + reward.surveyId + ") has been " + reward.outcomeType.name + " with reward " + reward.userReward + ".")
-                }
-                Toast.makeText(this@MainActivity, outText.toString(), Toast.LENGTH_LONG).show()
+        val outText = StringBuilder("Survey outcome from callback:")
+        if (rewards != null) {
+            for (reward in rewards) {
+                if (outText.isNotEmpty())
+                    outText.append("\n")
+                outText.append("Survey(" + reward.surveyId + ") has been " + reward.outcomeType.name + " with reward " + reward.userReward + ".")
             }
-
-            // Manually check rewards received
-            getInBrainRewards()
+            Toast.makeText(this@MainActivity, outText.toString(), Toast.LENGTH_LONG).show()
         }
 
-        override fun didReceiveInBrainRewards(rewards: List<Reward>): Boolean {
-            // THIS METHOD IS DEPRECATED...USE getInBrainRewards() INSTEAD
-            // note: this method can be called during SDK usage while your activity is in 'onStop' state
-            return false //this should always be false
-        }
+        // Manually check rewards received
+        getInBrainRewards()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
