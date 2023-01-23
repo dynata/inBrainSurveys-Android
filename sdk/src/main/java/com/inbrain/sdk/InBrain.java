@@ -33,7 +33,6 @@ import com.inbrain.sdk.model.SurveyFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -49,9 +48,6 @@ public class InBrain {
     private static final String PREFERENCE_PENDING_REWARDS = "372131_f4lied";
 
     private static InBrain instance;
-
-    private final Set<Long> confirmedRewardsIds = new HashSet<>();
-    private Set<Reward> lastReceivedRewards = new HashSet<>();
 
     private String apiClientID = null;
     private String apiSecret = null;
@@ -459,8 +455,11 @@ public class InBrain {
         }, userID, deviceId);
     }
 
+    private void onGetRewardsSuccess(List<Reward> rewards) {
+        onGetRewardsSuccess(null, rewards);
+    }
+
     private void onGetRewardsSuccess(GetRewardsCallback callback, List<Reward> rewards) {
-        lastReceivedRewards = new HashSet<>(rewards);
         if (shouldConfirmNewRewards(rewards, callback)) {
             confirmRewards(rewards);
         }
@@ -538,39 +537,7 @@ public class InBrain {
         }, userID, deviceId);
     }
 
-    private void onGetRewardsSuccess(List<Reward> rewards) {
-        Set<Reward> newRewards = new HashSet<>(rewards);
-        if (checkRewardsAreSame(newRewards)) {
-            if (BuildConfig.DEBUG) Log.w(Constants.LOG_TAG, "Rewards are same");
-            return;
-        }
-        lastReceivedRewards = newRewards;
-        if (shouldConfirmNewRewards(rewards, null)) {
-            confirmRewards(rewards);
-        }
-    }
-
-    private boolean checkRewardsAreSame(Set<Reward> newRewards) {
-        boolean firstContainsAll = lastReceivedRewards.containsAll(newRewards);
-        boolean secondContainsAll = newRewards.containsAll(lastReceivedRewards);
-        return firstContainsAll && secondContainsAll;
-    }
-
-    private boolean shouldConfirmNewRewards(List<Reward> rewards,
-                                            GetRewardsCallback externalCallback) {
-        Iterator<Reward> iterator = rewards.iterator();
-        while (iterator.hasNext()) {
-            Reward reward = iterator.next();
-            for (Long rewardId : confirmedRewardsIds) {
-                if (reward.transactionId == rewardId) {
-                    if (BuildConfig.DEBUG) {
-                        Log.w(Constants.LOG_TAG, "New reward has been already confirmed");
-                    }
-                    iterator.remove();
-                    break;
-                }
-            }
-        }
+    private boolean shouldConfirmNewRewards(List<Reward> rewards, GetRewardsCallback externalCallback) {
         if (externalCallback != null) {
             return externalCallback.handleRewards(rewards); // notify by request
         } else if (!callbacksList.isEmpty()) {
@@ -635,7 +602,6 @@ public class InBrain {
     private Set<Long> getRewardsIds(List<Reward> rewards) {
         Set<Long> rewardsIds = new HashSet<>(rewards.size());
         for (Reward reward : rewards) {
-            if (confirmedRewardsIds.contains(reward.transactionId)) continue;
             rewardsIds.add(reward.transactionId);
         }
         return rewardsIds;
@@ -644,7 +610,6 @@ public class InBrain {
     private Set<Long> getRewardsIds(long[] transactionIds) {
         Set<Long> rewardsIds = new HashSet<>(transactionIds.length);
         for (long transactionId : transactionIds) {
-            if (confirmedRewardsIds.contains(transactionId)) continue;
             rewardsIds.add(transactionId);
         }
         return rewardsIds;
@@ -682,7 +647,6 @@ public class InBrain {
                 if (BuildConfig.DEBUG) {
                     Log.d(Constants.LOG_TAG, "Successfully confirmed rewards");
                 }
-                confirmedRewardsIds.addAll(pendingRewardIds);
                 Set<Long> newPendingRewardIds = getPendingRewardIds(); // It might have changed
                 newPendingRewardIds.removeAll(pendingRewardIds);
                 savePendingRewards(newPendingRewardIds);
@@ -704,7 +668,6 @@ public class InBrain {
                                     if (BuildConfig.DEBUG) {
                                         Log.d(Constants.LOG_TAG, "Successfully confirmed rewards");
                                     }
-                                    confirmedRewardsIds.addAll(pendingRewardIds);
                                     Set<Long> newPendingRewardIds = getPendingRewardIds(); // It might have changed
                                     newPendingRewardIds.removeAll(pendingRewardIds);
                                     savePendingRewards(newPendingRewardIds);
