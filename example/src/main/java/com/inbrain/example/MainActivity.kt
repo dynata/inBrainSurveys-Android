@@ -3,6 +3,9 @@ package com.inbrain.example
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.CheckBox
+import android.widget.CompoundButton
+import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -46,9 +49,8 @@ class MainActivity : AppCompatActivity() {
         val outText = StringBuilder("Survey outcome from callback:")
         if (rewards != null) {
             for (reward in rewards) {
-                if (outText.isNotEmpty())
-                    outText.append("\n")
-                outText.append("Survey(" + reward.surveyId + ") has been " + reward.outcomeType.name + " with reward " + reward.userReward + ".")
+                outText.append("\n")
+                    .append("Survey(" + reward.surveyId + ") has been " + reward.outcomeType.name + " with reward " + reward.userReward + ".")
             }
             Toast.makeText(this@MainActivity, outText.toString(), Toast.LENGTH_LONG).show()
         }
@@ -64,6 +66,19 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnOpenSurveyWall).setOnClickListener { openSurveyWall() }
         findViewById<View>(R.id.btnShowNativeSurveys).setOnClickListener { showNativeSurveys() }
         findViewById<View>(R.id.btnFetchCurrencySale).setOnClickListener { fetchCurrencySale() }
+
+        val chbSessionId = findViewById<CheckBox>(R.id.chbSessionId)
+        val edtSessionId = findViewById<EditText>(R.id.edtSessionId)
+        chbSessionId.setOnCheckedChangeListener { compoundButton: CompoundButton?, checked: Boolean ->
+            if (checked) {
+                val sessionId = edtSessionId.text.toString()
+                if (sessionId.isNotEmpty()) {
+                    InBrain.getInstance().sessionId = sessionId
+                    return@setOnCheckedChangeListener
+                }
+            }
+            InBrain.getInstance().sessionId = null
+        }
 
         initInBrain()
     }
@@ -104,7 +119,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun initInBrain() {
         //this line must be called prior to utilizing any other inBrain functions
-        InBrain.getInstance().setInBrain(this, apiClientKey, apiSecret, false, userId)
+        InBrain.getInstance().setInBrain(this, apiClientKey, apiSecret, false)
+        InBrain.getInstance().setUserID(this, userId)
 
         InBrain.getInstance().addCallback(callback) // subscribe to events and new rewards
 
@@ -131,7 +147,7 @@ class MainActivity : AppCompatActivity() {
                     override fun onFail(message: String) {
                         Log.e(LOG_TAG, "Failed to Show inBrain Survey Wall: $message")
                         Toast.makeText(
-                            this@MainActivity,  // show some message or dialog to user
+                            this@MainActivity,
                             "Sorry, something went wrong!",
                             Toast.LENGTH_LONG
                         ).show()
@@ -139,7 +155,7 @@ class MainActivity : AppCompatActivity() {
                 })
             } else {
                 Toast.makeText(
-                    this@MainActivity,  // show some message or dialog to user
+                    this@MainActivity,
                     "Oops... No surveys available right now!",
                     Toast.LENGTH_LONG
                 ).show()
