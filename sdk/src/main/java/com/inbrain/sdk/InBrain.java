@@ -90,11 +90,6 @@ public class InBrain {
     }
 
     public void setInBrain(Context context, String apiClientID, String apiSecret, boolean isS2S, String userID) {
-        boolean isUiThread = Looper.getMainLooper().getThread() == Thread.currentThread();
-        if (!isUiThread) {
-            Log.e(Constants.LOG_TAG, "Method must be called from main thread!");
-            return;
-        }
         handler = new Handler(Looper.getMainLooper());
         if (TextUtils.isEmpty(apiClientID)) {
             Log.e(Constants.LOG_TAG, "API_CLIENT_ID can't be null or empty!");
