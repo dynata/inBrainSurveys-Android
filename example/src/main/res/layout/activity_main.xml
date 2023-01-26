@@ -4,28 +4,57 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_marginBottom="100dp"
-    android:gravity="center_horizontal"
     android:orientation="vertical"
     tools:context="com.inbrain.example.MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="100dp"
+        android:orientation="horizontal"
+        tools:ignore="RtlCompat">
+
+        <CheckBox
+            android:id="@+id/chbSessionId"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/use_session_id" />
+
+        <EditText
+            android:id="@+id/edtSessionId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="24dp"
+            android:hint="eg. daily-survey"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
 
     <Button
         android:id="@+id/btnOpenSurveyWall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
-        android:text="@string/open_survey_wall" />
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="20dp"
+        android:text="@string/open_survey_wall"
+        tools:ignore="RtlCompat" />
 
     <Button
         android:id="@+id/btnFetchCurrencySale"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
         android:layout_marginTop="20dp"
-        android:text="@string/fetch_currency_sale" />
+        android:text="@string/fetch_currency_sale"
+        tools:ignore="RtlCompat" />
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp">
+        android:layout_marginTop="40dp">
 
         <Button
             android:id="@+id/btnShowNativeSurveys"

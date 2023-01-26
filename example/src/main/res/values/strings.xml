@@ -3,4 +3,5 @@
     <string name="open_survey_wall">Open Survey Wall</string>
     <string name="fetch_currency_sale">Fetch Currency Sale</string>
     <string name="show_native_surveys">Show Native Surveys</string>
+    <string name="use_session_id">Use Session ID</string>
 </resources>
