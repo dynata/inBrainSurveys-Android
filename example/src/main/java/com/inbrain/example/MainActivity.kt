@@ -263,28 +263,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyUiCustomization() {
-//        val toolBarConfig = ToolBarConfig()
-//        toolBarConfig.title = getString(R.string.app_name) // set title
-//        val useResourceId = false
-//        if (useResourceId) {
-//            toolBarConfig.setToolbarColorResId(R.color.colorAccent) // set toolbar color with status bar
-//                .setBackButtonColorResId(R.color.white)
-//                .titleColorResId = R.color.white //  set toolbar text
-//        } else {
-//            toolBarConfig.setToolbarColor(ContextCompat.getColor(this, R.color.colorAccent))
-//                .setBackButtonColor(ContextCompat.getColor(this, R.color.white))
-//                .titleColor = ContextCompat.getColor(this, R.color.white)
-//        }
-//        toolBarConfig.isElevationEnabled = false
-//        InBrain.getInstance().setToolbarConfig(toolBarConfig)
-//        val statusBarConfig = StatusBarConfig()
-//        if (useResourceId) {
-//            statusBarConfig.setStatusBarColorResId(R.color.white)
-//                .setStatusBarIconsLight(false)
-//        } else {
-//            statusBarConfig.setStatusBarColor(ContextCompat.getColor(this, R.color.white))
-//                .setStatusBarIconsLight(false)
-//        }
-//        InBrain.getInstance().setStatusBarConfig(statusBarConfig)
+        val toolBarConfig = ToolBarConfig()
+        toolBarConfig.title = getString(R.string.app_name) // set title
+        val useResourceId = false
+        if (useResourceId) {
+            toolBarConfig.setToolbarColorResId(R.color.colorAccent) // set toolbar color with status bar
+                .setBackButtonColorResId(R.color.white)
+                .titleColorResId = R.color.white //  set toolbar text
+        } else {
+            toolBarConfig.setToolbarColor(ContextCompat.getColor(this, R.color.colorAccent))
+                .setBackButtonColor(ContextCompat.getColor(this, R.color.white))
+                .titleColor = ContextCompat.getColor(this, R.color.white)
+        }
+        toolBarConfig.isElevationEnabled = false
+        InBrain.getInstance().setToolbarConfig(toolBarConfig)
+        val statusBarConfig = StatusBarConfig()
+        if (useResourceId) {
+            statusBarConfig.setStatusBarColorResId(R.color.white)
+                .setStatusBarIconsLight(false)
+        } else {
+            statusBarConfig.setStatusBarColor(ContextCompat.getColor(this, R.color.white))
+                .setStatusBarIconsLight(false)
+        }
+        InBrain.getInstance().setStatusBarConfig(statusBarConfig)
     }
 }
