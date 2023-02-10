@@ -10,6 +10,7 @@ enum class SurveyConversionLevel(val level: Int) {
     EXCELLENT(6);
 
     companion object {
+        @JvmStatic
         fun fromLevel(level: Int): SurveyConversionLevel? {
             for (conversionLevel in values()) {
                 if (conversionLevel.level == level) {

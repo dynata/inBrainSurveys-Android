@@ -8,6 +8,7 @@ enum class SurveyOutcomeType(val type: Int) {
     Terminated(1);
 
     companion object {
+        @JvmStatic
         fun fromType(type: Int): SurveyOutcomeType {
             if (type == 0) { return Completed }
             return Terminated
