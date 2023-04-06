@@ -547,27 +547,6 @@ public class InBrain {
         return false; // no subscriptions for rewards, leave rewards for next call
     }
 
-    private void refreshToken(final TokenExecutor.TokenCallback tokenCallback) {
-        TokenExecutor executor = new TokenExecutor(stagingMode, apiClientID, apiSecret);
-        executor.getToken(new TokenExecutor.TokenCallback() {
-            @Override
-            public void onGetToken(String token) {
-                InBrain.this.token = token;
-                tokenCallback.onGetToken(token);
-            }
-
-            @Override
-            public void onFailToLoadToken(Throwable t) {
-                if (t instanceof InvalidClientException) {
-                    token = null;
-                    wrongClientIdError = true;
-                    Log.w(Constants.LOG_TAG, "Invalid client");
-                }
-                tokenCallback.onFailToLoadToken(t);
-            }
-        });
-    }
-
     /**
      * Confirms rewards manually.
      *
@@ -618,7 +597,7 @@ public class InBrain {
             refreshToken(new TokenExecutor.TokenCallback() {
                 @Override
                 public void onGetToken(String token) {
-                    confirmRewards(token, pendingRewardIds);
+                    requestConfirmRewards(pendingRewardIds);
                 }
 
                 @Override
@@ -630,11 +609,11 @@ public class InBrain {
                 }
             });
         } else {
-            confirmRewards(token, pendingRewardIds);
+            requestConfirmRewards(pendingRewardIds);
         }
     }
 
-    private void confirmRewards(String token, final Set<Long> pendingRewardIds) {
+    private void requestConfirmRewards(final Set<Long> pendingRewardIds) {
         ConfirmRewardsExecutor confirmRewardsExecutor = new ConfirmRewardsExecutor();
         confirmRewardsExecutor.confirmRewards(stagingMode, token, pendingRewardIds, new ConfirmRewardsExecutor.ConfirmRewardsCallback() {
             @Override
@@ -989,5 +968,26 @@ public class InBrain {
                         }
                     }
                 });
+    }
+
+    private void refreshToken(final TokenExecutor.TokenCallback tokenCallback) {
+        TokenExecutor executor = new TokenExecutor(stagingMode, apiClientID, apiSecret);
+        executor.getToken(new TokenExecutor.TokenCallback() {
+            @Override
+            public void onGetToken(String token) {
+                InBrain.this.token = token;
+                tokenCallback.onGetToken(token);
+            }
+
+            @Override
+            public void onFailToLoadToken(Throwable t) {
+                if (t instanceof InvalidClientException) {
+                    token = null;
+                    wrongClientIdError = true;
+                    Log.w(Constants.LOG_TAG, "Invalid client");
+                }
+                tokenCallback.onFailToLoadToken(t);
+            }
+        });
     }
 }
