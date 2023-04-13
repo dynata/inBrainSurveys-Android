@@ -34,12 +34,6 @@ import java.util.UUID;
 public class InBrain {
     private static InBrain instance;
 
-    private String apiClientID = null;
-    private String apiSecret = null;
-    private boolean isS2S = false;
-    private String userID = null;
-    private String deviceId = null;
-
     private String sessionUid;
     private HashMap<String, String> dataOptions;
     private String language;
@@ -84,9 +78,6 @@ public class InBrain {
             Log.e(Constants.LOG_TAG, "API_SECRET can't be null or empty!");
             return;
         }
-        this.apiClientID = apiClientID.trim();
-        this.apiSecret = apiSecret.trim();
-        this.isS2S = isS2S;
         apiExecutor.setApiClientId(apiClientID.trim());
         apiExecutor.setApiSecret(apiSecret.trim());
         apiExecutor.setIsS2S(isS2S);
@@ -95,18 +86,17 @@ public class InBrain {
 
     public void setUserID(Context context, String userID) {
         PreferenceUtil.INSTANCE.init(context);
-        deviceId = PreferenceUtil.INSTANCE.getDeviceId();
+        String deviceId = PreferenceUtil.INSTANCE.getDeviceId();
         if (TextUtils.isEmpty(deviceId)) {
             deviceId = UUID.randomUUID().toString();
             PreferenceUtil.INSTANCE.saveDeviceId(deviceId);
         }
+        apiExecutor.setDeviceId(deviceId);
         if (TextUtils.isEmpty(userID)) {
-            this.userID = deviceId;
+            apiExecutor.setUserId(deviceId);
         } else {
-            this.userID = userID;
+            apiExecutor.setUserId(userID);
         }
-        apiExecutor.setDeviceId(this.deviceId);
-        apiExecutor.setUserId(this.userID);
     }
 
     public void addCallback(InBrainCallback callback) {
@@ -188,8 +178,8 @@ public class InBrain {
         prepareConfig(context);
 
         try {
-            SurveysActivity.start(context, APIExecutor.stagingMode, apiClientID, apiSecret, isS2S,
-                    sessionUid, userID, deviceId, dataOptions, language, title, toolbarColor,
+            SurveysActivity.start(context, APIExecutor.stagingMode, apiExecutor.getApiClientId(), apiExecutor.getApiSecret(), apiExecutor.getIsS2S(),
+                    sessionUid, apiExecutor.getUserId(), apiExecutor.getDeviceId(), dataOptions, language, title, toolbarColor,
                     backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
             handler.post(callback::onSuccess);
         } catch (final Exception ex) {
@@ -209,8 +199,8 @@ public class InBrain {
         prepareConfig(context);
 
         try {
-            SurveysActivity.start(context, APIExecutor.stagingMode, apiClientID, apiSecret, isS2S,
-                    sessionUid, userID, deviceId, surveyId, searchId, dataOptions, language, title, toolbarColor,
+            SurveysActivity.start(context, APIExecutor.stagingMode, apiExecutor.getApiClientId(), apiExecutor.getApiSecret(), apiExecutor.getIsS2S(),
+                    sessionUid, apiExecutor.getUserId(), apiExecutor.getDeviceId(), surveyId, searchId, dataOptions, language, title, toolbarColor,
                     backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
             handler.post(callback::onSuccess);
         } catch (final Exception ex) {
@@ -364,12 +354,12 @@ public class InBrain {
     }
 
     public String getDeviceId() {
-        if (TextUtils.isEmpty(apiClientID) || TextUtils.isEmpty(apiSecret)) {
+        if (TextUtils.isEmpty(apiExecutor.getApiClientId()) || TextUtils.isEmpty(apiExecutor.getApiSecret())) {
             Log.e(Constants.LOG_TAG, "Please first call setInBrain() method!");
             return "";
         }
 
-        return deviceId;
+        return apiExecutor.getDeviceId();
     }
 
     public void areSurveysAvailable(final Context context, final SurveysAvailableCallback callback) {

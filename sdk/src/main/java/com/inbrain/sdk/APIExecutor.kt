@@ -44,20 +44,40 @@ internal class APIExecutor {
         this.apiClientID = clientId
     }
 
+    fun getApiClientId(): String? {
+        return this.apiClientID
+    }
+
     fun setApiSecret(apiSecret: String?) {
         this.apiSecret = apiSecret
+    }
+
+    fun getApiSecret(): String? {
+        return this.apiSecret
     }
 
     fun setIsS2S(isS2S: Boolean) {
         this.isS2S = isS2S
     }
 
+    fun getIsS2S(): Boolean {
+        return this.isS2S
+    }
+
     fun setDeviceId(deviceId: String?) {
         this.deviceId = deviceId
     }
 
+    fun getDeviceId(): String? {
+        return this.deviceId
+    }
+
     fun setUserId(userId: String?) {
         this.userID = userId;
+    }
+
+    fun getUserId(): String? {
+        return this.userID
     }
 
     fun addCallback(callback: InBrainCallback?) {
@@ -98,7 +118,7 @@ internal class APIExecutor {
                 val matches = java.util.ArrayList<String>()
                 while (m.find()) {
                     for (i in 1..m.groupCount()) {
-                        matches.add(m.group(i))
+                        m.group(i)?.let { matches.add(it) }
                     }
                 }
                 if (matches.size > 2) {
@@ -172,20 +192,23 @@ internal class APIExecutor {
                     }
                     when (requestType) {
                         RequestType.GET_REWARDS -> {
-                            val callback = (params[0] as Array<*>)[0] as GetRewardsCallback?
+                            val callback =
+                                if (params[0] != null) params[0] as GetRewardsCallback else null
                             if (callback != null)
-                                handler.post { callback.onFailToLoadRewards(t) }
+                                handler.post {
+                                    callback.onFailToLoadRewards(t)
+                                }
                         }
                         RequestType.ARE_SURVEYS_AVAILABLE -> {
-                            val callback = (params[0] as Array<*>)[1] as SurveysAvailableCallback
+                            val callback = params[1] as SurveysAvailableCallback
                             handler.post { callback.onSurveysAvailable(false) }
                         }
                         RequestType.GET_NATIVE_SURVEYS -> {
-                            val callback = (params[0] as Array<*>)[3] as GetNativeSurveysCallback
+                            val callback = params[3] as GetNativeSurveysCallback
                             handler.post { callback.nativeSurveysReceived(java.util.ArrayList()) }
                         }
                         RequestType.GET_CURRENCY_SALE -> {
-                            val callback = (params[0] as Array<*>)[0] as GetCurrencySaleCallback
+                            val callback = params[0] as GetCurrencySaleCallback
                             handler.post { callback.currencySaleReceived(null) }
                         }
                         else -> {}
@@ -195,42 +218,47 @@ internal class APIExecutor {
         } else {
             when (requestType) {
                 RequestType.GET_REWARDS -> {
-                    val callback = if (params[0] != null) (params[0] as Array<*>)[0] else null
+                    val callback =
+                        if (params[0] != null) (params[0] as GetRewardsCallback) else null
                     requestRewardsWithTokenUpdate(
-                        if (callback != null) callback as GetRewardsCallback else null,
+                        callback,
                         updateTokenIfRequired
                     )
                 }
                 RequestType.CONFIRM_REWARDS -> {
-                    val pendingRewardIds = (params[0] as Array<*>)[0] as Set<Long>
+                    @Suppress("UNCHECKED_CAST")
+                    val pendingRewardIds = params[0] as Set<Long>
                     requestConfirmRewards(pendingRewardIds, updateTokenIfRequired)
                 }
                 RequestType.ARE_SURVEYS_AVAILABLE -> {
-                    val context = (params[0] as Array<*>)[0]
-                    val callback = (params[0] as Array<*>)[1]
+                    val context = params[0] as Context
+                    val callback = params[1] as SurveysAvailableCallback
                     requestSurveysAvailabilityWithTokenUpdate(
-                        context as Context,
-                        callback as SurveysAvailableCallback,
+                        context,
+                        callback,
                         updateTokenIfRequired
                     )
                 }
                 RequestType.GET_NATIVE_SURVEYS -> {
-                    val placeId = (params[0] as Array<*>)[0]
-                    val includeCate = (params[0] as Array<*>)[1]
-                    val excludeCate = (params[0] as Array<*>)[2]
-                    val callback = (params[0] as Array<*>)[3]
-                    requestNativeSurveysWithTokenUpdate(
-                        if (placeId is String) placeId else null,
-                        includeCate as List<SurveyCategory>,
-                        excludeCate as List<SurveyCategory>,
-                        callback as GetNativeSurveysCallback,
-                        updateTokenIfRequired
-                    )
+                    if (params[0] != null) {
+                        val placeId = (params[0] as Array<*>)[0]
+                        val includeCate = (params[0] as Array<*>)[1]
+                        val excludeCate = (params[0] as Array<*>)[2]
+                        val callback = (params[0] as Array<*>)[3]
+                        @Suppress("UNCHECKED_CAST")
+                        requestNativeSurveysWithTokenUpdate(
+                            if (placeId is String) placeId else null,
+                            if (includeCate != null) includeCate as List<SurveyCategory> else null,
+                            if (excludeCate != null) excludeCate as List<SurveyCategory> else null,
+                            callback as GetNativeSurveysCallback,
+                            updateTokenIfRequired
+                        )
+                    }
                 }
                 RequestType.GET_CURRENCY_SALE -> {
-                    val callback = (params[0] as Array<*>)[0]
+                    val callback = params[0] as GetCurrencySaleCallback
                     fetchCurrencySaleWithTokenUpdate(
-                        callback as GetCurrencySaleCallback,
+                        callback,
                         updateTokenIfRequired
                     )
                 }
@@ -444,8 +472,8 @@ internal class APIExecutor {
 
     private fun requestNativeSurveysWithTokenUpdate(
         placeId: String?,
-        includeCategoryIds: List<SurveyCategory>,
-        excludeCategoryIds: List<SurveyCategory>,
+        includeCategoryIds: List<SurveyCategory>?,
+        excludeCategoryIds: List<SurveyCategory>?,
         callback: GetNativeSurveysCallback,
         updateToken: Boolean
     ) {
@@ -560,7 +588,7 @@ internal class APIExecutor {
             })
     }
 
-    fun onClosed(byWebView: Boolean, rewards: MutableList<InBrainSurveyReward>) {
+    fun onClosed(byWebView: Boolean, rewards: MutableList<InBrainSurveyReward>?) {
         if (callbacksList.isEmpty()) {
             return
         }
@@ -570,6 +598,7 @@ internal class APIExecutor {
                 handler.post { callback.surveysClosed(byWebView, rewards) }
 
                 //deprecated functions support
+                @Suppress("DEPRECATION")
                 if (byWebView) {
                     handler.post { callback.surveysClosedFromPage() }
                 } else {
