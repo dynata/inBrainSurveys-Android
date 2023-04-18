@@ -1,6 +1,9 @@
 package com.inbrain.sdk;
 
 import static com.inbrain.sdk.Constants.LOG_TAG;
+import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_1;
+import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_2;
+import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_3;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -9,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
+import android.webkit.WebView;
 
 import com.inbrain.sdk.callback.GetCurrencySaleCallback;
 import com.inbrain.sdk.callback.GetNativeSurveysCallback;
@@ -24,12 +28,15 @@ import com.inbrain.sdk.model.Survey;
 import com.inbrain.sdk.model.SurveyCategory;
 import com.inbrain.sdk.model.SurveyFilter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class InBrain {
     private static InBrain instance;
@@ -167,11 +174,61 @@ public class InBrain {
         this.statusBarColor = config.getStatusBarColor();
     }
 
+    private boolean canStartSurveys(Context context, final StartSurveysCallback callback) {
+        if (!apiExecutor.checkForInit()) {
+            handler.post(() -> callback.onFail("SDK not initialized"));
+            return false;
+        }
+        // todo pay attention to minimal required chrome version, old devices may have updates
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            try {
+                WebView webView = new WebView(context);
+                String userAgent = webView.getSettings().getUserAgentString();
+                Pattern pattern = Pattern.compile("chrome/(\\d+)\\.(\\d+)\\.(\\d+)",
+                        Pattern.CASE_INSENSITIVE);
+                Matcher m = pattern.matcher(userAgent);
+                ArrayList<String> matches = new ArrayList<>();
+                while (m.find()) {
+                    for (int i = 1; i <= m.groupCount(); i++) {
+                        matches.add(m.group(i));
+                    }
+                }
+                if (matches.size() > 2) {
+                    int group0 = Integer.parseInt(matches.get(0));
+                    int group1 = Integer.parseInt(matches.get(1));
+                    int group2 = Integer.parseInt(matches.get(2));
+                    boolean group0Matches = group0 >= MINIMUM_WEBVIEW_VERSION_GROUP_1;
+                    boolean group1Matches = group1 >= MINIMUM_WEBVIEW_VERSION_GROUP_2;
+                    boolean group2Matches = group2 >= MINIMUM_WEBVIEW_VERSION_GROUP_3;
+                    if (group0Matches) {
+                        if (!group1Matches) {
+                            handler.post(() -> callback.onFail("Android System WebView version isn't supported"));
+                            return false;
+                        } else if (!group2Matches) {
+                            handler.post(() -> callback.onFail("Android System WebView version isn't supported"));
+                            return false;
+                        }
+                    } else {
+                        handler.post(() -> callback.onFail("Android System WebView version isn't supported"));
+                        return false;
+                    }
+                } else {
+                    handler.post(() -> callback.onFail("Failed to check webview version, can't start SDK"));
+                    return false;
+                }
+            } catch (Exception ex) {
+                handler.post(() -> callback.onFail("Failed to check webview version, can't start SDK"));
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Opens survey wall
      */
     public void showSurveys(Context context, final StartSurveysCallback callback) {
-        if (!apiExecutor.canStartSurveys(context, callback)) {
+        if (!canStartSurveys(context, callback)) {
             return;
         }
 
@@ -192,7 +249,7 @@ public class InBrain {
     }
 
     public void showNativeSurveyWith(Context context, String surveyId, String searchId, final StartSurveysCallback callback) {
-        if (!apiExecutor.canStartSurveys(context, callback)) {
+        if (!canStartSurveys(context, callback)) {
             return;
         }
 

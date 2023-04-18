@@ -88,7 +88,7 @@ internal class APIExecutor {
         callbacksList.remove(callback)
     }
 
-    private fun checkForInit(): Boolean {
+    fun checkForInit(): Boolean {
         if (TextUtils.isEmpty(apiClientID) || TextUtils.isEmpty(apiSecret)) {
             Log.e(Constants.LOG_TAG, "Please first call setInBrain() method!")
             return false
@@ -96,58 +96,6 @@ internal class APIExecutor {
         if (wrongClientIdError) {
             Log.e(Constants.LOG_TAG, "Wrong client id!")
             return false
-        }
-        return true
-    }
-
-    fun canStartSurveys(context: Context, callback: StartSurveysCallback): Boolean {
-        if (!checkForInit()) {
-            handler.post { callback.onFail("SDK not initialized") }
-            return false
-        }
-        // todo pay attention to minimal required chrome version, old devices may have updates
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-            try {
-                val webView = WebView(context)
-                val userAgent = webView.settings.userAgentString
-                val pattern = Pattern.compile(
-                    "chrome/(\\d+)\\.(\\d+)\\.(\\d+)",
-                    Pattern.CASE_INSENSITIVE
-                )
-                val m = pattern.matcher(userAgent)
-                val matches = java.util.ArrayList<String>()
-                while (m.find()) {
-                    for (i in 1..m.groupCount()) {
-                        m.group(i)?.let { matches.add(it) }
-                    }
-                }
-                if (matches.size > 2) {
-                    val group0 = matches[0].toInt()
-                    val group1 = matches[1].toInt()
-                    val group2 = matches[2].toInt()
-                    val group0Matches = group0 >= Constants.MINIMUM_WEBVIEW_VERSION_GROUP_1
-                    val group1Matches = group1 >= Constants.MINIMUM_WEBVIEW_VERSION_GROUP_2
-                    val group2Matches = group2 >= Constants.MINIMUM_WEBVIEW_VERSION_GROUP_3
-                    if (group0Matches) {
-                        if (!group1Matches) {
-                            handler.post { callback.onFail("Android System WebView version isn't supported") }
-                            return false
-                        } else if (!group2Matches) {
-                            handler.post { callback.onFail("Android System WebView version isn't supported") }
-                            return false
-                        }
-                    } else {
-                        handler.post { callback.onFail("Android System WebView version isn't supported") }
-                        return false
-                    }
-                } else {
-                    handler.post { callback.onFail("Failed to check webview version, can't start SDK") }
-                    return false
-                }
-            } catch (ex: java.lang.Exception) {
-                handler.post { callback.onFail("Failed to check webview version, can't start SDK") }
-                return false
-            }
         }
         return true
     }
