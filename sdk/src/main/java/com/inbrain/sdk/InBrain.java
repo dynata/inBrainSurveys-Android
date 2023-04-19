@@ -6,7 +6,6 @@ import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_2;
 import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_3;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Handler;
@@ -23,7 +22,6 @@ import com.inbrain.sdk.callback.StartSurveysCallback;
 import com.inbrain.sdk.callback.SurveysAvailableCallback;
 import com.inbrain.sdk.config.StatusBarConfig;
 import com.inbrain.sdk.config.ToolBarConfig;
-import com.inbrain.sdk.model.CurrencySale;
 import com.inbrain.sdk.model.InBrainSurveyReward;
 import com.inbrain.sdk.model.Reward;
 import com.inbrain.sdk.model.Survey;
@@ -41,21 +39,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class InBrain {
-    private static final boolean stagingMode = false;
-
-    private static final String PREFERENCES = "SharedPreferences_inBrain25930";
-    private static final String PREFERENCE_DEVICE_ID = "529826892";
-    private static final String PREFERENCE_PENDING_REWARDS = "372131_f4lied";
-
     private static InBrain instance;
 
-    private String apiClientID = null;
-    private String apiSecret = null;
-    private boolean isS2S = false;
-    private final List<InBrainCallback> callbacksList = new ArrayList<>();
-    private String userID = null;
-    private String deviceId = null;
-    private SharedPreferences preferences;
     private String sessionUid;
     private HashMap<String, String> dataOptions;
     private String language;
@@ -71,11 +56,12 @@ public class InBrain {
     private Boolean lightStatusBarIcons;
     private int statusBarColorResId;
     private int statusBarColor;
-    private String token;
-    private boolean wrongClientIdError;
     private Handler handler;
 
+    private final APIExecutor apiExecutor;
+
     private InBrain() {
+        apiExecutor = new APIExecutor();
     }
 
     public static InBrain getInstance() {
@@ -99,47 +85,33 @@ public class InBrain {
             Log.e(Constants.LOG_TAG, "API_SECRET can't be null or empty!");
             return;
         }
-        this.apiClientID = apiClientID.trim();
-        this.apiSecret = apiSecret.trim();
-        this.isS2S = isS2S;
-        wrongClientIdError = false;
+        apiExecutor.setApiClientId(apiClientID.trim());
+        apiExecutor.setApiSecret(apiSecret.trim());
+        apiExecutor.setIsS2S(isS2S);
         setUserID(context, userID);
     }
 
     public void setUserID(Context context, String userID) {
-        preferences = getPreferences(context);
-        if (preferences.contains(PREFERENCE_DEVICE_ID)) {
-            deviceId = preferences.getString(PREFERENCE_DEVICE_ID, null);
-        }
+        PreferenceUtil.INSTANCE.init(context);
+        String deviceId = PreferenceUtil.INSTANCE.getDeviceId();
         if (TextUtils.isEmpty(deviceId)) {
             deviceId = UUID.randomUUID().toString();
-            preferences.edit().putString(PREFERENCE_DEVICE_ID, deviceId).apply();
+            PreferenceUtil.INSTANCE.saveDeviceId(deviceId);
         }
+        apiExecutor.setDeviceId(deviceId);
         if (TextUtils.isEmpty(userID)) {
-            this.userID = deviceId;
+            apiExecutor.setUserId(deviceId);
         } else {
-            this.userID = userID;
+            apiExecutor.setUserId(userID);
         }
-    }
-
-    private boolean checkForInit() {
-        if (TextUtils.isEmpty(apiClientID) || TextUtils.isEmpty(apiSecret)) {
-            Log.e(Constants.LOG_TAG, "Please first call setInBrain() method!");
-            return false;
-        }
-        if (wrongClientIdError) {
-            Log.e(Constants.LOG_TAG, "Wrong client id!");
-            return false;
-        }
-        return true;
     }
 
     public void addCallback(InBrainCallback callback) {
-        callbacksList.add(callback);
+        apiExecutor.addCallback(callback);
     }
 
     public void removeCallback(InBrainCallback callback) {
-        callbacksList.remove(callback);
+        apiExecutor.removeCallback(callback);
     }
 
     /**
@@ -202,49 +174,8 @@ public class InBrain {
         this.statusBarColor = config.getStatusBarColor();
     }
 
-    /**
-     * Opens survey wall
-     */
-    public void showSurveys(Context context, final StartSurveysCallback callback) {
-        if (!canStartSurveys(context, callback)) {
-            return;
-        }
-
-        prepareConfig(context);
-
-        try {
-            SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
-                    sessionUid, userID, deviceId, dataOptions, language, title, toolbarColor,
-                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
-            handler.post(callback::onSuccess);
-        } catch (final Exception ex) {
-            handler.post(() -> callback.onFail("Failed to start SDK:" + ex));
-        }
-    }
-
-    public void showNativeSurvey(Context context, Survey survey, final StartSurveysCallback callback) {
-        showNativeSurveyWith(context, survey.id, survey.searchId, callback);
-    }
-
-    public void showNativeSurveyWith(Context context, String surveyId, String searchId, final StartSurveysCallback callback) {
-        if (!canStartSurveys(context, callback)) {
-            return;
-        }
-
-        prepareConfig(context);
-
-        try {
-            SurveysActivity.start(context, stagingMode, apiClientID, apiSecret, isS2S,
-                    sessionUid, userID, deviceId, surveyId, searchId, dataOptions, language, title, toolbarColor,
-                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
-            handler.post(callback::onSuccess);
-        } catch (final Exception ex) {
-            handler.post(() -> callback.onFail("Failed to start SDK:" + ex));
-        }
-    }
-
     private boolean canStartSurveys(Context context, final StartSurveysCallback callback) {
-        if (!checkForInit()) {
+        if (!apiExecutor.checkForInit()) {
             handler.post(() -> callback.onFail("SDK not initialized"));
             return false;
         }
@@ -291,6 +222,47 @@ public class InBrain {
             }
         }
         return true;
+    }
+
+    /**
+     * Opens survey wall
+     */
+    public void showSurveys(Context context, final StartSurveysCallback callback) {
+        if (!canStartSurveys(context, callback)) {
+            return;
+        }
+
+        prepareConfig(context);
+
+        try {
+            SurveysActivity.start(context, APIExecutor.stagingMode, apiExecutor.getApiClientId(), apiExecutor.getApiSecret(), apiExecutor.getIsS2S(),
+                    sessionUid, apiExecutor.getUserId(), apiExecutor.getDeviceId(), dataOptions, language, title, toolbarColor,
+                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
+            handler.post(callback::onSuccess);
+        } catch (final Exception ex) {
+            handler.post(() -> callback.onFail("Failed to start SDK:" + ex));
+        }
+    }
+
+    public void showNativeSurvey(Context context, Survey survey, final StartSurveysCallback callback) {
+        showNativeSurveyWith(context, survey.id, survey.searchId, callback);
+    }
+
+    public void showNativeSurveyWith(Context context, String surveyId, String searchId, final StartSurveysCallback callback) {
+        if (!canStartSurveys(context, callback)) {
+            return;
+        }
+
+        prepareConfig(context);
+
+        try {
+            SurveysActivity.start(context, APIExecutor.stagingMode, apiExecutor.getApiClientId(), apiExecutor.getApiSecret(), apiExecutor.getIsS2S(),
+                    sessionUid, apiExecutor.getUserId(), apiExecutor.getDeviceId(), surveyId, searchId, dataOptions, language, title, toolbarColor,
+                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
+            handler.post(callback::onSuccess);
+        } catch (final Exception ex) {
+            handler.post(() -> callback.onFail("Failed to start SDK:" + ex));
+        }
     }
 
     private void prepareConfig(Context context) {
@@ -376,196 +348,19 @@ public class InBrain {
     }
 
     /**
+     * Requests rewards manually. Returns result through global callback set in setListener().
+     */
+    public void getRewards() {
+        getRewards(null);
+    }
+
+    /**
      * Requests rewards manually.
      *
      * @see InBrainCallback
      */
     public void getRewards(final GetRewardsCallback callback) {
-        if (!checkForInit()) {
-            return;
-        }
-        if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "External get rewards");
-        if (TextUtils.isEmpty(token)) {
-            refreshToken(new TokenExecutor.TokenCallback() {
-                @Override
-                public void onGetToken(String token) {
-                    requestRewardsWithTokenUpdate(callback, false);
-                }
-
-                @Override
-                public void onFailToLoadToken(final Throwable t) {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(Constants.LOG_TAG, "Failed to load token");
-                        t.printStackTrace();
-                    }
-                    handler.post(() -> callback.onFailToLoadRewards(t));
-                }
-            });
-        } else {
-            requestRewardsWithTokenUpdate(callback, true);
-        }
-    }
-
-    private void requestRewardsWithTokenUpdate(final GetRewardsCallback callback, final boolean updateToken) {
-        RewardsExecutor rewardsExecutor = new RewardsExecutor();
-        rewardsExecutor.getRewards(stagingMode, token, new RewardsExecutor.RequestRewardsCallback() {
-            @Override
-            public void onGetRewards(List<Reward> rewards) {
-                onGetRewardsSuccess(callback, rewards);
-            }
-
-            @Override
-            public void onFailToLoadRewards(final Throwable t) {
-                if (BuildConfig.DEBUG) {
-                    Log.e(Constants.LOG_TAG, "Failed to load rewards");
-                    t.printStackTrace();
-                }
-                if (t instanceof TokenExpiredException) {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(Constants.LOG_TAG, "Token expired");
-                    }
-                    if (updateToken) {
-                        refreshToken(new TokenExecutor.TokenCallback() {
-                            @Override
-                            public void onGetToken(String token) {
-                                requestRewardsWithTokenUpdate(callback, false);
-                            }
-
-                            @Override
-                            public void onFailToLoadToken(final Throwable t) {
-                                if (BuildConfig.DEBUG) {
-                                    Log.e(Constants.LOG_TAG, "Failed to load token");
-                                    t.printStackTrace();
-                                }
-                                handler.post(() -> callback.onFailToLoadRewards(t));
-                            }
-                        });
-                    } else {
-                        handler.post(() -> callback.onFailToLoadRewards(t));
-                    }
-                } else {
-                    handler.post(() -> callback.onFailToLoadRewards(t));
-                }
-            }
-        }, userID, deviceId);
-    }
-
-    private void onGetRewardsSuccess(List<Reward> rewards) {
-        onGetRewardsSuccess(null, rewards);
-    }
-
-    private void onGetRewardsSuccess(GetRewardsCallback callback, List<Reward> rewards) {
-        if (shouldConfirmNewRewards(rewards, callback)) {
-            confirmRewards(rewards);
-        }
-    }
-
-    /**
-     * Requests rewards manually. Returns result through global callback set in setListener().
-     */
-    public void getRewards() {
-        if (!checkForInit()) {
-            return;
-        }
-        if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "Get rewards");
-        if (TextUtils.isEmpty(token)) {
-            refreshToken(new TokenExecutor.TokenCallback() {
-                @Override
-                public void onGetToken(String token) {
-                    requestRewardsWithTokenUpdate(false);
-                }
-
-                @Override
-                public void onFailToLoadToken(Throwable t) {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(Constants.LOG_TAG, "Failed to load token");
-                        t.printStackTrace();
-                    }
-                }
-            });
-        } else {
-            requestRewardsWithTokenUpdate(true);
-        }
-    }
-
-    private void requestRewardsWithTokenUpdate(final boolean updateToken) {
-        RewardsExecutor rewardsExecutor = new RewardsExecutor();
-        rewardsExecutor.getRewards(stagingMode, token, new RewardsExecutor.RequestRewardsCallback() {
-            @Override
-            public void onGetRewards(List<Reward> rewards) {
-                onGetRewardsSuccess(rewards);
-            }
-
-            @Override
-            public void onFailToLoadRewards(Throwable t) {
-                if (t instanceof TokenExpiredException) {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(Constants.LOG_TAG, "Token expired");
-                    }
-                    if (updateToken) {
-                        refreshToken(new TokenExecutor.TokenCallback() {
-                            @Override
-                            public void onGetToken(String token) {
-                                requestRewardsWithTokenUpdate(false);
-                            }
-
-                            @Override
-                            public void onFailToLoadToken(Throwable t) {
-                                if (BuildConfig.DEBUG) {
-                                    Log.e(Constants.LOG_TAG, "Failed to load token");
-                                    t.printStackTrace();
-                                }
-                            }
-                        });
-                    } else {
-                        if (BuildConfig.DEBUG) {
-                            Log.e(Constants.LOG_TAG, "Token is expired, but not gonna update");
-                        }
-                    }
-                } else {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(Constants.LOG_TAG, "Failed to load rewards");
-                        t.printStackTrace();
-                    }
-                }
-            }
-        }, userID, deviceId);
-    }
-
-    private boolean shouldConfirmNewRewards(List<Reward> rewards, GetRewardsCallback externalCallback) {
-        if (externalCallback != null) {
-            return externalCallback.handleRewards(rewards); // notify by request
-        } else if (!callbacksList.isEmpty()) {
-            boolean processed = false;
-            for (InBrainCallback callback : callbacksList) {
-                if (callback.didReceiveInBrainRewards(rewards)) {
-                    processed = true;
-                }
-            }
-            return processed; // confirm by subscriber
-        }
-        return false; // no subscriptions for rewards, leave rewards for next call
-    }
-
-    private void refreshToken(final TokenExecutor.TokenCallback tokenCallback) {
-        TokenExecutor executor = new TokenExecutor(stagingMode, apiClientID, apiSecret);
-        executor.getToken(new TokenExecutor.TokenCallback() {
-            @Override
-            public void onGetToken(String token) {
-                InBrain.this.token = token;
-                tokenCallback.onGetToken(token);
-            }
-
-            @Override
-            public void onFailToLoadToken(Throwable t) {
-                if (t instanceof InvalidClientException) {
-                    token = null;
-                    wrongClientIdError = true;
-                    Log.w(Constants.LOG_TAG, "Invalid client");
-                }
-                tokenCallback.onFailToLoadToken(t);
-            }
-        });
+        apiExecutor.execute(RequestType.GET_REWARDS, true, callback);
     }
 
     /**
@@ -574,9 +369,6 @@ public class InBrain {
      * @param rewards list of rewards which need to be confirmed
      */
     public void confirmRewards(final List<Reward> rewards) {
-        if (!checkForInit()) {
-            return;
-        }
         Set<Long> rewardsIds = getRewardsIds(rewards);
         confirmRewardsById(rewardsIds);
     }
@@ -587,9 +379,6 @@ public class InBrain {
      * @param transactionIds list of transactionIds which need to be confirmed
      */
     public void confirmRewards(final long[] transactionIds) {
-        if (!checkForInit()) {
-            return;
-        }
         Set<Long> rewardsIds = getRewardsIds(transactionIds);
         confirmRewardsById(rewardsIds);
     }
@@ -611,219 +400,27 @@ public class InBrain {
     }
 
     private void confirmRewardsById(final Set<Long> rewardIds) {
-        final Set<Long> pendingRewardIds = getPendingRewardIds();
+        final Set<Long> pendingRewardIds = PreferenceUtil.INSTANCE.getPendingRewardIds();
         pendingRewardIds.addAll(rewardIds);
-        savePendingRewards(pendingRewardIds);
-        if (TextUtils.isEmpty(token)) {
-            refreshToken(new TokenExecutor.TokenCallback() {
-                @Override
-                public void onGetToken(String token) {
-                    confirmRewards(token, pendingRewardIds);
-                }
-
-                @Override
-                public void onFailToLoadToken(Throwable t) {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(Constants.LOG_TAG, "Failed to load token");
-                        t.printStackTrace();
-                    }
-                }
-            });
-        } else {
-            confirmRewards(token, pendingRewardIds);
-        }
-    }
-
-    private void confirmRewards(String token, final Set<Long> pendingRewardIds) {
-        ConfirmRewardsExecutor confirmRewardsExecutor = new ConfirmRewardsExecutor();
-        confirmRewardsExecutor.confirmRewards(stagingMode, token, pendingRewardIds, new ConfirmRewardsExecutor.ConfirmRewardsCallback() {
-            @Override
-            public void onSuccess() {
-                if (BuildConfig.DEBUG) {
-                    Log.d(Constants.LOG_TAG, "Successfully confirmed rewards");
-                }
-                Set<Long> newPendingRewardIds = getPendingRewardIds(); // It might have changed
-                newPendingRewardIds.removeAll(pendingRewardIds);
-                savePendingRewards(newPendingRewardIds);
-            }
-
-            @Override
-            public void onFailed(Throwable t) {
-                if (t instanceof TokenExpiredException) {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(Constants.LOG_TAG, "Token expired");
-                    }
-                    refreshToken(new TokenExecutor.TokenCallback() {
-                        @Override
-                        public void onGetToken(String token) {
-                            ConfirmRewardsExecutor confirmRewardsExecutor = new ConfirmRewardsExecutor();
-                            confirmRewardsExecutor.confirmRewards(stagingMode, token, pendingRewardIds, new ConfirmRewardsExecutor.ConfirmRewardsCallback() {
-                                @Override
-                                public void onSuccess() {
-                                    if (BuildConfig.DEBUG) {
-                                        Log.d(Constants.LOG_TAG, "Successfully confirmed rewards");
-                                    }
-                                    Set<Long> newPendingRewardIds = getPendingRewardIds(); // It might have changed
-                                    newPendingRewardIds.removeAll(pendingRewardIds);
-                                    savePendingRewards(newPendingRewardIds);
-                                }
-
-                                @Override
-                                public void onFailed(Throwable t) {
-                                    if (BuildConfig.DEBUG) {
-                                        Log.e(Constants.LOG_TAG, "On failed to confirm rewards:" + t);
-                                    }
-                                }
-                            }, userID, deviceId);
-                        }
-
-                        @Override
-                        public void onFailToLoadToken(Throwable t) {
-                            if (BuildConfig.DEBUG) {
-                                Log.e(Constants.LOG_TAG, "Failed to load token");
-                                t.printStackTrace();
-                            }
-                        }
-                    });
-                } else {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(Constants.LOG_TAG, "On failed to confirm rewards:" + t);
-                    }
-                }
-            }
-        }, userID, deviceId);
-    }
-
-    private void savePendingRewards(Set<Long> rewardsIds) {
-        if (rewardsIds == null) {
-            preferences.edit()
-                    .putStringSet(PREFERENCE_PENDING_REWARDS, null)
-                    .apply();
-            return;
-        }
-        Set<String> set = new HashSet<>();
-        for (Long id : rewardsIds) set.add(id.toString());
-        preferences.edit()
-                .putStringSet(PREFERENCE_PENDING_REWARDS, set)
-                .apply();
-    }
-
-    private Set<Long> getPendingRewardIds() {
-        Set<String> set = preferences.getStringSet(PREFERENCE_PENDING_REWARDS, null);
-        Set<Long> ids = new HashSet<>();
-        if (set != null) {
-            for (String stringNumber : set) {
-                try {
-                    ids.add(Long.parseLong(stringNumber));
-                } catch (Exception ignored) {
-                }
-            }
-        }
-        return ids;
-    }
-
-    private SharedPreferences getPreferences(Context context) {
-        return context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
+        PreferenceUtil.INSTANCE.savePendingRewards(pendingRewardIds);
+        apiExecutor.execute(RequestType.CONFIRM_REWARDS, true, pendingRewardIds);
     }
 
     void onClosed(boolean byWebView, List<InBrainSurveyReward> rewards) {
-        if (callbacksList.isEmpty()) {
-            return;
-        }
-
-        for (final InBrainCallback callback : callbacksList) {
-            handler.post(() -> callback.surveysClosed(byWebView, rewards));
-
-            //deprecated functions support
-            if (byWebView) {
-                handler.post(callback::surveysClosedFromPage);
-            } else {
-                handler.post(callback::surveysClosed);
-            }
-        }
+        apiExecutor.onClosed(byWebView, rewards);
     }
 
     public String getDeviceId() {
-        if (TextUtils.isEmpty(apiClientID) || TextUtils.isEmpty(apiSecret)) {
+        if (TextUtils.isEmpty(apiExecutor.getApiClientId()) || TextUtils.isEmpty(apiExecutor.getApiSecret())) {
             Log.e(Constants.LOG_TAG, "Please first call setInBrain() method!");
             return "";
         }
 
-        return deviceId;
+        return apiExecutor.getDeviceId();
     }
 
-    public void areSurveysAvailable(final Context context,
-                                    final SurveysAvailableCallback callback) {
-        if (!checkForInit()) {
-            return;
-        }
-        if (BuildConfig.DEBUG) Log.d(Constants.LOG_TAG, "External check for available surveys");
-        if (TextUtils.isEmpty(token)) {
-            refreshToken(new TokenExecutor.TokenCallback() {
-                @Override
-                public void onGetToken(String token) {
-                    requestSurveysAvailabilityWithTokenUpdate(context, callback, false);
-                }
-
-                @Override
-                public void onFailToLoadToken(Throwable t) {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(Constants.LOG_TAG, "Failed to load token");
-                        t.printStackTrace();
-                    }
-                    handler.post(() -> callback.onSurveysAvailable(false));
-                }
-            });
-        } else {
-            requestSurveysAvailabilityWithTokenUpdate(context, callback, true);
-        }
-    }
-
-    private void requestSurveysAvailabilityWithTokenUpdate(final Context context,
-                                                           final SurveysAvailableCallback callback,
-                                                           final boolean updateToken) {
-        SurveysAvailabilityExecutor surveysAvailabilityExecutor = new SurveysAvailabilityExecutor();
-        surveysAvailabilityExecutor.areSurveysAvailable(context, token, stagingMode,
-                new SurveysAvailabilityExecutor.SurveysAvailableExecutorCallback() {
-                    @Override
-                    public void onSurveysAvailable(boolean available) {
-                        callback.onSurveysAvailable(available);
-                    }
-
-                    @Override
-                    public void onFailToLoadSurveysAvailability(Exception t) {
-                        if (BuildConfig.DEBUG) {
-                            Log.e(Constants.LOG_TAG, "Failed to load surveys availability");
-                            t.printStackTrace();
-                        }
-                        if (t instanceof TokenExpiredException) {
-                            if (BuildConfig.DEBUG) {
-                                Log.e(Constants.LOG_TAG, "Token expired");
-                            }
-                            if (updateToken) {
-                                refreshToken(new TokenExecutor.TokenCallback() {
-                                    @Override
-                                    public void onGetToken(String token) {
-                                        requestSurveysAvailabilityWithTokenUpdate(context, callback, false);
-                                    }
-
-                                    @Override
-                                    public void onFailToLoadToken(final Throwable t) {
-                                        if (BuildConfig.DEBUG) {
-                                            Log.e(Constants.LOG_TAG, "Failed to load token");
-                                            t.printStackTrace();
-                                        }
-                                        handler.post(() -> callback.onSurveysAvailable(false));
-                                    }
-                                });
-                            } else {
-                                handler.post(() -> callback.onSurveysAvailable(false));
-                            }
-                        } else {
-                            handler.post(() -> callback.onSurveysAvailable(false));
-                        }
-                    }
-                }, userID, deviceId);
+    public void areSurveysAvailable(final Context context, final SurveysAvailableCallback callback) {
+        apiExecutor.execute(RequestType.ARE_SURVEYS_AVAILABLE, true, context, callback);
     }
 
     public void getNativeSurveys(final GetNativeSurveysCallback callback) {
@@ -839,155 +436,10 @@ public class InBrain {
 
     private void getNativeSurveys(final String placeId, final List<SurveyCategory> includeCategoryIds, final List<SurveyCategory> excludeCategoryIds,
                                   final GetNativeSurveysCallback callback) {
-        if (!checkForInit()) {
-            return;
-        }
-        if (BuildConfig.DEBUG)
-            Log.d(Constants.LOG_TAG, "External get for native surveys, token: " + token);
-        if (TextUtils.isEmpty(token)) {
-            refreshToken(new TokenExecutor.TokenCallback() {
-                @Override
-                public void onGetToken(String token) {
-                    Log.d(Constants.LOG_TAG, "onGetToken: " + token);
-                    requestNativeSurveysWithTokenUpdate(placeId, includeCategoryIds, excludeCategoryIds, callback, false);
-                }
-
-                @Override
-                public void onFailToLoadToken(Throwable t) {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(Constants.LOG_TAG, "Failed to load token");
-                        t.printStackTrace();
-                    }
-                    handler.post(() -> callback.nativeSurveysReceived(new ArrayList<>()));
-                }
-            });
-        } else {
-            requestNativeSurveysWithTokenUpdate(placeId, includeCategoryIds, excludeCategoryIds, callback, true);
-        }
-    }
-
-    private void requestNativeSurveysWithTokenUpdate(final String placeId, final List<SurveyCategory> includeCategoryIds, final List<SurveyCategory> excludeCategoryIds,
-                                                     final GetNativeSurveysCallback callback, final boolean updateToken) {
-        GetNativeSurveysListExecutor getNativeSurveysListExecutor = new GetNativeSurveysListExecutor();
-        getNativeSurveysListExecutor.getNativeSurveysList(token, stagingMode,
-                new GetNativeSurveysListExecutor.NativeSurveysExecutorCallback() {
-                    @Override
-                    public void onNativeSurveysAvailable(List<Survey> surveys) {
-                        callback.nativeSurveysReceived(surveys);
-                    }
-
-                    @Override
-                    public void onFailToLoadNativeSurveysList(Exception t) {
-                        if (BuildConfig.DEBUG) {
-                            Log.e(Constants.LOG_TAG, "Failed to load native surveys: " + t);
-                            t.printStackTrace();
-                        }
-                        if (t instanceof TokenExpiredException) {
-                            if (BuildConfig.DEBUG) {
-                                Log.e(Constants.LOG_TAG, "Token expired");
-                            }
-                            if (updateToken) {
-                                refreshToken(new TokenExecutor.TokenCallback() {
-                                    @Override
-                                    public void onGetToken(String token) {
-                                        if (BuildConfig.DEBUG) {
-                                            Log.d(Constants.LOG_TAG, "onGetToken: " + token);
-                                        }
-                                        requestNativeSurveysWithTokenUpdate(placeId, includeCategoryIds, excludeCategoryIds, callback, false);
-                                    }
-
-                                    @Override
-                                    public void onFailToLoadToken(final Throwable t) {
-                                        if (BuildConfig.DEBUG) {
-                                            Log.e(Constants.LOG_TAG, "Failed to load token");
-                                            t.printStackTrace();
-                                        }
-                                        handler.post(() -> callback.nativeSurveysReceived(new ArrayList<>()));
-                                    }
-                                });
-                            } else {
-                                handler.post(() -> callback.nativeSurveysReceived(new ArrayList<>()));
-                            }
-                        } else {
-                            handler.post(() -> callback.nativeSurveysReceived(new ArrayList<>()));
-                        }
-                    }
-                }, userID, deviceId, placeId, includeCategoryIds, excludeCategoryIds);
+        apiExecutor.execute(RequestType.GET_NATIVE_SURVEYS, true, placeId, includeCategoryIds, excludeCategoryIds, callback);
     }
 
     public void getCurrencySale(final GetCurrencySaleCallback callback) {
-        if (!checkForInit()) {
-            return;
-        }
-        if (BuildConfig.DEBUG)
-            Log.d(Constants.LOG_TAG, "External get for ongoing currency sale data, token: " + token);
-        if (TextUtils.isEmpty(token)) {
-            refreshToken(new TokenExecutor.TokenCallback() {
-                @Override
-                public void onGetToken(String token) {
-                    Log.d(Constants.LOG_TAG, "onGetToken: " + token);
-                    fetchCurrencySaleWithTokenUpdate(callback, false);
-                }
-
-                @Override
-                public void onFailToLoadToken(Throwable t) {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(Constants.LOG_TAG, "Failed to load token");
-                        t.printStackTrace();
-                    }
-                    handler.post(() -> callback.currencySaleReceived(null));
-                }
-            });
-        } else {
-            fetchCurrencySaleWithTokenUpdate(callback, true);
-        }
-    }
-
-    private void fetchCurrencySaleWithTokenUpdate(final GetCurrencySaleCallback callback, final boolean updateToken) {
-        FetchCurrencySaleExecutor fetchCurrencySaleExecutor = new FetchCurrencySaleExecutor();
-        fetchCurrencySaleExecutor.fetchCurrencySale(token, stagingMode,
-                new FetchCurrencySaleExecutor.CurrencySaleExecutorCallback() {
-                    @Override
-                    public void onCurrencySaleAvailable(CurrencySale currencySale) {
-                        callback.currencySaleReceived(currencySale);
-                    }
-
-                    @Override
-                    public void onFailedToFetchCurrencySale(Exception t) {
-                        if (BuildConfig.DEBUG) {
-                            Log.e(Constants.LOG_TAG, "Failed to fetch currency sale: " + t);
-                            t.printStackTrace();
-                        }
-                        if (t instanceof TokenExpiredException) {
-                            if (BuildConfig.DEBUG) {
-                                Log.e(Constants.LOG_TAG, "Token expired");
-                            }
-                            if (updateToken) {
-                                refreshToken(new TokenExecutor.TokenCallback() {
-                                    @Override
-                                    public void onGetToken(String token) {
-                                        if (BuildConfig.DEBUG) {
-                                            Log.d(Constants.LOG_TAG, "onGetToken: " + token);
-                                        }
-                                        fetchCurrencySaleWithTokenUpdate(callback, false);
-                                    }
-
-                                    @Override
-                                    public void onFailToLoadToken(final Throwable t) {
-                                        if (BuildConfig.DEBUG) {
-                                            Log.e(Constants.LOG_TAG, "Failed to load token");
-                                            t.printStackTrace();
-                                        }
-                                        handler.post(() -> callback.currencySaleReceived(null));
-                                    }
-                                });
-                            } else {
-                                handler.post(() -> callback.currencySaleReceived(null));
-                            }
-                        } else {
-                            handler.post(() -> callback.currencySaleReceived(null));
-                        }
-                    }
-                });
+        apiExecutor.execute(RequestType.GET_CURRENCY_SALE, true, callback);
     }
 }
