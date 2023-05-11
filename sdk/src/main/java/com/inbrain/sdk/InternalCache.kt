@@ -11,23 +11,15 @@ class InternalCache {
 
     fun put(key: String, value: Any) {
         cache.put(key, CacheEntry(value))
-        handler.postDelayed({
-            cache.remove(key)
-        }, EXPIRATION_TIME)
     }
 
     fun get(key: String): Any? {
-        val entry = cache.get(key)
-        return if (entry != null) {
-            if (entry.isExpired()) {
-                cache.remove(key)
-                null
-            } else {
-                entry.value
-            }
-        } else {
-            null
+        val entry = cache.get(key) ?: return null
+        if (entry.isExpired()) {
+            cache.remove(key)
+            return null
         }
+        return entry.value
     }
 
     private inner class CacheEntry(val value: Any) {
