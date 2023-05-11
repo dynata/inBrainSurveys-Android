@@ -33,8 +33,6 @@ class Constants {
 
     static final String STAGING_TOKEN_URL = "https://inbrain-auth-qa.azurewebsites.net/connect/token";
 
-    static final String ALLOWED_COUNTRIES_URL = "https://inbrainbackend.blob.core.windows.net/misc/allowedCountries.json";
-
     static final String TOKEN_SCOPE = "inbrain-api:integration";
 
     static final String GRANT_TYPE_CLIENT_CREDENTIALS = "client_credentials";

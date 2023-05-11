@@ -141,21 +141,14 @@ internal class APIExecutor {
                         RequestType.GET_REWARDS -> {
                             val callback =
                                 if (params[0] != null) params[0] as GetRewardsCallback else null
-                            if (callback != null)
-                                handler.post {
-                                    callback.onFailToLoadRewards(t)
-                                }
+                            if (callback != null) {
+                                handler.post { callback.onFailToLoadRewards(t) }
+                            }
                         }
 
                         RequestType.ARE_SURVEYS_AVAILABLE -> {
                             val callback = params[1] as SurveysAvailableCallback
-                            handler.post {
-                                handler.post {
-                                    myCache.put(InternalCache.KEY_SURVEYS_AVAILABILITY, false)
-                                    callback.onSurveysAvailable(false)
-                                }
-                                callback.onSurveysAvailable(false)
-                            }
+                            handler.post { callback.onSurveysAvailable(false) }
                         }
 
                         RequestType.GET_NATIVE_SURVEYS -> {
@@ -425,20 +418,11 @@ internal class APIExecutor {
                                             Log.e(Constants.LOG_TAG, "Failed to load token")
                                             t.printStackTrace()
                                         }
-                                        handler.post {
-                                            myCache.put(
-                                                InternalCache.KEY_SURVEYS_AVAILABILITY,
-                                                false
-                                            )
-                                            callback.onSurveysAvailable(false)
-                                        }
+                                        handler.post { callback.onSurveysAvailable(false) }
                                     }
                                 })
                             } else {
-                                handler.post {
-                                    myCache.put(InternalCache.KEY_SURVEYS_AVAILABILITY, false)
-                                    callback.onSurveysAvailable(false)
-                                }
+                                handler.post { callback.onSurveysAvailable(false) }
                             }
                         } else {
                             handler.post {
@@ -565,7 +549,6 @@ internal class APIExecutor {
                         }
                     }
                     handler.post { callback.currencySaleReceived(null) }
-
                 }
             })
     }
