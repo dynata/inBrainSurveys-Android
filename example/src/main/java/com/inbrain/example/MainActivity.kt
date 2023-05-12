@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.CheckBox
-import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -17,8 +16,12 @@ import com.inbrain.sdk.callback.InBrainCallback
 import com.inbrain.sdk.callback.StartSurveysCallback
 import com.inbrain.sdk.config.StatusBarConfig
 import com.inbrain.sdk.config.ToolBarConfig
-import com.inbrain.sdk.model.*
-import java.util.*
+import com.inbrain.sdk.model.CurrencySale
+import com.inbrain.sdk.model.Reward
+import com.inbrain.sdk.model.Survey
+import com.inbrain.sdk.model.SurveyCategory
+import com.inbrain.sdk.model.SurveyFilter
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,11 +35,14 @@ class MainActivity : AppCompatActivity() {
         private const val LOG_TAG = "InBrainExample"
     }
 
-    private val apiClientKey: String = if (QA) BuildConfig.QA_CLIENT_ID else BuildConfig.PROD_CLIENT_ID // Client Id
+    private val apiClientKey: String =
+        if (QA) BuildConfig.QA_CLIENT_ID else BuildConfig.PROD_CLIENT_ID // Client Id
 
-    private val apiSecret: String = if (QA) BuildConfig.QA_CLIENT_SECRET else BuildConfig.PROD_CLIENT_SECRET // Client Secret
+    private val apiSecret: String =
+        if (QA) BuildConfig.QA_CLIENT_SECRET else BuildConfig.PROD_CLIENT_SECRET // Client Secret
 
-    private val userId: String = if (QA) BuildConfig.QA_USER_ID else BuildConfig.PROD_USER_ID // Unique User_id provided by your app
+    private val userId: String =
+        if (QA) BuildConfig.QA_USER_ID else BuildConfig.PROD_USER_ID // Unique User_id provided by your app
 
     private val placementId: String? = null // Used for custom placements with Native Surveys
 
@@ -134,10 +140,7 @@ class MainActivity : AppCompatActivity() {
     private fun openSurveyWall() {
         //Checking if Surveys are Available
         InBrain.getInstance().areSurveysAvailable(this) { available: Boolean ->
-            Log.d(
-                LOG_TAG,
-                "Surveys available:$available"
-            )
+            Log.d(LOG_TAG, "Surveys available:$available")
             if (available) {
                 InBrain.getInstance().showSurveys(this, object : StartSurveysCallback {
                     override fun onSuccess() {
@@ -169,7 +172,8 @@ class MainActivity : AppCompatActivity() {
     private fun fetchCurrencySale() {
         InBrain.getInstance().getCurrencySale { currencySale: CurrencySale? ->
             if (currencySale == null) {
-                Toast.makeText(this, "There's no ongoing currency sale now.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "There's no ongoing currency sale now.", Toast.LENGTH_SHORT)
+                    .show()
             } else {
                 val currencySaleInfo: String = (currencySale.description
                         + "\n" + currencySale.startOn
@@ -186,7 +190,11 @@ class MainActivity : AppCompatActivity() {
     private fun showNativeSurveys() {
         //Checking if there are any nativeSurveys returned
         if (nativeSurveys == null || nativeSurveys!!.isEmpty()) {
-            Toast.makeText(this@MainActivity, "Sorry, no native surveys available", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this@MainActivity,
+                "Sorry, no native surveys available",
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
 
@@ -199,11 +207,12 @@ class MainActivity : AppCompatActivity() {
         recyclerView.layoutManager = layoutManager
 
         //THIS IS THE LINE THAT CALLS showNativeSurveys private function to load the Survey via inBrain function
-        val adapter = NativeSurveysAdapter(object : NativeSurveysAdapter.NativeSurveysClickListener {
-            override fun surveyClicked(survey: Survey) {
-                showNativeSurvey(survey)
-            }
-        }, nativeSurveys!!)
+        val adapter =
+            NativeSurveysAdapter(object : NativeSurveysAdapter.NativeSurveysClickListener {
+                override fun surveyClicked(survey: Survey) {
+                    showNativeSurvey(survey)
+                }
+            }, nativeSurveys!!)
         recyclerView.adapter = adapter
     }
 
@@ -246,7 +255,11 @@ class MainActivity : AppCompatActivity() {
             total += reward.amount
         }
         if (rewards.isEmpty()) {
-            Toast.makeText(this@MainActivity, "Force check rewards:\nYou have no new rewards!", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this@MainActivity,
+                "Force check rewards:\nYou have no new rewards!",
+                Toast.LENGTH_LONG
+            ).show()
         } else {
             Toast.makeText(
                 this@MainActivity,

@@ -1,13 +1,10 @@
 package com.inbrain.sdk
 
-import android.os.Handler
-import android.os.Looper
 import android.util.LruCache
 
 class InternalCache {
 
     private val cache: LruCache<String, CacheEntry> = LruCache(MAX_CACHE_SIZE)
-    private val handler: Handler = Handler(Looper.getMainLooper())
 
     fun put(key: String, value: Any) {
         cache.put(key, CacheEntry(value))
