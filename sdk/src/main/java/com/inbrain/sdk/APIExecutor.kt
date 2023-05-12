@@ -425,10 +425,8 @@ internal class APIExecutor {
                                 handler.post { callback.onSurveysAvailable(false) }
                             }
                         } else {
-                            handler.post {
-                                myCache.put(InternalCache.KEY_SURVEYS_AVAILABILITY, false)
-                                callback.onSurveysAvailable(false)
-                            }
+                            myCache.put(InternalCache.KEY_SURVEYS_AVAILABILITY, false)
+                            handler.post { callback.onSurveysAvailable(false) }
                         }
                     }
                 }, userID, deviceId
