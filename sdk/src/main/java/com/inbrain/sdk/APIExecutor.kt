@@ -1,12 +1,10 @@
 package com.inbrain.sdk
 
 import android.content.Context
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.text.TextUtils
 import android.util.Log
-import android.webkit.WebView
 import com.inbrain.sdk.ConfirmRewardsExecutor.ConfirmRewardsCallback
 import com.inbrain.sdk.FetchCurrencySaleExecutor.CurrencySaleExecutorCallback
 import com.inbrain.sdk.GetNativeSurveysListExecutor.NativeSurveysExecutorCallback
@@ -15,7 +13,6 @@ import com.inbrain.sdk.SurveysAvailabilityExecutor.SurveysAvailableExecutorCallb
 import com.inbrain.sdk.TokenExecutor.TokenCallback
 import com.inbrain.sdk.callback.*
 import com.inbrain.sdk.model.*
-import java.util.regex.Pattern
 
 
 enum class RequestType {
@@ -39,6 +36,8 @@ internal class APIExecutor {
     private val callbacksList: MutableList<InBrainCallback?> = ArrayList()
 
     private val handler: Handler = Handler(Looper.myLooper()!!)
+
+    private val myCache = InternalCache()
 
     fun setApiClientId(clientId: String?) {
         this.apiClientID = clientId
@@ -142,23 +141,26 @@ internal class APIExecutor {
                         RequestType.GET_REWARDS -> {
                             val callback =
                                 if (params[0] != null) params[0] as GetRewardsCallback else null
-                            if (callback != null)
-                                handler.post {
-                                    callback.onFailToLoadRewards(t)
-                                }
+                            if (callback != null) {
+                                handler.post { callback.onFailToLoadRewards(t) }
+                            }
                         }
+
                         RequestType.ARE_SURVEYS_AVAILABLE -> {
                             val callback = params[1] as SurveysAvailableCallback
                             handler.post { callback.onSurveysAvailable(false) }
                         }
+
                         RequestType.GET_NATIVE_SURVEYS -> {
                             val callback = params[3] as GetNativeSurveysCallback
                             handler.post { callback.nativeSurveysReceived(java.util.ArrayList()) }
                         }
+
                         RequestType.GET_CURRENCY_SALE -> {
                             val callback = params[0] as GetCurrencySaleCallback
                             handler.post { callback.currencySaleReceived(null) }
                         }
+
                         else -> {}
                     }
                 }
@@ -173,11 +175,13 @@ internal class APIExecutor {
                         updateTokenIfRequired
                     )
                 }
+
                 RequestType.CONFIRM_REWARDS -> {
                     @Suppress("UNCHECKED_CAST")
                     val pendingRewardIds = params[0] as Set<Long>
                     requestConfirmRewards(pendingRewardIds, updateTokenIfRequired)
                 }
+
                 RequestType.ARE_SURVEYS_AVAILABLE -> {
                     val context = params[0] as Context
                     val callback = params[1] as SurveysAvailableCallback
@@ -187,6 +191,7 @@ internal class APIExecutor {
                         updateTokenIfRequired
                     )
                 }
+
                 RequestType.GET_NATIVE_SURVEYS -> {
                     if (params[0] != null) {
                         val placeId = (params[0] as Array<*>)[0]
@@ -203,6 +208,7 @@ internal class APIExecutor {
                         )
                     }
                 }
+
                 RequestType.GET_CURRENCY_SALE -> {
                     val callback = params[0] as GetCurrencySaleCallback
                     fetchCurrencySaleWithTokenUpdate(
@@ -372,50 +378,60 @@ internal class APIExecutor {
         callback: SurveysAvailableCallback,
         updateToken: Boolean
     ) {
-        val surveysAvailabilityExecutor = SurveysAvailabilityExecutor()
-        surveysAvailabilityExecutor.areSurveysAvailable(
-            context, token, stagingMode,
-            object : SurveysAvailableExecutorCallback {
-                override fun onSurveysAvailable(available: Boolean) {
-                    callback.onSurveysAvailable(available)
-                }
-
-                override fun onFailToLoadSurveysAvailability(t: Exception) {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(Constants.LOG_TAG, "Failed to load surveys availability")
-                        t.printStackTrace()
+        val cachedData = myCache.get(InternalCache.KEY_SURVEYS_AVAILABILITY)
+        if (cachedData != null) {
+            if (BuildConfig.DEBUG) {
+                Log.d(Constants.LOG_TAG, "Get surveys availability from cache")
+            }
+            callback.onSurveysAvailable(cachedData as Boolean)
+        } else {
+            val surveysAvailabilityExecutor = SurveysAvailabilityExecutor()
+            surveysAvailabilityExecutor.areSurveysAvailable(
+                token, stagingMode,
+                object : SurveysAvailableExecutorCallback {
+                    override fun onSurveysAvailable(available: Boolean) {
+                        myCache.put(InternalCache.KEY_SURVEYS_AVAILABILITY, available)
+                        callback.onSurveysAvailable(available)
                     }
-                    if (t is TokenExpiredException) {
-                        if (BuildConfig.DEBUG) {
-                            Log.e(Constants.LOG_TAG, "Token expired")
-                        }
-                        if (updateToken) {
-                            refreshToken(object : TokenCallback {
-                                override fun onGetToken(token: String) {
-                                    requestSurveysAvailabilityWithTokenUpdate(
-                                        context,
-                                        callback,
-                                        false
-                                    )
-                                }
 
-                                override fun onFailToLoadToken(t: Throwable) {
-                                    if (BuildConfig.DEBUG) {
-                                        Log.e(Constants.LOG_TAG, "Failed to load token")
-                                        t.printStackTrace()
+                    override fun onFailToLoadSurveysAvailability(t: Exception) {
+                        if (BuildConfig.DEBUG) {
+                            Log.e(Constants.LOG_TAG, "Failed to load surveys availability")
+                            t.printStackTrace()
+                        }
+                        if (t is TokenExpiredException) {
+                            if (BuildConfig.DEBUG) {
+                                Log.e(Constants.LOG_TAG, "Token expired")
+                            }
+                            if (updateToken) {
+                                refreshToken(object : TokenCallback {
+                                    override fun onGetToken(token: String) {
+                                        requestSurveysAvailabilityWithTokenUpdate(
+                                            context,
+                                            callback,
+                                            false
+                                        )
                                     }
-                                    handler.post { callback.onSurveysAvailable(false) }
-                                }
-                            })
+
+                                    override fun onFailToLoadToken(t: Throwable) {
+                                        if (BuildConfig.DEBUG) {
+                                            Log.e(Constants.LOG_TAG, "Failed to load token")
+                                            t.printStackTrace()
+                                        }
+                                        handler.post { callback.onSurveysAvailable(false) }
+                                    }
+                                })
+                            } else {
+                                handler.post { callback.onSurveysAvailable(false) }
+                            }
                         } else {
+                            myCache.put(InternalCache.KEY_SURVEYS_AVAILABILITY, false)
                             handler.post { callback.onSurveysAvailable(false) }
                         }
-                    } else {
-                        handler.post { callback.onSurveysAvailable(false) }
                     }
-                }
-            }, userID, deviceId
-        )
+                }, userID, deviceId
+            )
+        }
     }
 
     private fun requestNativeSurveysWithTokenUpdate(
@@ -531,7 +547,6 @@ internal class APIExecutor {
                         }
                     }
                     handler.post { callback.currencySaleReceived(null) }
-
                 }
             })
     }
