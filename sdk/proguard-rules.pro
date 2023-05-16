@@ -12,3 +12,5 @@
 -keep class com.inbrain.sdk.config.** { *; }
 
 -keeppackagenames com.inbrain.sdk
+
+-dontwarn java.lang.invoke.StringConcatFactory
