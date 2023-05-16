@@ -103,10 +103,10 @@ class MainActivity : AppCompatActivity() {
 
         // (2) Fetch Native Surveys from inBrain based on the given SurveyFilter
         // ============================================
-        val incCategories: MutableList<SurveyCategory> = ArrayList<SurveyCategory>()
+        val incCategories: MutableList<SurveyCategory> = ArrayList()
 //        incCategories.add(SurveyCategory.Home)
 //        incCategories.add(SurveyCategory.PersonalCare)
-        val excCategories: MutableList<SurveyCategory> = ArrayList<SurveyCategory>()
+        val excCategories: MutableList<SurveyCategory> = ArrayList()
 //        excCategories.add(SurveyCategory.SmokingTobacco)
         val filter = SurveyFilter()
         filter.placementId = placementId
