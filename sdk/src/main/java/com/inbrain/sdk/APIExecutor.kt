@@ -41,6 +41,7 @@ internal class APIExecutor {
 
     fun setApiClientId(clientId: String?) {
         this.apiClientID = clientId
+        this.wrongClientIdError = false
     }
 
     fun getApiClientId(): String? {
@@ -49,6 +50,7 @@ internal class APIExecutor {
 
     fun setApiSecret(apiSecret: String?) {
         this.apiSecret = apiSecret
+        this.wrongClientIdError = false
     }
 
     fun getApiSecret(): String? {
@@ -193,20 +195,29 @@ internal class APIExecutor {
                 }
 
                 RequestType.GET_NATIVE_SURVEYS -> {
-                    if (params[0] != null) {
-                        val placeId = (params[0] as Array<*>)[0]
-                        val includeCate = (params[0] as Array<*>)[1]
-                        val excludeCate = (params[0] as Array<*>)[2]
-                        val callback = (params[0] as Array<*>)[3]
-                        @Suppress("UNCHECKED_CAST")
-                        requestNativeSurveysWithTokenUpdate(
-                            if (placeId is String) placeId else null,
-                            if (includeCate != null) includeCate as List<SurveyCategory> else null,
-                            if (excludeCate != null) excludeCate as List<SurveyCategory> else null,
-                            callback as GetNativeSurveysCallback,
-                            updateTokenIfRequired
-                        )
+                    val placeId: Any?
+                    val includeCate: Any?
+                    val excludeCate: Any?
+                    val callback: Any?
+                    if (params.size == 1 && params[0] != null) {
+                        placeId = (params[0] as Array<*>)[0]
+                        includeCate = (params[0] as Array<*>)[1]
+                        excludeCate = (params[0] as Array<*>)[2]
+                        callback = (params[0] as Array<*>)[3]
+                    } else {
+                        placeId = params[0]
+                        includeCate = params[1]
+                        excludeCate = params[2]
+                        callback = params[3]
                     }
+                    @Suppress("UNCHECKED_CAST")
+                    requestNativeSurveysWithTokenUpdate(
+                        if (placeId is String) placeId else null,
+                        if (includeCate != null) includeCate as List<SurveyCategory> else null,
+                        if (excludeCate != null) excludeCate as List<SurveyCategory> else null,
+                        callback as GetNativeSurveysCallback,
+                        updateTokenIfRequired
+                    )
                 }
 
                 RequestType.GET_CURRENCY_SALE -> {
