@@ -41,6 +41,7 @@ internal class APIExecutor {
 
     fun setApiClientId(clientId: String?) {
         this.apiClientID = clientId
+        this.wrongClientIdError = false
     }
 
     fun getApiClientId(): String? {
@@ -49,6 +50,7 @@ internal class APIExecutor {
 
     fun setApiSecret(apiSecret: String?) {
         this.apiSecret = apiSecret
+        this.wrongClientIdError = false
     }
 
     fun getApiSecret(): String? {
