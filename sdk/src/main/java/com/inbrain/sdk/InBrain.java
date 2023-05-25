@@ -420,7 +420,7 @@ public class InBrain {
     }
 
     public void areSurveysAvailable(final Context context, final SurveysAvailableCallback callback) {
-        apiExecutor.execute(RequestType.ARE_SURVEYS_AVAILABLE, true, context, callback);
+        apiExecutor.execute(RequestType.ARE_SURVEYS_AVAILABLE, true, callback);
     }
 
     public void getNativeSurveys(final GetNativeSurveysCallback callback) {

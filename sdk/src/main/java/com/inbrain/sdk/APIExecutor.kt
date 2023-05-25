@@ -1,6 +1,5 @@
 package com.inbrain.sdk
 
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.text.TextUtils
@@ -120,11 +119,69 @@ internal class APIExecutor {
         })
     }
 
+    private fun callbackOnFailure(
+        requestType: RequestType,
+        throwable: Throwable,
+        vararg params: Any?
+    ) {
+        try {
+            when (requestType) {
+                RequestType.GET_REWARDS -> {
+
+                    val callback = if (params[0] == null)
+                        null
+                    else if (params[0] is GetRewardsCallback)
+                        params[0] as GetRewardsCallback
+                    else
+                        (params[0] as Array<*>)[0] as GetRewardsCallback
+
+                  if (callback != null) {
+                        handler.post { callback.onFailToLoadRewards(throwable) }
+                    }
+                }
+
+                RequestType.ARE_SURVEYS_AVAILABLE -> {
+
+                    val callback: SurveysAvailableCallback =
+                        if (params[0] is Array<*>) {
+                            (params[0] as Array<*>)[0] as SurveysAvailableCallback
+                        } else {
+                            params[0] as SurveysAvailableCallback
+                        }
+
+                    handler.post { callback.onSurveysAvailable(false) }
+                }
+
+                RequestType.GET_NATIVE_SURVEYS -> {
+                    val callback = if (params.size == 1 && params[0] != null) {
+                        (params[0] as Array<*>)[3] as GetNativeSurveysCallback
+                    } else {
+                        params[3] as GetNativeSurveysCallback
+                    }
+                    handler.post { callback.nativeSurveysReceived(java.util.ArrayList()) }
+                }
+
+                RequestType.GET_CURRENCY_SALE -> {
+                    val callback = (params[0] as Array<*>)[0] as GetCurrencySaleCallback
+                    handler.post { callback.currencySaleReceived(null) }
+                }
+
+                else -> {}
+            }
+        } catch (_: java.lang.Exception) {
+        }
+    }
+
     /**
      * execute a request
      */
     fun execute(requestType: RequestType, updateTokenIfRequired: Boolean, vararg params: Any?) {
         if (!checkForInit()) {
+            callbackOnFailure(
+                requestType,
+                Exception("SDK not initialized or wrong client id"),
+                params
+            )
             return
         }
         if (TextUtils.isEmpty(token)) {
@@ -139,39 +196,18 @@ internal class APIExecutor {
                         Log.e(Constants.LOG_TAG, "Failed to load token");
                         t.printStackTrace()
                     }
-                    when (requestType) {
-                        RequestType.GET_REWARDS -> {
-                            val callback =
-                                if (params[0] != null) params[0] as GetRewardsCallback else null
-                            if (callback != null) {
-                                handler.post { callback.onFailToLoadRewards(t) }
-                            }
-                        }
-
-                        RequestType.ARE_SURVEYS_AVAILABLE -> {
-                            val callback = params[1] as SurveysAvailableCallback
-                            handler.post { callback.onSurveysAvailable(false) }
-                        }
-
-                        RequestType.GET_NATIVE_SURVEYS -> {
-                            val callback = params[3] as GetNativeSurveysCallback
-                            handler.post { callback.nativeSurveysReceived(java.util.ArrayList()) }
-                        }
-
-                        RequestType.GET_CURRENCY_SALE -> {
-                            val callback = params[0] as GetCurrencySaleCallback
-                            handler.post { callback.currencySaleReceived(null) }
-                        }
-
-                        else -> {}
-                    }
+                    callbackOnFailure(requestType, t, params)
                 }
             })
         } else {
             when (requestType) {
                 RequestType.GET_REWARDS -> {
-                    val callback =
-                        if (params[0] != null) (params[0] as GetRewardsCallback) else null
+                    val callback = if (params[0] == null)
+                        null
+                    else if (params[0] is GetRewardsCallback)
+                        params[0] as GetRewardsCallback
+                    else
+                        (params[0] as Array<*>)[0] as GetRewardsCallback
                     requestRewardsWithTokenUpdate(
                         callback,
                         updateTokenIfRequired
@@ -180,15 +216,21 @@ internal class APIExecutor {
 
                 RequestType.CONFIRM_REWARDS -> {
                     @Suppress("UNCHECKED_CAST")
-                    val pendingRewardIds = params[0] as Set<Long>
+                    val pendingRewardIds: Set<Long> = if (params[0] is Set<*>)
+                        params[0] as Set<Long>
+                    else
+                        (params[0] as Array<*>)[0] as Set<Long>
                     requestConfirmRewards(pendingRewardIds, updateTokenIfRequired)
                 }
 
                 RequestType.ARE_SURVEYS_AVAILABLE -> {
-                    val context = params[0] as Context
-                    val callback = params[1] as SurveysAvailableCallback
+                    val callback: SurveysAvailableCallback =
+                        if (params[0] is Array<*>) {
+                            (params[0] as Array<*>)[0] as SurveysAvailableCallback
+                        } else {
+                            params[0] as SurveysAvailableCallback
+                        }
                     requestSurveysAvailabilityWithTokenUpdate(
-                        context,
                         callback,
                         updateTokenIfRequired
                     )
@@ -221,7 +263,10 @@ internal class APIExecutor {
                 }
 
                 RequestType.GET_CURRENCY_SALE -> {
-                    val callback = params[0] as GetCurrencySaleCallback
+                    val callback = if (params[0] is GetCurrencySaleCallback)
+                        params[0] as GetCurrencySaleCallback
+                    else
+                        (params[0] as Array<*>)[0] as GetCurrencySaleCallback
                     fetchCurrencySaleWithTokenUpdate(
                         callback,
                         updateTokenIfRequired
@@ -385,7 +430,6 @@ internal class APIExecutor {
     }
 
     private fun requestSurveysAvailabilityWithTokenUpdate(
-        context: Context,
         callback: SurveysAvailableCallback,
         updateToken: Boolean
     ) {
@@ -418,7 +462,6 @@ internal class APIExecutor {
                                 refreshToken(object : TokenCallback {
                                     override fun onGetToken(token: String) {
                                         requestSurveysAvailabilityWithTokenUpdate(
-                                            context,
                                             callback,
                                             false
                                         )
