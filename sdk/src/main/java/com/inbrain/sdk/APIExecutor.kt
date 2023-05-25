@@ -127,15 +127,28 @@ internal class APIExecutor {
         try {
             when (requestType) {
                 RequestType.GET_REWARDS -> {
-                    val callback =
-                        if (params[0] != null) (params[0] as Array<*>)[0] as GetRewardsCallback else null
-                    if (callback != null) {
+
+                    val callback = if (params[0] == null)
+                        null
+                    else if (params[0] is GetRewardsCallback)
+                        params[0] as GetRewardsCallback
+                    else
+                        (params[0] as Array<*>)[0] as GetRewardsCallback
+
+                  if (callback != null) {
                         handler.post { callback.onFailToLoadRewards(throwable) }
                     }
                 }
 
                 RequestType.ARE_SURVEYS_AVAILABLE -> {
-                    val callback = (params[0] as Array<*>)[1] as SurveysAvailableCallback
+
+                    val callback: SurveysAvailableCallback =
+                        if (params[0] is Array<*>) {
+                            (params[0] as Array<*>)[0] as SurveysAvailableCallback
+                        } else {
+                            params[0] as SurveysAvailableCallback
+                        }
+
                     handler.post { callback.onSurveysAvailable(false) }
                 }
 
@@ -212,10 +225,10 @@ internal class APIExecutor {
 
                 RequestType.ARE_SURVEYS_AVAILABLE -> {
                     val callback: SurveysAvailableCallback =
-                        if (params.size == 1 && params[0] != null) {
-                            (params[0] as Array<*>)[1] as SurveysAvailableCallback
+                        if (params[0] is Array<*>) {
+                            (params[0] as Array<*>)[0] as SurveysAvailableCallback
                         } else {
-                            params[1] as SurveysAvailableCallback
+                            params[0] as SurveysAvailableCallback
                         }
                     requestSurveysAvailabilityWithTokenUpdate(
                         callback,
