@@ -120,11 +120,56 @@ internal class APIExecutor {
         })
     }
 
+    private fun callbackOnFailure(
+        requestType: RequestType,
+        throwable: Throwable,
+        vararg params: Any?
+    ) {
+        try {
+            when (requestType) {
+                RequestType.GET_REWARDS -> {
+                    val callback =
+                        if (params[0] != null) (params[0] as Array<*>)[0] as GetRewardsCallback else null
+                    if (callback != null) {
+                        handler.post { callback.onFailToLoadRewards(throwable) }
+                    }
+                }
+
+                RequestType.ARE_SURVEYS_AVAILABLE -> {
+                    val callback = (params[0] as Array<*>)[1] as SurveysAvailableCallback
+                    handler.post { callback.onSurveysAvailable(false) }
+                }
+
+                RequestType.GET_NATIVE_SURVEYS -> {
+                    val callback = if (params.size == 1 && params[0] != null) {
+                        (params[0] as Array<*>)[3] as GetNativeSurveysCallback
+                    } else {
+                        params[3] as GetNativeSurveysCallback
+                    }
+                    handler.post { callback.nativeSurveysReceived(java.util.ArrayList()) }
+                }
+
+                RequestType.GET_CURRENCY_SALE -> {
+                    val callback = (params[0] as Array<*>)[0] as GetCurrencySaleCallback
+                    handler.post { callback.currencySaleReceived(null) }
+                }
+
+                else -> {}
+            }
+        } catch (_: java.lang.Exception) {
+        }
+    }
+
     /**
      * execute a request
      */
     fun execute(requestType: RequestType, updateTokenIfRequired: Boolean, vararg params: Any?) {
         if (!checkForInit()) {
+            callbackOnFailure(
+                requestType,
+                Exception("SDK not initialized or wrong client id"),
+                params
+            )
             return
         }
         if (TextUtils.isEmpty(token)) {
@@ -139,39 +184,18 @@ internal class APIExecutor {
                         Log.e(Constants.LOG_TAG, "Failed to load token");
                         t.printStackTrace()
                     }
-                    when (requestType) {
-                        RequestType.GET_REWARDS -> {
-                            val callback =
-                                if (params[0] != null) params[0] as GetRewardsCallback else null
-                            if (callback != null) {
-                                handler.post { callback.onFailToLoadRewards(t) }
-                            }
-                        }
-
-                        RequestType.ARE_SURVEYS_AVAILABLE -> {
-                            val callback = params[1] as SurveysAvailableCallback
-                            handler.post { callback.onSurveysAvailable(false) }
-                        }
-
-                        RequestType.GET_NATIVE_SURVEYS -> {
-                            val callback = params[3] as GetNativeSurveysCallback
-                            handler.post { callback.nativeSurveysReceived(java.util.ArrayList()) }
-                        }
-
-                        RequestType.GET_CURRENCY_SALE -> {
-                            val callback = params[0] as GetCurrencySaleCallback
-                            handler.post { callback.currencySaleReceived(null) }
-                        }
-
-                        else -> {}
-                    }
+                    callbackOnFailure(requestType, t, params)
                 }
             })
         } else {
             when (requestType) {
                 RequestType.GET_REWARDS -> {
-                    val callback =
-                        if (params[0] != null) (params[0] as GetRewardsCallback) else null
+                    val callback = if (params[0] == null)
+                        null
+                    else if (params[0] is GetRewardsCallback)
+                        params[0] as GetRewardsCallback
+                    else
+                        (params[0] as Array<*>)[0] as GetRewardsCallback
                     requestRewardsWithTokenUpdate(
                         callback,
                         updateTokenIfRequired
