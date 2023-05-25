@@ -1,6 +1,5 @@
 package com.inbrain.sdk
 
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.text.TextUtils
@@ -204,15 +203,21 @@ internal class APIExecutor {
 
                 RequestType.CONFIRM_REWARDS -> {
                     @Suppress("UNCHECKED_CAST")
-                    val pendingRewardIds = params[0] as Set<Long>
+                    val pendingRewardIds: Set<Long> = if (params[0] is Set<*>)
+                        params[0] as Set<Long>
+                    else
+                        (params[0] as Array<*>)[0] as Set<Long>
                     requestConfirmRewards(pendingRewardIds, updateTokenIfRequired)
                 }
 
                 RequestType.ARE_SURVEYS_AVAILABLE -> {
-                    val context = params[0] as Context
-                    val callback = params[1] as SurveysAvailableCallback
+                    val callback: SurveysAvailableCallback =
+                        if (params.size == 1 && params[0] != null) {
+                            (params[0] as Array<*>)[1] as SurveysAvailableCallback
+                        } else {
+                            params[1] as SurveysAvailableCallback
+                        }
                     requestSurveysAvailabilityWithTokenUpdate(
-                        context,
                         callback,
                         updateTokenIfRequired
                     )
@@ -245,7 +250,10 @@ internal class APIExecutor {
                 }
 
                 RequestType.GET_CURRENCY_SALE -> {
-                    val callback = params[0] as GetCurrencySaleCallback
+                    val callback = if (params[0] is GetCurrencySaleCallback)
+                        params[0] as GetCurrencySaleCallback
+                    else
+                        (params[0] as Array<*>)[0] as GetCurrencySaleCallback
                     fetchCurrencySaleWithTokenUpdate(
                         callback,
                         updateTokenIfRequired
@@ -409,7 +417,6 @@ internal class APIExecutor {
     }
 
     private fun requestSurveysAvailabilityWithTokenUpdate(
-        context: Context,
         callback: SurveysAvailableCallback,
         updateToken: Boolean
     ) {
@@ -442,7 +449,6 @@ internal class APIExecutor {
                                 refreshToken(object : TokenCallback {
                                     override fun onGetToken(token: String) {
                                         requestSurveysAvailabilityWithTokenUpdate(
-                                            context,
                                             callback,
                                             false
                                         )
