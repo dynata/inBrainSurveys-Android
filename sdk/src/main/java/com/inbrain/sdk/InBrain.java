@@ -61,7 +61,8 @@ public class InBrain {
     private final APIExecutor apiExecutor;
 
     private InBrain() {
-        apiExecutor = new APIExecutor();
+        handler = new Handler(Looper.getMainLooper());
+        apiExecutor = new APIExecutor(handler);
     }
 
     public static InBrain getInstance() {
@@ -71,12 +72,12 @@ public class InBrain {
         return instance;
     }
 
+
     public void setInBrain(Context context, String apiClientID, String apiSecret, boolean isS2S) {
         setInBrain(context, apiClientID, apiSecret, isS2S, null);
     }
 
     public void setInBrain(Context context, String apiClientID, String apiSecret, boolean isS2S, String userID) {
-        handler = new Handler(Looper.getMainLooper());
         if (TextUtils.isEmpty(apiClientID)) {
             Log.e(Constants.LOG_TAG, "API_CLIENT_ID can't be null or empty!");
             return;

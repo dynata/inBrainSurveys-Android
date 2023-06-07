@@ -1,7 +1,6 @@
 package com.inbrain.sdk
 
 import android.os.Handler
-import android.os.Looper
 import android.text.TextUtils
 import android.util.Log
 import com.inbrain.sdk.ConfirmRewardsExecutor.ConfirmRewardsCallback
@@ -22,7 +21,10 @@ enum class RequestType {
     GET_CURRENCY_SALE
 }
 
-internal class APIExecutor {
+internal class APIExecutor(
+    private var handler: Handler
+    ) {
+
     private var apiClientID: String? = null
     private var apiSecret: String? = null
     private var isS2S = false
@@ -33,8 +35,6 @@ internal class APIExecutor {
     private var wrongClientIdError = false
 
     private val callbacksList: MutableList<InBrainCallback?> = ArrayList()
-
-    private val handler: Handler = Handler(Looper.myLooper()!!)
 
     private val myCache = InternalCache()
 
