@@ -3,13 +3,11 @@ apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 33
-        versionCode 24
-        versionName "2.1.13"
+        targetSdkVersion 34
     }
 
     buildTypes {
@@ -49,6 +47,5 @@ afterEvaluate {
 }
 
 dependencies {
-    //noinspection GradleDynamicVersion
-    implementation 'androidx.core:core-ktx:+'
+    implementation 'androidx.core:core-ktx:1.10.1'
 }
