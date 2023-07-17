@@ -23,7 +23,7 @@ enum class RequestType {
 
 internal class APIExecutor(
     private var handler: Handler
-    ) {
+) {
 
     private var apiClientID: String? = null
     private var apiSecret: String? = null
@@ -127,15 +127,16 @@ internal class APIExecutor(
         try {
             when (requestType) {
                 RequestType.GET_REWARDS -> {
-
                     val callback = if (params[0] == null)
                         null
                     else if (params[0] is GetRewardsCallback)
                         params[0] as GetRewardsCallback
-                    else
+                    else if ((params[0] as Array<*>)[0] is GetRewardsCallback)
                         (params[0] as Array<*>)[0] as GetRewardsCallback
+                    else
+                        null
 
-                  if (callback != null) {
+                    if (callback != null) {
                         handler.post { callback.onFailToLoadRewards(throwable) }
                     }
                 }
@@ -206,8 +207,10 @@ internal class APIExecutor(
                         null
                     else if (params[0] is GetRewardsCallback)
                         params[0] as GetRewardsCallback
-                    else
+                    else if ((params[0] as Array<*>)[0] is GetRewardsCallback)
                         (params[0] as Array<*>)[0] as GetRewardsCallback
+                    else
+                        null
                     requestRewardsWithTokenUpdate(
                         callback,
                         updateTokenIfRequired
