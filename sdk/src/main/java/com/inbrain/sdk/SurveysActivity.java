@@ -515,7 +515,7 @@ public class SurveysActivity extends Activity {
             InBrainSurveyReward reward = new InBrainSurveyReward(outcome);
 
             if (rewards == null) {
-                rewards = new ArrayList<InBrainSurveyReward>();
+                rewards = new ArrayList<>();
             }
             rewards.add(reward);
         }
