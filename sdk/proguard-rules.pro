@@ -14,3 +14,5 @@
 -keeppackagenames com.inbrain.sdk
 
 -dontwarn java.lang.invoke.StringConcatFactory
+
+-keepparameternames
