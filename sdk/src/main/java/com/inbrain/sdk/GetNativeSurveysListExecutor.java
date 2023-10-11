@@ -81,7 +81,8 @@ class GetNativeSurveysListExecutor {
                     categories.add(SurveyCategory.fromId(idsArray.getInt(j)));
                 }
             }
-            surveys.add(new Survey(id, rank, time, value, currencySale, multiplier, conversionThreshold, String.valueOf(searchId), categories));
+            boolean isProfilerSurvey = jsonobject.getBoolean("isProfilerSurvey");
+            surveys.add(new Survey(id, rank, time, value, currencySale, multiplier, conversionThreshold, String.valueOf(searchId), categories, isProfilerSurvey));
         }
         return surveys;
     }

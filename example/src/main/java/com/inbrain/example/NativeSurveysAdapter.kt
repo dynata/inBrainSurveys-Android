@@ -37,6 +37,7 @@ class NativeSurveysAdapter(private val listener: NativeSurveysClickListener, pri
         private val conversionTextView: TextView = rootView.findViewById(R.id.conversion_threshold_text_view)
         private val categoriesTextView: TextView = rootView.findViewById(R.id.categories_text_view)
         private val searchIdTextView: TextView = rootView.findViewById(R.id.search_id_text_view)
+        private val isProfilerTextView: TextView = rootView.findViewById(R.id.is_profiler_text_view)
 
         @SuppressLint("SetTextI18n")
         fun setupSurvey(survey: Survey) {
@@ -48,6 +49,7 @@ class NativeSurveysAdapter(private val listener: NativeSurveysClickListener, pri
             conversionTextView.text = "Conversion: " + survey.conversionLevel
             categoriesTextView.text = "Categories: " + survey.categories
             searchIdTextView.text = "SearchID: " + survey.searchId
+            isProfilerTextView.text = "isProfiler: " + survey.isProfilerSurvey
             rootView.setOnClickListener { listener.surveyClicked(survey) }
         }
     }

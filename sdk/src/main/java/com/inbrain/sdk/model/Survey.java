@@ -15,6 +15,7 @@ public class Survey implements Serializable {
     public SurveyConversionLevel conversionLevel;
     public String searchId;
     public List<SurveyCategory> categories;
+    public boolean isProfilerSurvey;
 
     /**
      * @deprecated(forRemoval=true) Use {@link #conversionLevel} instead.
@@ -23,7 +24,7 @@ public class Survey implements Serializable {
     public int conversionThreshold;
 
     public Survey(String id, long rank, long time, float value, boolean currencySale, float multiplier, int convThreshold,
-                  String searchId, List<SurveyCategory> categories) {
+                  String searchId, List<SurveyCategory> categories, boolean isProfilerSurvey) {
         this.id = id;
         this.rank = rank;
         this.time = time;
@@ -34,10 +35,11 @@ public class Survey implements Serializable {
         this.conversionLevel = SurveyConversionLevel.Companion.fromLevel(convThreshold);
         this.categories = categories;
         this.searchId = searchId;
+        this.isProfilerSurvey = isProfilerSurvey;
     }
 
     public Survey(String id, long rank, long time, float value, boolean currencySale, float multiplier, SurveyConversionLevel convLevel,
-                  String searchId, List<SurveyCategory> categories) {
+                  String searchId, List<SurveyCategory> categories, boolean isProfilerSurvey) {
         this.id = id;
         this.rank = rank;
         this.time = time;
@@ -48,6 +50,7 @@ public class Survey implements Serializable {
         this.conversionThreshold = convLevel.getLevel();
         this.categories = categories;
         this.searchId = searchId;
+        this.isProfilerSurvey = isProfilerSurvey;
     }
 
     @Override
@@ -63,7 +66,8 @@ public class Survey implements Serializable {
                 reward.currencySale == currencySale &&
                 reward.multiplier == multiplier &&
                 (reward.conversionThreshold == conversionThreshold
-                        || reward.conversionLevel.getLevel() == conversionLevel.getLevel());
+                        || reward.conversionLevel.getLevel() == conversionLevel.getLevel()) &&
+                reward.isProfilerSurvey == isProfilerSurvey;
     }
 
     @Override
