@@ -151,7 +151,7 @@ class MainActivity : AppCompatActivity() {
                         Log.e(LOG_TAG, "Failed to Show inBrain Survey Wall: $message")
                         Toast.makeText(
                             this@MainActivity,
-                            "Sorry, something went wrong!",
+                            message.ifEmpty { "Sorry, something went wrong!" },
                             Toast.LENGTH_LONG
                         ).show()
                     }

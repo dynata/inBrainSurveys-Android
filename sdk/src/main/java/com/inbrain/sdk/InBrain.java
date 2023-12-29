@@ -6,6 +6,7 @@ import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_2;
 import static com.inbrain.sdk.Constants.MINIMUM_WEBVIEW_VERSION_GROUP_3;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Handler;
@@ -13,6 +14,8 @@ import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.WebView;
+
+import androidx.webkit.WebViewCompat;
 
 import com.inbrain.sdk.callback.GetCurrencySaleCallback;
 import com.inbrain.sdk.callback.GetNativeSurveysCallback;
@@ -180,6 +183,12 @@ public class InBrain {
             handler.post(() -> callback.onFail("SDK not initialized"));
             return false;
         }
+        // check if webview package is available
+        PackageInfo webViewPackageInfo = WebViewCompat.getCurrentWebViewPackage(context);
+        if (webViewPackageInfo == null) {
+            handler.post(() -> callback.onFail("No WebView installed"));
+            return false;
+        }
         // todo pay attention to minimal required chrome version, old devices may have updates
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             try {
@@ -198,6 +207,7 @@ public class InBrain {
                     int group0 = Integer.parseInt(matches.get(0));
                     int group1 = Integer.parseInt(matches.get(1));
                     int group2 = Integer.parseInt(matches.get(2));
+                    Log.i(LOG_TAG, "System WebView version: " + group0 + "." + group1 + "." + group2);
                     boolean group0Matches = group0 >= MINIMUM_WEBVIEW_VERSION_GROUP_1;
                     boolean group1Matches = group1 >= MINIMUM_WEBVIEW_VERSION_GROUP_2;
                     boolean group2Matches = group2 >= MINIMUM_WEBVIEW_VERSION_GROUP_3;
