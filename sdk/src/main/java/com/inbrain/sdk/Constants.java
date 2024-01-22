@@ -87,7 +87,8 @@ class Constants {
         return sb.toString();
     }
 
-    public static String getCurrencySaleUrl() {
-        return "external-panelist/publisher/currency-sale";
+    public static String getCurrencySaleUrl(String userId) {
+//        return "external-panelist/publisher/currency-sale";
+        return "external-panelist/" + userId + "/active-currency-sale";
     }
 }

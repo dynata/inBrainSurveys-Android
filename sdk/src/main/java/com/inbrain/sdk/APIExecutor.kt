@@ -605,7 +605,8 @@ internal class APIExecutor(
                     }
                     handler.post { callback.currencySaleReceived(null) }
                 }
-            })
+            }, userID
+        )
     }
 
     fun onClosed(byWebView: Boolean, rewards: MutableList<InBrainSurveyReward>?) {
