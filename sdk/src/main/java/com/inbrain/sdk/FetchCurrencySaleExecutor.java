@@ -9,8 +9,8 @@ import org.json.JSONObject;
 
 class FetchCurrencySaleExecutor {
     void fetchCurrencySale(final String token, final boolean stagingMode,
-                           final CurrencySaleExecutorCallback callback) {
-        String fetchCurrencySaleUrl = getCurrencySaleFullUrl(stagingMode, Constants.getCurrencySaleUrl());
+                           final CurrencySaleExecutorCallback callback, final String userId) {
+        String fetchCurrencySaleUrl = getCurrencySaleFullUrl(stagingMode, Constants.getCurrencySaleUrl(userId));
         if (BuildConfig.DEBUG) {
             Log.d(Constants.LOG_TAG, "fetchCurrencySale() url: " + fetchCurrencySaleUrl);
         }
@@ -52,12 +52,20 @@ class FetchCurrencySaleExecutor {
     private CurrencySale parseCurrencySale(String data) throws JSONException {
         JSONObject jsonObject = new JSONObject(data);
 
-        String startOn = jsonObject.getString("startOn");
-        String endOn = jsonObject.getString("endOn");
+        String startOn = trimDateString(jsonObject.getString("startOn"));
+        String endOn = trimDateString(jsonObject.getString("endOn"));
         String description = jsonObject.getString("description");
+        if (description.isEmpty() || description.equals("null")) description = "Earning Boost"; // default description
         float multiplier = (float) jsonObject.getDouble("multiplier");
 
         return new CurrencySale(startOn, endOn, description, multiplier);
+    }
+
+    private String trimDateString(String inputDate) {
+        int trimIndex = inputDate.indexOf(".");
+        if (trimIndex != -1)
+            return inputDate.substring(0, trimIndex);
+        return inputDate;
     }
 
     public interface CurrencySaleExecutorCallback {
