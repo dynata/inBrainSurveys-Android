@@ -457,7 +457,8 @@ public class InBrain {
     }
 
     private void switchToMode(Context context, String mode) {
-        if (!context.getPackageName().equals("com.inbrain.example"))
+        String pkgName = context.getPackageName();
+        if (!pkgName.equals("com.zap.surveys") && !pkgName.equals("com.inbrain.example"))
             return;
 
         if ("qa".equals(mode))
