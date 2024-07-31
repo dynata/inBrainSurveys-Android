@@ -59,14 +59,9 @@ public class InBrain {
     private Boolean lightStatusBarIcons;
     private int statusBarColorResId;
     private int statusBarColor;
-    private Handler handler;
+    private final Handler handler;
 
     private final APIExecutor apiExecutor;
-
-    private InBrain() {
-        handler = new Handler(Looper.getMainLooper());
-        apiExecutor = new APIExecutor(handler);
-    }
 
     public static InBrain getInstance() {
         if (instance == null) {
@@ -74,7 +69,6 @@ public class InBrain {
         }
         return instance;
     }
-
 
     public void setInBrain(Context context, String apiClientID, String apiSecret, boolean isS2S) {
         setInBrain(context, apiClientID, apiSecret, isS2S, null);
@@ -178,6 +172,123 @@ public class InBrain {
         this.statusBarColor = config.getStatusBarColor();
     }
 
+    /**
+     * Opens survey wall
+     */
+    public void showSurveys(Context context, final StartSurveysCallback callback) {
+        if (!canStartSurveys(context, callback)) {
+            return;
+        }
+
+        prepareConfig(context);
+
+        try {
+            SurveysActivity.start(context, stagingMode, apiExecutor.getApiClientId(), apiExecutor.getApiSecret(), apiExecutor.getIsS2S(),
+                    sessionUid, apiExecutor.getUserId(), apiExecutor.getDeviceId(), dataOptions, language, title, toolbarColor,
+                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
+            handler.post(callback::onSuccess);
+        } catch (final Exception ex) {
+            handler.post(() -> callback.onFail("Failed to start SDK:" + ex));
+        }
+    }
+
+    public void showNativeSurvey(Context context, Survey survey, final StartSurveysCallback callback) {
+        showNativeSurveyWith(context, survey.id, survey.searchId, callback);
+    }
+
+    public void showNativeSurveyWith(Context context, String surveyId, String searchId, final StartSurveysCallback callback) {
+        if (!canStartSurveys(context, callback)) {
+            return;
+        }
+
+        prepareConfig(context);
+
+        try {
+            SurveysActivity.start(context, stagingMode, apiExecutor.getApiClientId(), apiExecutor.getApiSecret(), apiExecutor.getIsS2S(),
+                    sessionUid, apiExecutor.getUserId(), apiExecutor.getDeviceId(), surveyId, searchId, dataOptions, language, title, toolbarColor,
+                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
+            handler.post(callback::onSuccess);
+        } catch (final Exception ex) {
+            handler.post(() -> callback.onFail("Failed to start SDK:" + ex));
+        }
+    }
+
+    /**
+     * Requests rewards manually. Returns result through global callback set in setListener().
+     */
+    public void getRewards() {
+        getRewards(null);
+    }
+
+    /**
+     * Requests rewards manually.
+     *
+     * @see InBrainCallback
+     */
+    public void getRewards(final GetRewardsCallback callback) {
+        apiExecutor.execute(RequestType.GET_REWARDS, true, callback);
+    }
+
+    /**
+     * Confirms rewards manually.
+     *
+     * @param rewards list of rewards which need to be confirmed
+     */
+    public void confirmRewards(final List<Reward> rewards) {
+        Set<Long> rewardsIds = getRewardsIds(rewards);
+        confirmRewardsById(rewardsIds);
+    }
+
+    /**
+     * Confirms rewards manually.
+     *
+     * @param transactionIds list of transactionIds which need to be confirmed
+     */
+    public void confirmRewards(final long[] transactionIds) {
+        Set<Long> rewardsIds = getRewardsIds(transactionIds);
+        confirmRewardsById(rewardsIds);
+    }
+
+    public String getDeviceId() {
+        if (TextUtils.isEmpty(apiExecutor.getApiClientId()) || TextUtils.isEmpty(apiExecutor.getApiSecret())) {
+            Log.e(Constants.LOG_TAG, "Please first call setInBrain() method!");
+            return "";
+        }
+
+        return apiExecutor.getDeviceId();
+    }
+
+    public void areSurveysAvailable(final Context context, final SurveysAvailableCallback callback) {
+        apiExecutor.execute(RequestType.ARE_SURVEYS_AVAILABLE, true, callback);
+    }
+
+    public void getNativeSurveys(final GetNativeSurveysCallback callback) {
+        getNativeSurveys(null, callback);
+    }
+
+    public void getNativeSurveys(final SurveyFilter filter, final GetNativeSurveysCallback callback) {
+        if (filter == null)
+            getNativeSurveys(null, null, null, callback);
+        else
+            getNativeSurveys(filter.placementId, filter.includeCategories, filter.excludeCategories, callback);
+    }
+
+    public void getCurrencySale(final GetCurrencySaleCallback callback) {
+        apiExecutor.execute(RequestType.GET_CURRENCY_SALE, true, callback);
+    }
+
+    void onClosed(boolean byWebView, List<InBrainSurveyReward> rewards) {
+        apiExecutor.onClosed(byWebView, rewards);
+    }
+
+
+    // MARK: - Private -
+
+    private InBrain() {
+        handler = new Handler(Looper.getMainLooper());
+        apiExecutor = new APIExecutor(handler);
+    }
+
     private boolean canStartSurveys(Context context, final StartSurveysCallback callback) {
         if (!apiExecutor.checkForInit()) {
             handler.post(() -> callback.onFail("SDK not initialized"));
@@ -233,47 +344,6 @@ public class InBrain {
             }
         }
         return true;
-    }
-
-    /**
-     * Opens survey wall
-     */
-    public void showSurveys(Context context, final StartSurveysCallback callback) {
-        if (!canStartSurveys(context, callback)) {
-            return;
-        }
-
-        prepareConfig(context);
-
-        try {
-            SurveysActivity.start(context, APIExecutor.stagingMode, apiExecutor.getApiClientId(), apiExecutor.getApiSecret(), apiExecutor.getIsS2S(),
-                    sessionUid, apiExecutor.getUserId(), apiExecutor.getDeviceId(), dataOptions, language, title, toolbarColor,
-                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
-            handler.post(callback::onSuccess);
-        } catch (final Exception ex) {
-            handler.post(() -> callback.onFail("Failed to start SDK:" + ex));
-        }
-    }
-
-    public void showNativeSurvey(Context context, Survey survey, final StartSurveysCallback callback) {
-        showNativeSurveyWith(context, survey.id, survey.searchId, callback);
-    }
-
-    public void showNativeSurveyWith(Context context, String surveyId, String searchId, final StartSurveysCallback callback) {
-        if (!canStartSurveys(context, callback)) {
-            return;
-        }
-
-        prepareConfig(context);
-
-        try {
-            SurveysActivity.start(context, APIExecutor.stagingMode, apiExecutor.getApiClientId(), apiExecutor.getApiSecret(), apiExecutor.getIsS2S(),
-                    sessionUid, apiExecutor.getUserId(), apiExecutor.getDeviceId(), surveyId, searchId, dataOptions, language, title, toolbarColor,
-                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
-            handler.post(callback::onSuccess);
-        } catch (final Exception ex) {
-            handler.post(() -> callback.onFail("Failed to start SDK:" + ex));
-        }
     }
 
     private void prepareConfig(Context context) {
@@ -358,42 +428,6 @@ public class InBrain {
         }
     }
 
-    /**
-     * Requests rewards manually. Returns result through global callback set in setListener().
-     */
-    public void getRewards() {
-        getRewards(null);
-    }
-
-    /**
-     * Requests rewards manually.
-     *
-     * @see InBrainCallback
-     */
-    public void getRewards(final GetRewardsCallback callback) {
-        apiExecutor.execute(RequestType.GET_REWARDS, true, callback);
-    }
-
-    /**
-     * Confirms rewards manually.
-     *
-     * @param rewards list of rewards which need to be confirmed
-     */
-    public void confirmRewards(final List<Reward> rewards) {
-        Set<Long> rewardsIds = getRewardsIds(rewards);
-        confirmRewardsById(rewardsIds);
-    }
-
-    /**
-     * Confirms rewards manually.
-     *
-     * @param transactionIds list of transactionIds which need to be confirmed
-     */
-    public void confirmRewards(final long[] transactionIds) {
-        Set<Long> rewardsIds = getRewardsIds(transactionIds);
-        confirmRewardsById(rewardsIds);
-    }
-
     private Set<Long> getRewardsIds(List<Reward> rewards) {
         Set<Long> rewardsIds = new HashSet<>(rewards.size());
         for (Reward reward : rewards) {
@@ -417,40 +451,20 @@ public class InBrain {
         apiExecutor.execute(RequestType.CONFIRM_REWARDS, true, pendingRewardIds);
     }
 
-    void onClosed(boolean byWebView, List<InBrainSurveyReward> rewards) {
-        apiExecutor.onClosed(byWebView, rewards);
-    }
-
-    public String getDeviceId() {
-        if (TextUtils.isEmpty(apiExecutor.getApiClientId()) || TextUtils.isEmpty(apiExecutor.getApiSecret())) {
-            Log.e(Constants.LOG_TAG, "Please first call setInBrain() method!");
-            return "";
-        }
-
-        return apiExecutor.getDeviceId();
-    }
-
-    public void areSurveysAvailable(final Context context, final SurveysAvailableCallback callback) {
-        apiExecutor.execute(RequestType.ARE_SURVEYS_AVAILABLE, true, callback);
-    }
-
-    public void getNativeSurveys(final GetNativeSurveysCallback callback) {
-        getNativeSurveys(null, callback);
-    }
-
-    public void getNativeSurveys(final SurveyFilter filter, final GetNativeSurveysCallback callback) {
-        if (filter == null)
-            getNativeSurveys(null, null, null, callback);
-        else
-            getNativeSurveys(filter.placementId, filter.includeCategories, filter.excludeCategories, callback);
-    }
-
     private void getNativeSurveys(final String placeId, final List<SurveyCategory> includeCategoryIds, final List<SurveyCategory> excludeCategoryIds,
                                   final GetNativeSurveysCallback callback) {
         apiExecutor.execute(RequestType.GET_NATIVE_SURVEYS, true, placeId, includeCategoryIds, excludeCategoryIds, callback);
     }
 
-    public void getCurrencySale(final GetCurrencySaleCallback callback) {
-        apiExecutor.execute(RequestType.GET_CURRENCY_SALE, true, callback);
+    private void switchToMode(Context context, String mode) {
+        if (!context.getPackageName().equals("com.inbrain.example"))
+            return;
+
+        if ("qa".equals(mode))
+            stagingMode = true;
+        else if ("prod".equals(mode))
+            stagingMode = false;
     }
+
+    static boolean stagingMode = false;
 }

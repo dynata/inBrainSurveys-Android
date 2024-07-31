@@ -1,5 +1,6 @@
 package com.inbrain.example
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -30,7 +31,7 @@ class MainActivity : AppCompatActivity() {
          * Set this to {true} if you want to test with QA credentials.
          * Also, make sure InBrain.stagingMode is set to true as well, so the sdk indicates QA BE correctly.
          */
-        private const val QA = false
+        private const val QA = true
 
         private const val LOG_TAG = "InBrainExample"
     }
@@ -86,7 +87,19 @@ class MainActivity : AppCompatActivity() {
             InBrain.getInstance().sessionId = null
         }
 
+        if (QA) {
+            switchToQA("qa")
+        }
         initInBrain()
+    }
+
+    /**
+     * internal use only
+     */
+    private fun switchToQA(mode: String) {
+        val method = InBrain::class.java.getDeclaredMethod("switchToMode", Context::class.java, String::class.java)
+        method.isAccessible = true
+        method.invoke(InBrain.getInstance(), this, mode)
     }
 
     override fun onResume() {

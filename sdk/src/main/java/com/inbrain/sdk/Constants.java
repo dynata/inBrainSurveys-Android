@@ -7,7 +7,7 @@ import com.inbrain.sdk.model.SurveyCategory;
 import java.util.List;
 
 class Constants {
-    static final String STAGING_DOMAIN = "https://qa.surveyb.in";
+    static final String STAGING_DOMAIN = "https://www.surveyb.dev";
 
     static final String DOMAIN = "https://www.surveyb.in";
 
@@ -23,15 +23,15 @@ class Constants {
 
     static final String BASE_URL_EXTERNAL_SURVEYS = BASE_URL + "external-surveys/";
 
-    static final String STAGING_BASE_URL = "https://inbrain-api-qa.azurewebsites.net/api/v1/";
+    static final String STAGING_BASE_URL = "https://api.surveyb.dev/api/v1/";
 
-    static final String STAGING_BASE_URL_V2 = "https://inbrain-api-qa.azurewebsites.net/api/v2/";
+    static final String STAGING_BASE_URL_V2 = "https://api.surveyb.dev/api/v2/";
 
     static final String STAGING_BASE_URL_EXTERNAL_SURVEYS = STAGING_BASE_URL + "external-surveys/";
 
     static final String TOKEN_URL = "https://auth.surveyb.in/connect/token";
 
-    static final String STAGING_TOKEN_URL = "https://inbrain-auth-qa.azurewebsites.net/connect/token";
+    static final String STAGING_TOKEN_URL = "https://auth.surveyb.dev/connect/token";
 
     static final String TOKEN_SCOPE = "inbrain-api:integration";
 
