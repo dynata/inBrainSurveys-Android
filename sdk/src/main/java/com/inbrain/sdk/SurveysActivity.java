@@ -17,6 +17,7 @@ import android.content.IntentFilter;
 import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -253,7 +254,57 @@ public class SurveysActivity extends Activity {
         setupWebView(mainWebView);
         mainWebView.setWebViewClient(new WebViewClient() {
             @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url == null || url.startsWith("http://") || url.startsWith("https://")) {
+                    return false;
+                }
+
+                Uri uri = Uri.parse(url);
+
+                if (url.startsWith("market://")) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        view.getContext().startActivity(intent);
+                    } catch (Exception e) {
+                        String finalUri = "https://play.google.com/store/apps/" + uri.getHost() + "?" + uri.getQuery();
+                        openURLAsIntent(finalUri, view);
+                    }
+                    return true;
+                }
+
+                if (url.startsWith("intent://")) {
+                    try {
+                        Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+                        view.getContext().startActivity(intent);
+                    } catch (Exception e) {
+                        String finalUri = "https://play.google.com/store/apps/details?" + uri.getQuery();
+                        openURLAsIntent(finalUri, view);
+                    }
+                    return true;
+                }
+
+                return false;
+            }
+
+            private void openURLAsIntent(String url, WebView webView) {
+                try {
+                    // Try to open the link in the system's browser
+                    Uri uri = Uri.parse(url);
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, uri);
+                    webView.getContext().startActivity(browserIntent);
+                } catch (Exception error) {
+                    // Try to load the link at WebView if the system browser attempt failed;
+                    webView.loadUrl(url);
+
+                    if (BuildConfig.DEBUG) {
+                        Log.w(LOG_TAG, "Unable to start intent: " + error.getMessage());
+                    }
+                }
+            }
+
+            @Override
             public void onPageFinished(WebView view, String url) {
+                Log.d(LOG_TAG, "onPageFinished: " + url);
                 if (view.getProgress() < 100) {
                     return;
                 }
@@ -275,15 +326,8 @@ public class SurveysActivity extends Activity {
             public void onReceivedError(WebView view, WebResourceRequest request,
                                         WebResourceError error) {
                 super.onReceivedError(view, request, error);
-                if (request.isForMainFrame()) {
-                    if (BuildConfig.DEBUG) {
-                        Log.w(LOG_TAG, "error for main frame:" + error.getDescription());
-                    }
-                    onFailedToLoadInBrainSurveys();
-                } else {
-                    if (BuildConfig.DEBUG) {
-                        Log.w(LOG_TAG, "error for secondary frame:" + error.getDescription());
-                    }
+                if (BuildConfig.DEBUG) {
+                    Log.w(LOG_TAG, "error for main frame:" + error.getDescription());
                 }
             }
 
@@ -294,34 +338,28 @@ public class SurveysActivity extends Activity {
                 if (BuildConfig.DEBUG) {
                     Log.w(LOG_TAG, "old api error for main frame:" + errorCode + ", " + description);
                 }
-                onFailedToLoadInBrainSurveys();
             }
         });
+
         mainWebView.addJavascriptInterface(new SurveyJavaScriptInterface(), INTERFACE_NAME);
 
         mainWebView.clearHistory();
 
-        mainWebView.loadUrl(configurationUrl);
+        mainWebView.loadUrl("https://api.adgem.com/v1/wall?appid=28917&playerid=qwerty");
 
         updateRewards(false);
     }
 
-    private boolean onCreateWebviewWindow(WebView view) {
-        WebView.HitTestResult result = view.getHitTestResult();
-        String url = result.getExtra();
-        if (TextUtils.isEmpty(url)) {
-            return false;
-        }
-        if (BuildConfig.DEBUG) {
-            Log.i(LOG_TAG, "onCreateWebviewWindow with url: " + url);
-        }
+    private boolean onCreateWebviewWindow(Message resultMsg) {
         if (secondaryWebView == null) {
             secondaryWebView = new WebView(this);
             setupWebView(secondaryWebView);
             secondaryWebView.setWebViewClient(new WebViewClient());
             webViewsContainer.addView(secondaryWebView);
         }
-        secondaryWebView.loadUrl(url);
+        WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+        transport.setWebView(secondaryWebView);
+        resultMsg.sendToTarget();
         return true;
     }
 
@@ -457,7 +495,7 @@ public class SurveysActivity extends Activity {
                 @Override
                 public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture,
                                               Message resultMsg) {
-                    return onCreateWebviewWindow(view);
+                    return onCreateWebviewWindow(resultMsg);
                 }
             });
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -468,7 +506,7 @@ public class SurveysActivity extends Activity {
                 @Override
                 public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture,
                                               Message resultMsg) {
-                    return onCreateWebviewWindow(view);
+                    return onCreateWebviewWindow(resultMsg);
                 }
             });
         }
