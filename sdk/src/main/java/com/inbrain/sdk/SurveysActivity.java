@@ -345,7 +345,7 @@ public class SurveysActivity extends Activity {
 
         mainWebView.clearHistory();
 
-        mainWebView.loadUrl("https://api.adgem.com/v1/wall?appid=28917&playerid=qwerty");
+        mainWebView.loadUrl("https://aqua-zara-15.tiiny.site/");
 
         updateRewards(false);
     }
