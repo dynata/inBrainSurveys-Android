@@ -304,7 +304,6 @@ public class SurveysActivity extends Activity {
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                Log.d(LOG_TAG, "onPageFinished: " + url);
                 if (view.getProgress() < 100) {
                     return;
                 }
@@ -345,7 +344,7 @@ public class SurveysActivity extends Activity {
 
         mainWebView.clearHistory();
 
-        mainWebView.loadUrl("https://aqua-zara-15.tiiny.site/");
+        mainWebView.loadUrl(configurationUrl);
 
         updateRewards(false);
     }
