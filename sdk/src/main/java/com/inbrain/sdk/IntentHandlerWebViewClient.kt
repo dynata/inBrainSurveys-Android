@@ -11,6 +11,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 
 open class IntentHandlerWebViewClient : WebViewClient() {
+    // TODO: Add modern version of the function lateer
     override fun shouldOverrideUrlLoading(view: WebView, url: String?): Boolean {
         if (url == null || url.startsWith("http://") || url.startsWith("https://")) {
             return false
