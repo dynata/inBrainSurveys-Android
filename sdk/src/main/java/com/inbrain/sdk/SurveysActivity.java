@@ -248,6 +248,10 @@ public class SurveysActivity extends Activity {
 
         setupWebView(mainWebView);
         mainWebView.setWebViewClient(new IntentHandlerWebViewClient() {
+            @Override
+            public void intentOpened() {
+                mainWebView.goBack();
+            }
 
             @Override
             public void onPageFinished(WebView view, String url) {
