@@ -281,7 +281,14 @@ public class SurveysActivity extends Activity {
         if (secondaryWebView == null) {
             secondaryWebView = new WebView(this);
             setupWebView(secondaryWebView);
-            secondaryWebView.setWebViewClient(new IntentHandlerWebViewClient());
+            secondaryWebView.setWebViewClient(new IntentHandlerWebViewClient() {
+                @Override
+                public void intentOpened() {
+                    // Close the empty WebView for the better UX
+                    destroySecondaryWebView();
+                }
+
+            });
 
             webViewsContainer.addView(secondaryWebView);
         }
@@ -368,13 +375,22 @@ public class SurveysActivity extends Activity {
         handleBackButton(true);
     }
 
-    private void handleBackButton(boolean hardware) {
-        if (secondaryWebView != null) {
-            webViewsContainer.removeView(secondaryWebView);
-            destroyWebView(secondaryWebView);
-            secondaryWebView = null;
+    private void destroySecondaryWebView() {
+        if (secondaryWebView == null) {
             return;
         }
+
+        webViewsContainer.removeView(secondaryWebView);
+        destroyWebView(secondaryWebView);
+        secondaryWebView = null;
+    }
+
+    private void handleBackButton(boolean hardware) {
+        if (secondaryWebView != null) {
+            destroySecondaryWebView();
+            return;
+        }
+
         if (surveyActive) {
             if (hardware) {
                 return;

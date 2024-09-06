@@ -12,6 +12,8 @@ import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
 
 open class IntentHandlerWebViewClient : WebViewClient() {
+    open fun intentOpened() {}
+
     @RequiresApi(api = Build.VERSION_CODES.N)
     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest): Boolean {
         var url = request.url.toString()
@@ -33,6 +35,8 @@ open class IntentHandlerWebViewClient : WebViewClient() {
             try {
                 val intent = Intent(Intent.ACTION_VIEW, uri)
                 view.context.startActivity(intent)
+
+                intentOpened()
             } catch (e: Exception) {
                 val finalUri = "https://play.google.com/store/apps/" + uri.host + "?" + uri.query
                 openURLAsIntent(finalUri, view)
@@ -44,6 +48,8 @@ open class IntentHandlerWebViewClient : WebViewClient() {
             try {
                 val intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
                 view.context.startActivity(intent)
+
+                intentOpened()
             } catch (e: Exception) {
                 val finalUri = "https://play.google.com/store/apps/details?" + uri.query
                 openURLAsIntent(finalUri, view)
@@ -53,12 +59,15 @@ open class IntentHandlerWebViewClient : WebViewClient() {
 
         return false
     }
+
     private fun openURLAsIntent(url: String, webView: WebView) {
         try {
             // Try to open the link in the system's browser
             val uri = Uri.parse(url)
             val browserIntent = Intent(Intent.ACTION_VIEW, uri)
             webView.context.startActivity(browserIntent)
+
+            intentOpened()
         } catch (error: Exception) {
             // Try to load the link at WebView if the system browser attempt failed;
             webView.loadUrl(url)
