@@ -7,7 +7,6 @@ import static com.inbrain.sdk.Constants.LOG_TAG;
 import static com.inbrain.sdk.Constants.STAGING_DOMAIN;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -17,7 +16,6 @@ import android.content.IntentFilter;
 import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -31,10 +29,7 @@ import android.view.WindowInsetsController;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
-import android.webkit.WebResourceError;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -252,55 +247,7 @@ public class SurveysActivity extends Activity {
         backImageView.setOnClickListener(v -> handleBackButton(false));
 
         setupWebView(mainWebView);
-        mainWebView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url == null || url.startsWith("http://") || url.startsWith("https://")) {
-                    return false;
-                }
-
-                Uri uri = Uri.parse(url);
-
-                if (url.startsWith("market://")) {
-                    try {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                        view.getContext().startActivity(intent);
-                    } catch (Exception e) {
-                        String finalUri = "https://play.google.com/store/apps/" + uri.getHost() + "?" + uri.getQuery();
-                        openURLAsIntent(finalUri, view);
-                    }
-                    return true;
-                }
-
-                if (url.startsWith("intent://")) {
-                    try {
-                        Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
-                        view.getContext().startActivity(intent);
-                    } catch (Exception e) {
-                        String finalUri = "https://play.google.com/store/apps/details?" + uri.getQuery();
-                        openURLAsIntent(finalUri, view);
-                    }
-                    return true;
-                }
-
-                return false;
-            }
-
-            private void openURLAsIntent(String url, WebView webView) {
-                try {
-                    // Try to open the link in the system's browser
-                    Uri uri = Uri.parse(url);
-                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, uri);
-                    webView.getContext().startActivity(browserIntent);
-                } catch (Exception error) {
-                    // Try to load the link at WebView if the system browser attempt failed;
-                    webView.loadUrl(url);
-
-                    if (BuildConfig.DEBUG) {
-                        Log.w(LOG_TAG, "Unable to start intent: " + error.getMessage());
-                    }
-                }
-            }
+        mainWebView.setWebViewClient(new IntentHandlerWebViewClient() {
 
             @Override
             public void onPageFinished(WebView view, String url) {
@@ -319,25 +266,6 @@ public class SurveysActivity extends Activity {
                 }
                 setConfiguration();
             }
-
-            @TargetApi(Build.VERSION_CODES.M)
-            @Override
-            public void onReceivedError(WebView view, WebResourceRequest request,
-                                        WebResourceError error) {
-                super.onReceivedError(view, request, error);
-                if (BuildConfig.DEBUG) {
-                    Log.w(LOG_TAG, "error for main frame:" + error.getDescription());
-                }
-            }
-
-            @Override
-            public void onReceivedError(WebView view, int errorCode, String description,
-                                        String failingUrl) {
-                super.onReceivedError(view, errorCode, description, failingUrl);
-                if (BuildConfig.DEBUG) {
-                    Log.w(LOG_TAG, "old api error for main frame:" + errorCode + ", " + description);
-                }
-            }
         });
 
         mainWebView.addJavascriptInterface(new SurveyJavaScriptInterface(), INTERFACE_NAME);
@@ -353,9 +281,11 @@ public class SurveysActivity extends Activity {
         if (secondaryWebView == null) {
             secondaryWebView = new WebView(this);
             setupWebView(secondaryWebView);
-            secondaryWebView.setWebViewClient(new WebViewClient());
+            secondaryWebView.setWebViewClient(new IntentHandlerWebViewClient());
+
             webViewsContainer.addView(secondaryWebView);
         }
+
         WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
         transport.setWebView(secondaryWebView);
         resultMsg.sendToTarget();
