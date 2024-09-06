@@ -9,10 +9,20 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.annotation.RequiresApi
 
 open class IntentHandlerWebViewClient : WebViewClient() {
-    // TODO: Add modern version of the function lateer
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest): Boolean {
+        var url = request.url.toString()
+        return checkForOverrideUrlLoading(view!!, url);
+    }
+
     override fun shouldOverrideUrlLoading(view: WebView, url: String?): Boolean {
+        return checkForOverrideUrlLoading(view, url);
+    }
+
+    fun checkForOverrideUrlLoading(view: WebView, url: String?): Boolean {
         if (url == null || url.startsWith("http://") || url.startsWith("https://")) {
             return false
         }
@@ -43,7 +53,6 @@ open class IntentHandlerWebViewClient : WebViewClient() {
 
         return false
     }
-
     private fun openURLAsIntent(url: String, webView: WebView) {
         try {
             // Try to open the link in the system's browser
