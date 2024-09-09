@@ -221,7 +221,7 @@ public class SurveysActivity extends Activity {
                 if (lightStatusBarIcons) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         WindowInsetsController controller = getWindow().getInsetsController();
-                        if(controller != null) {
+                        if (controller != null) {
                             controller.setSystemBarsAppearance(WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
                                     WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
                         }

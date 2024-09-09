@@ -16,15 +16,16 @@ open class IntentHandlerWebViewClient : WebViewClient() {
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest): Boolean {
-        var url = request.url.toString()
-        return checkForOverrideUrlLoading(view!!, url);
+        val url = request.url.toString()
+        return checkForOverrideUrlLoading(view!!, url)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun shouldOverrideUrlLoading(view: WebView, url: String?): Boolean {
-        return checkForOverrideUrlLoading(view, url);
+        return checkForOverrideUrlLoading(view, url)
     }
 
-    fun checkForOverrideUrlLoading(view: WebView, url: String?): Boolean {
+    private fun checkForOverrideUrlLoading(view: WebView, url: String?): Boolean {
         if (url == null || url.startsWith("http://") || url.startsWith("https://")) {
             return false
         }
@@ -78,15 +79,15 @@ open class IntentHandlerWebViewClient : WebViewClient() {
         }
     }
 
-
     @TargetApi(Build.VERSION_CODES.M)
-    override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError ) {
+    override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError) {
         super.onReceivedError(view, request, error)
         if (BuildConfig.DEBUG) {
             Log.w(Constants.LOG_TAG, "error for main frame:" + error.description)
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onReceivedError(view: WebView?, errorCode: Int, description: String, failingUrl: String?) {
         super.onReceivedError(view, errorCode, description, failingUrl)
         if (BuildConfig.DEBUG) {
