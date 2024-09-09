@@ -5,6 +5,7 @@
 
 -keep class com.inbrain.sdk.InBrain {
     public <methods>;
+    private void switchToMode(android.content.Context, java.lang.String);
 }
 
 -keep interface com.inbrain.sdk.callback.** { *; }

@@ -6,6 +6,7 @@ import android.util.Log
 import com.inbrain.sdk.ConfirmRewardsExecutor.ConfirmRewardsCallback
 import com.inbrain.sdk.FetchCurrencySaleExecutor.CurrencySaleExecutorCallback
 import com.inbrain.sdk.GetNativeSurveysListExecutor.NativeSurveysExecutorCallback
+import com.inbrain.sdk.InBrain.stagingMode
 import com.inbrain.sdk.RewardsExecutor.RequestRewardsCallback
 import com.inbrain.sdk.SurveysAvailabilityExecutor.SurveysAvailableExecutorCallback
 import com.inbrain.sdk.TokenExecutor.TokenCallback
@@ -627,9 +628,5 @@ internal class APIExecutor(
                 }
             }
         }
-    }
-
-    companion object {
-        const val stagingMode = false
     }
 }
