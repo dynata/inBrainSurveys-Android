@@ -42,24 +42,6 @@ open class IntentHandlerWebViewClient : WebViewClient() {
         return false
     }
 
-    private fun openURLAsIntent(url: String, webView: WebView) {
-        try {
-            // Try to open the link in the system's browser
-            val uri = Uri.parse(url)
-            val browserIntent = Intent(Intent.ACTION_VIEW, uri)
-            webView.context.startActivity(browserIntent)
-
-            intentOpened()
-        } catch (error: Exception) {
-            // Try to load the link at WebView if the system browser attempt failed;
-            webView.loadUrl(url)
-
-            if (BuildConfig.DEBUG) {
-                Log.w(Constants.LOG_TAG, "Unable to start intent: " + error.message)
-            }
-        }
-    }
-
     @TargetApi(Build.VERSION_CODES.M)
     override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError) {
         super.onReceivedError(view, request, error)
