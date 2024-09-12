@@ -26,35 +26,16 @@ open class IntentHandlerWebViewClient : WebViewClient() {
     }
 
     private fun checkForOverrideUrlLoading(view: WebView, url: String?): Boolean {
-        if (url == null || url.startsWith("http://") || url.startsWith("https://")) {
+        if (url.isNullOrBlank()) {
             return false
         }
 
-        val uri = Uri.parse(url)
+        if (url.contains("gotooffer.inbrain")) {
+            val uri = Uri.parse(url)
+            val intent = Intent(Intent.ACTION_VIEW, uri)
+            view.context.startActivity(intent)
+            intentOpened()
 
-        if (url.startsWith("market://")) {
-            try {
-                val intent = Intent(Intent.ACTION_VIEW, uri)
-                view.context.startActivity(intent)
-
-                intentOpened()
-            } catch (e: Exception) {
-                val finalUri = "https://play.google.com/store/apps/" + uri.host + "?" + uri.query
-                openURLAsIntent(finalUri, view)
-            }
-            return true
-        }
-
-        if (url.startsWith("intent://")) {
-            try {
-                val intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
-                view.context.startActivity(intent)
-
-                intentOpened()
-            } catch (e: Exception) {
-                val finalUri = "https://play.google.com/store/apps/details?" + uri.query
-                openURLAsIntent(finalUri, view)
-            }
             return true
         }
 

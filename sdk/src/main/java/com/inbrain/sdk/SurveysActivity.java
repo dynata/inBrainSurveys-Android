@@ -305,7 +305,7 @@ public class SurveysActivity extends Activity {
 
     private void setConfiguration() {
         try {
-            String newUrl = getConfigurationUrl();
+            String newUrl = getConfigurationCommand();
             if (BuildConfig.DEBUG) {
                 Log.i(LOG_TAG, "Configuration URL: " + newUrl);
             }
@@ -324,7 +324,7 @@ public class SurveysActivity extends Activity {
         }
     }
 
-    private String getConfigurationUrl() throws IOException {
+    private String getConfigurationCommand() throws IOException {
         Configuration configuration = new Configuration(clientId, clientSecret, appUserId, deviceId,
                 surveyId, searchId, sessionUid, dataPoints, language);
         return String.format("javascript:setConfiguration(%s);", configuration.toJson());
