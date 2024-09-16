@@ -7,7 +7,6 @@ import static com.inbrain.sdk.Constants.LOG_TAG;
 import static com.inbrain.sdk.Constants.STAGING_DOMAIN;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -30,10 +29,7 @@ import android.view.WindowInsetsController;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
-import android.webkit.WebResourceError;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -225,7 +221,7 @@ public class SurveysActivity extends Activity {
                 if (lightStatusBarIcons) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         WindowInsetsController controller = getWindow().getInsetsController();
-                        if(controller != null) {
+                        if (controller != null) {
                             controller.setSystemBarsAppearance(WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
                                     WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
                         }
@@ -251,7 +247,12 @@ public class SurveysActivity extends Activity {
         backImageView.setOnClickListener(v -> handleBackButton(false));
 
         setupWebView(mainWebView);
-        mainWebView.setWebViewClient(new WebViewClient() {
+        mainWebView.setWebViewClient(new IntentHandlerWebViewClient() {
+            @Override
+            public void intentOpened() {
+                mainWebView.goBack();
+            }
+
             @Override
             public void onPageFinished(WebView view, String url) {
                 if (view.getProgress() < 100) {
@@ -269,34 +270,8 @@ public class SurveysActivity extends Activity {
                 }
                 setConfiguration();
             }
-
-            @TargetApi(Build.VERSION_CODES.M)
-            @Override
-            public void onReceivedError(WebView view, WebResourceRequest request,
-                                        WebResourceError error) {
-                super.onReceivedError(view, request, error);
-                if (request.isForMainFrame()) {
-                    if (BuildConfig.DEBUG) {
-                        Log.w(LOG_TAG, "error for main frame:" + error.getDescription());
-                    }
-                    onFailedToLoadInBrainSurveys();
-                } else {
-                    if (BuildConfig.DEBUG) {
-                        Log.w(LOG_TAG, "error for secondary frame:" + error.getDescription());
-                    }
-                }
-            }
-
-            @Override
-            public void onReceivedError(WebView view, int errorCode, String description,
-                                        String failingUrl) {
-                super.onReceivedError(view, errorCode, description, failingUrl);
-                if (BuildConfig.DEBUG) {
-                    Log.w(LOG_TAG, "old api error for main frame:" + errorCode + ", " + description);
-                }
-                onFailedToLoadInBrainSurveys();
-            }
         });
+
         mainWebView.addJavascriptInterface(new SurveyJavaScriptInterface(), INTERFACE_NAME);
 
         mainWebView.clearHistory();
@@ -306,28 +281,31 @@ public class SurveysActivity extends Activity {
         updateRewards(false);
     }
 
-    private boolean onCreateWebviewWindow(WebView view) {
-        WebView.HitTestResult result = view.getHitTestResult();
-        String url = result.getExtra();
-        if (TextUtils.isEmpty(url)) {
-            return false;
-        }
-        if (BuildConfig.DEBUG) {
-            Log.i(LOG_TAG, "onCreateWebviewWindow with url: " + url);
-        }
+    private boolean onCreateWebviewWindow(Message resultMsg) {
         if (secondaryWebView == null) {
             secondaryWebView = new WebView(this);
             setupWebView(secondaryWebView);
-            secondaryWebView.setWebViewClient(new WebViewClient());
+            secondaryWebView.setWebViewClient(new IntentHandlerWebViewClient() {
+                @Override
+                public void intentOpened() {
+                    // Close the empty WebView for the better UX
+                    destroySecondaryWebView();
+                }
+
+            });
+
             webViewsContainer.addView(secondaryWebView);
         }
-        secondaryWebView.loadUrl(url);
+
+        WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+        transport.setWebView(secondaryWebView);
+        resultMsg.sendToTarget();
         return true;
     }
 
     private void setConfiguration() {
         try {
-            String newUrl = getConfigurationUrl();
+            String newUrl = getConfigurationCommand();
             if (BuildConfig.DEBUG) {
                 Log.i(LOG_TAG, "Configuration URL: " + newUrl);
             }
@@ -346,7 +324,7 @@ public class SurveysActivity extends Activity {
         }
     }
 
-    private String getConfigurationUrl() throws IOException {
+    private String getConfigurationCommand() throws IOException {
         Configuration configuration = new Configuration(clientId, clientSecret, appUserId, deviceId,
                 surveyId, searchId, sessionUid, dataPoints, language);
         return String.format("javascript:setConfiguration(%s);", configuration.toJson());
@@ -401,13 +379,22 @@ public class SurveysActivity extends Activity {
         handleBackButton(true);
     }
 
-    private void handleBackButton(boolean hardware) {
-        if (secondaryWebView != null) {
-            webViewsContainer.removeView(secondaryWebView);
-            destroyWebView(secondaryWebView);
-            secondaryWebView = null;
+    private void destroySecondaryWebView() {
+        if (secondaryWebView == null) {
             return;
         }
+
+        webViewsContainer.removeView(secondaryWebView);
+        destroyWebView(secondaryWebView);
+        secondaryWebView = null;
+    }
+
+    private void handleBackButton(boolean hardware) {
+        if (secondaryWebView != null) {
+            destroySecondaryWebView();
+            return;
+        }
+
         if (surveyActive) {
             if (hardware) {
                 return;
@@ -457,7 +444,7 @@ public class SurveysActivity extends Activity {
                 @Override
                 public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture,
                                               Message resultMsg) {
-                    return onCreateWebviewWindow(view);
+                    return onCreateWebviewWindow(resultMsg);
                 }
             });
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -468,7 +455,7 @@ public class SurveysActivity extends Activity {
                 @Override
                 public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture,
                                               Message resultMsg) {
-                    return onCreateWebviewWindow(view);
+                    return onCreateWebviewWindow(resultMsg);
                 }
             });
         }

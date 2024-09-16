@@ -151,32 +151,20 @@ class MainActivity : AppCompatActivity() {
      * Open the Survey Wall
      */
     private fun openSurveyWall() {
-        //Checking if Surveys are Available
-        InBrain.getInstance().areSurveysAvailable(this) { available: Boolean ->
-            Log.d(LOG_TAG, "Surveys available:$available")
-            if (available) {
-                InBrain.getInstance().showSurveys(this, object : StartSurveysCallback {
-                    override fun onSuccess() {
-                        Log.d(LOG_TAG, "Survey Wall Display Successfully")
-                    }
+        InBrain.getInstance().showSurveys(this, object : StartSurveysCallback {
+            override fun onSuccess() {
+                Log.d(LOG_TAG, "Survey Wall Display Successfully")
+            }
 
-                    override fun onFail(message: String) {
-                        Log.e(LOG_TAG, "Failed to Show inBrain Survey Wall: $message")
-                        Toast.makeText(
-                            this@MainActivity,
-                            message.ifEmpty { "Sorry, something went wrong!" },
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                })
-            } else {
+            override fun onFail(message: String) {
+                Log.e(LOG_TAG, "Failed to Show inBrain Survey Wall: $message")
                 Toast.makeText(
                     this@MainActivity,
-                    "Oops... No surveys available right now!",
+                    message.ifEmpty { "Sorry, something went wrong!" },
                     Toast.LENGTH_LONG
                 ).show()
             }
-        }
+        })
     }
 
     /**
