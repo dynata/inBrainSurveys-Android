@@ -77,10 +77,10 @@ public class Configuration {
                 writer.name("surveys_enabled").value(true);
                 writer.name("offers_enabled").value(true);
                 break;
-            case SURVEYS_ONLY:
+            case SURVEYS:
                 writer.name("offers_enabled").value(false);
                 break;
-            case OFFERS_ONLY:
+            case OFFERS:
                 writer.name("surveys_enabled").value(false);
                 break;
         }

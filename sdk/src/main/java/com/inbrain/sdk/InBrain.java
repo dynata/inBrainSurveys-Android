@@ -31,8 +31,6 @@ import com.inbrain.sdk.model.Survey;
 import com.inbrain.sdk.model.SurveyCategory;
 import com.inbrain.sdk.model.SurveyFilter;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,8 +65,8 @@ public class InBrain {
 
     public enum WallOption {
         ALL,
-        SURVEYS_ONLY,
-        OFFERS_ONLY,
+        SURVEYS,
+        OFFERS,
     }
 
     public static InBrain getInstance() {
@@ -120,16 +118,6 @@ public class InBrain {
         apiExecutor.removeCallback(callback);
     }
 
-    /**
-     * @deprecated(forRemoval=true) This method has been deprecated.
-     * Please build a habit to set sessionID and dataOptions separately using {@link #setSessionId(String)} and {@link #setDataOptions(HashMap)}
-     */
-    @Deprecated
-    public void setInBrainValuesFor(String sessionID, HashMap<String, String> dataOptions) {
-        this.sessionUid = sessionID;
-        this.dataOptions = dataOptions;
-    }
-
     public void setSessionId(String sessionID) {
         this.sessionUid = sessionID;
     }
@@ -144,15 +132,6 @@ public class InBrain {
 
     public HashMap<String, String> getDataOptions() {
         return this.dataOptions;
-    }
-
-    /**
-     * @deprecated(forRemoval=true) This method has been deprecated.
-     */
-    @Deprecated
-    public void setLanguage(String language) {
-        this.language = language;
-        this.langManuallySet = true;
     }
 
     public void setToolbarConfig(ToolBarConfig config) {
@@ -181,36 +160,9 @@ public class InBrain {
     }
 
     /**
-     * @deprecated(forRemoval=true) This method has been deprecated.
-     * Please use {@link #openWall(Context, WallOption, StartSurveysCallback)} instead.
-     */
-    @Deprecated
-    public void showSurveys(Context context, final StartSurveysCallback callback) {
-        openWall(context, WallOption.ALL, callback);
-    }
-
-    /**
-     * @deprecated(forRemoval=true) This method has been deprecated.
-     * Please use {@link #showNativeSurvey(Context, Survey, boolean, StartSurveysCallback)} instead.
-     */
-    @Deprecated
-    public void showNativeSurvey(Context context, Survey survey, final StartSurveysCallback callback) {
-        showNativeSurvey(context, survey, true, callback);
-    }
-
-    /**
-     * @deprecated(forRemoval=true) This method has been deprecated.
-     * Please use {@link #showNativeSurveyWith(Context, String, String, boolean, StartSurveysCallback)} instead.
-     */
-    @Deprecated
-    public void showNativeSurveyWith(Context context, String surveyId, String searchId, final StartSurveysCallback callback) {
-        showNativeSurveyWith(context, surveyId, searchId, true, callback);
-    }
-
-    /**
      * Opens the inBrain Wall with options
      *
-     * @param option Specifies whether to show only surveys, only offers, or both.
+     * @param option Indicates which feature is available at the dashboard: Surveys, Offers, or both
      */
     public void openWall(Context context, WallOption option, final StartSurveysCallback callback) {
         if (!canStartSurveys(context, callback)) {
@@ -232,7 +184,7 @@ public class InBrain {
     /**
      * Show a native survey specified by {@code survey} object.
      *
-     * @param offersEnabled Specifies whether to include Offers or not
+     * @param offersEnabled Specifies whether to enable Offers feature at the dashboard or not.
      */
     public void showNativeSurvey(Context context, Survey survey, boolean offersEnabled, final StartSurveysCallback callback) {
         showNativeSurveyWith(context, survey.id, survey.searchId, offersEnabled, callback);
@@ -241,7 +193,7 @@ public class InBrain {
     /**
      * Show a native survey with the given {@code surveyId} and {@code searchId}.
      *
-     * @param offersEnabled Specifies whether to include Offers or not
+     * @param offersEnabled Specifies whether to enable Offers feature at the dashboard or not.
      */
     public void showNativeSurveyWith(Context context, String surveyId, String searchId, boolean offersEnabled, final StartSurveysCallback callback) {
         if (!canStartSurveys(context, callback)) {
@@ -253,7 +205,7 @@ public class InBrain {
         try {
             SurveysActivity.start(context, stagingMode, apiExecutor.getApiClientId(), apiExecutor.getApiSecret(), apiExecutor.getIsS2S(),
                     sessionUid, apiExecutor.getUserId(), apiExecutor.getDeviceId(), surveyId, searchId, dataOptions, language, title, toolbarColor,
-                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons, offersEnabled ? WallOption.ALL : WallOption.SURVEYS_ONLY);
+                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons, offersEnabled ? WallOption.ALL : WallOption.SURVEYS);
             handler.post(callback::onSuccess);
         } catch (final Exception ex) {
             handler.post(() -> callback.onFail("Failed to start SDK:" + ex));
@@ -328,6 +280,54 @@ public class InBrain {
         apiExecutor.onClosed(byWebView, rewards);
     }
 
+
+    // MARK: - Deprecated -
+
+    /**
+     * @deprecated(forRemoval=true) This method has been deprecated.
+     * Please build a habit to set sessionID and dataOptions separately using {@link #setSessionId(String)} and {@link #setDataOptions(HashMap)}
+     */
+    @Deprecated
+    public void setInBrainValuesFor(String sessionID, HashMap<String, String> dataOptions) {
+        this.sessionUid = sessionID;
+        this.dataOptions = dataOptions;
+    }
+
+    /**
+     * @deprecated(forRemoval=true) This method has been deprecated.
+     */
+    @Deprecated
+    public void setLanguage(String language) {
+        this.language = language;
+        this.langManuallySet = true;
+    }
+
+    /**
+     * @deprecated(forRemoval=true) This method has been deprecated.
+     * Please use {@link #openWall(Context, WallOption, StartSurveysCallback)} instead.
+     */
+    @Deprecated
+    public void showSurveys(Context context, final StartSurveysCallback callback) {
+        openWall(context, WallOption.ALL, callback);
+    }
+
+    /**
+     * @deprecated(forRemoval=true) This method has been deprecated.
+     * Please use {@link #showNativeSurvey(Context, Survey, boolean, StartSurveysCallback)} instead.
+     */
+    @Deprecated
+    public void showNativeSurvey(Context context, Survey survey, final StartSurveysCallback callback) {
+        showNativeSurvey(context, survey, true, callback);
+    }
+
+    /**
+     * @deprecated(forRemoval=true) This method has been deprecated.
+     * Please use {@link #showNativeSurveyWith(Context, String, String, boolean, StartSurveysCallback)} instead.
+     */
+    @Deprecated
+    public void showNativeSurveyWith(Context context, String surveyId, String searchId, final StartSurveysCallback callback) {
+        showNativeSurveyWith(context, surveyId, searchId, true, callback);
+    }
 
     // MARK: - Private -
 
