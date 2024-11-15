@@ -202,10 +202,11 @@ public class InBrain {
 
         prepareConfig(context);
 
+        WallOption wallOption = offersEnabled ? WallOption.ALL : WallOption.SURVEYS;
         try {
             SurveysActivity.start(context, stagingMode, apiExecutor.getApiClientId(), apiExecutor.getApiSecret(), apiExecutor.getIsS2S(),
                     sessionUid, apiExecutor.getUserId(), apiExecutor.getDeviceId(), surveyId, searchId, dataOptions, language, title, toolbarColor,
-                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons, offersEnabled ? WallOption.ALL : WallOption.SURVEYS);
+                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons, wallOption);
             handler.post(callback::onSuccess);
         } catch (final Exception ex) {
             handler.post(() -> callback.onFail("Failed to start SDK:" + ex));

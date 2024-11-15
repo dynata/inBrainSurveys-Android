@@ -53,6 +53,7 @@ public class Configuration {
         writer.name("device_id").value(deviceId);
         if (!TextUtils.isEmpty(surveyId)) {
             writer.name("survey_id").value(surveyId);
+            writer.name("surveys_enabled").value(true);
         }
         if (!TextUtils.isEmpty(searchId)) {
             writer.name("search_id").value(searchId);
