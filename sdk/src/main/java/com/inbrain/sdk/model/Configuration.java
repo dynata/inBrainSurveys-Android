@@ -3,6 +3,8 @@ package com.inbrain.sdk.model;
 import android.text.TextUtils;
 import android.util.JsonWriter;
 
+import com.inbrain.sdk.InBrain.WallOption;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
@@ -18,10 +20,11 @@ public class Configuration {
     final String sessionUid;
     final HashMap<String, String> dataPoints;
     final String language;
+    final WallOption option;
 
     public Configuration(String clientId, String clientSecret, String appUserId, String deviceId,
                          String surveyId, String searchId, String sessionUid, HashMap<String, String> dataPoints,
-                         String language) {
+                         String language, WallOption option) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.appUserId = appUserId;
@@ -31,6 +34,7 @@ public class Configuration {
         this.sessionUid = sessionUid;
         this.dataPoints = dataPoints;
         this.language = language;
+        this.option = option;
     }
 
     public String toJson() throws IOException {
@@ -65,10 +69,22 @@ public class Configuration {
             }
             writer.endArray();
         }
-
         if (!TextUtils.isEmpty(language)) {
             writer.name("language").value(language);
         }
+        switch (option) {
+            case ALL:
+                writer.name("surveys_enabled").value(true);
+                writer.name("offers_enabled").value(true);
+                break;
+            case SURVEYS_ONLY:
+                writer.name("offers_enabled").value(false);
+                break;
+            case OFFERS_ONLY:
+                writer.name("surveys_enabled").value(false);
+                break;
+        }
+
         writer.endObject();
     }
 }

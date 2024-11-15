@@ -31,6 +31,8 @@ import com.inbrain.sdk.model.Survey;
 import com.inbrain.sdk.model.SurveyCategory;
 import com.inbrain.sdk.model.SurveyFilter;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -62,6 +64,12 @@ public class InBrain {
     private final Handler handler;
 
     private final APIExecutor apiExecutor;
+
+    public enum WallOption {
+        ALL,
+        SURVEYS_ONLY,
+        OFFERS_ONLY,
+    }
 
     public static InBrain getInstance() {
         if (instance == null) {
@@ -173,9 +181,38 @@ public class InBrain {
     }
 
     /**
-     * Opens survey wall
+     * @deprecated(forRemoval=true) This method has been deprecated.
+     * Please use {@link #openWall(Context, WallOption, StartSurveysCallback)} instead.
      */
+    @Deprecated
     public void showSurveys(Context context, final StartSurveysCallback callback) {
+        openWall(context, WallOption.ALL, callback);
+    }
+
+    /**
+     * @deprecated(forRemoval=true) This method has been deprecated.
+     * Please use {@link #showNativeSurvey(Context, Survey, boolean, StartSurveysCallback)} instead.
+     */
+    @Deprecated
+    public void showNativeSurvey(Context context, Survey survey, final StartSurveysCallback callback) {
+        showNativeSurvey(context, survey, true, callback);
+    }
+
+    /**
+     * @deprecated(forRemoval=true) This method has been deprecated.
+     * Please use {@link #showNativeSurveyWith(Context, String, String, boolean, StartSurveysCallback)} instead.
+     */
+    @Deprecated
+    public void showNativeSurveyWith(Context context, String surveyId, String searchId, final StartSurveysCallback callback) {
+        showNativeSurveyWith(context, surveyId, searchId, true, callback);
+    }
+
+    /**
+     * Opens the inBrain Wall with options
+     *
+     * @param option Specifies whether to show only surveys, only offers, or both.
+     */
+    public void openWall(Context context, WallOption option, final StartSurveysCallback callback) {
         if (!canStartSurveys(context, callback)) {
             return;
         }
@@ -185,18 +222,28 @@ public class InBrain {
         try {
             SurveysActivity.start(context, stagingMode, apiExecutor.getApiClientId(), apiExecutor.getApiSecret(), apiExecutor.getIsS2S(),
                     sessionUid, apiExecutor.getUserId(), apiExecutor.getDeviceId(), dataOptions, language, title, toolbarColor,
-                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
+                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons, option);
             handler.post(callback::onSuccess);
         } catch (final Exception ex) {
             handler.post(() -> callback.onFail("Failed to start SDK:" + ex));
         }
     }
 
-    public void showNativeSurvey(Context context, Survey survey, final StartSurveysCallback callback) {
-        showNativeSurveyWith(context, survey.id, survey.searchId, callback);
+    /**
+     * Show a native survey specified by {@code survey} object.
+     *
+     * @param offersEnabled Specifies whether to include Offers or not
+     */
+    public void showNativeSurvey(Context context, Survey survey, boolean offersEnabled, final StartSurveysCallback callback) {
+        showNativeSurveyWith(context, survey.id, survey.searchId, offersEnabled, callback);
     }
 
-    public void showNativeSurveyWith(Context context, String surveyId, String searchId, final StartSurveysCallback callback) {
+    /**
+     * Show a native survey with the given {@code surveyId} and {@code searchId}.
+     *
+     * @param offersEnabled Specifies whether to include Offers or not
+     */
+    public void showNativeSurveyWith(Context context, String surveyId, String searchId, boolean offersEnabled, final StartSurveysCallback callback) {
         if (!canStartSurveys(context, callback)) {
             return;
         }
@@ -206,7 +253,7 @@ public class InBrain {
         try {
             SurveysActivity.start(context, stagingMode, apiExecutor.getApiClientId(), apiExecutor.getApiSecret(), apiExecutor.getIsS2S(),
                     sessionUid, apiExecutor.getUserId(), apiExecutor.getDeviceId(), surveyId, searchId, dataOptions, language, title, toolbarColor,
-                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons);
+                    backButtonColor, titleColor, statusBarColor, enableToolbarElevation, lightStatusBarIcons, offersEnabled ? WallOption.ALL : WallOption.SURVEYS_ONLY);
             handler.post(callback::onSuccess);
         } catch (final Exception ex) {
             handler.post(() -> callback.onFail("Failed to start SDK:" + ex));
