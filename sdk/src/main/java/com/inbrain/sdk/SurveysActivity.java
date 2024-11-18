@@ -36,7 +36,7 @@ import android.widget.TextView;
 
 import com.inbrain.sdk.model.Configuration;
 import com.inbrain.sdk.model.InBrainSurveyReward;
-import com.inbrain.sdk.InBrain.WallOption;
+import com.inbrain.sdk.model.WallOption;
 
 import java.io.IOException;
 import java.util.ArrayList;

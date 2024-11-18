@@ -30,6 +30,7 @@ import com.inbrain.sdk.model.Reward;
 import com.inbrain.sdk.model.Survey;
 import com.inbrain.sdk.model.SurveyCategory;
 import com.inbrain.sdk.model.SurveyFilter;
+import com.inbrain.sdk.model.WallOption;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,12 +63,6 @@ public class InBrain {
     private final Handler handler;
 
     private final APIExecutor apiExecutor;
-
-    public enum WallOption {
-        ALL,
-        SURVEYS,
-        OFFERS,
-    }
 
     public static InBrain getInstance() {
         if (instance == null) {

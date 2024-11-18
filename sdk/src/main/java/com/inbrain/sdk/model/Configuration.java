@@ -3,8 +3,6 @@ package com.inbrain.sdk.model;
 import android.text.TextUtils;
 import android.util.JsonWriter;
 
-import com.inbrain.sdk.InBrain.WallOption;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
