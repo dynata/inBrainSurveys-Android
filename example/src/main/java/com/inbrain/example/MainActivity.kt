@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.inbrain.sdk.InBrain
+import com.inbrain.sdk.InBrain.WallOption
 import com.inbrain.sdk.callback.GetRewardsCallback
 import com.inbrain.sdk.callback.InBrainCallback
 import com.inbrain.sdk.callback.StartSurveysCallback
@@ -151,7 +152,7 @@ class MainActivity : AppCompatActivity() {
      * Open the Survey Wall
      */
     private fun openSurveyWall() {
-        InBrain.getInstance().showSurveys(this, object : StartSurveysCallback {
+        InBrain.getInstance().openWall(this, WallOption.ALL, object : StartSurveysCallback {
             override fun onSuccess() {
                 Log.d(LOG_TAG, "Survey Wall Display Successfully")
             }
@@ -218,7 +219,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showNativeSurvey(survey: Survey) {
-        InBrain.getInstance().showNativeSurvey(this, survey, object : StartSurveysCallback {
+        InBrain.getInstance().showNativeSurvey(this, survey, true, object : StartSurveysCallback {
             override fun onSuccess() {
                 Log.d(LOG_TAG, "Successfully started InBrain")
             }

@@ -36,6 +36,7 @@ import android.widget.TextView;
 
 import com.inbrain.sdk.model.Configuration;
 import com.inbrain.sdk.model.InBrainSurveyReward;
+import com.inbrain.sdk.InBrain.WallOption;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -61,6 +62,7 @@ public class SurveysActivity extends Activity {
     private static final String EXTRA_STATUS_BAR_COLOR = "89732498";
     private static final String EXTRA_ENABLE_ELEVATION = "46782388";
     private static final String EXTRA_LIGHT_STATUS_BAR_ICONS = "81237412";
+    private static final String EXTRA_WALL_OPTION = "43728195";
     private static final int UPDATE_REWARDS_DELAY_MS = 10000;
 
     private ViewGroup webViewsContainer;
@@ -83,6 +85,7 @@ public class SurveysActivity extends Activity {
     private String surveyId;
     private String searchId;
     private String language;
+    private WallOption wallOption = WallOption.ALL;
 
     private boolean surveyActive;
     private final Handler updateRewardsHandler = new Handler();
@@ -98,21 +101,21 @@ public class SurveysActivity extends Activity {
                       boolean isS2S, String sessionUid, String appUserId, String deviceId,
                       HashMap<String, String> dataPoints, String language, String title,
                       int toolbarColor, int backButtonColor, int titleColor, int statusBarColor,
-                      boolean enableElevation, boolean lightStatusBarColor) {
+                      boolean enableElevation, boolean lightStatusBarColor, WallOption option) {
         Intent startingIntent = getLaunchingIntent(context, stagingMode, clientId, clientSecret,
                 isS2S, sessionUid, appUserId, deviceId, dataPoints, language, title, toolbarColor,
-                backButtonColor, titleColor, statusBarColor, enableElevation, lightStatusBarColor);
+                backButtonColor, titleColor, statusBarColor, enableElevation, lightStatusBarColor, option);
         context.startActivity(startingIntent);
     }
 
-    public static void start(Context context, boolean stagingMode, String clientId, String clientSecret,
-                             boolean isS2S, String sessionUid, String appUserId, String deviceId,
-                             String surveyId, String searchId, HashMap<String, String> dataPoints, String language,
-                             String title, int toolbarColor, int backButtonColor, int titleColor,
-                             int statusBarColor, boolean enableElevation, boolean lightStatusBarColor) {
+    static void start(Context context, boolean stagingMode, String clientId, String clientSecret,
+                      boolean isS2S, String sessionUid, String appUserId, String deviceId,
+                      String surveyId, String searchId, HashMap<String, String> dataPoints, String language,
+                      String title, int toolbarColor, int backButtonColor, int titleColor,
+                      int statusBarColor, boolean enableElevation, boolean lightStatusBarColor, WallOption option) {
         Intent startingIntent = getLaunchingIntent(context, stagingMode, clientId, clientSecret,
                 isS2S, sessionUid, appUserId, deviceId, dataPoints, language, title, toolbarColor,
-                backButtonColor, titleColor, statusBarColor, enableElevation, lightStatusBarColor);
+                backButtonColor, titleColor, statusBarColor, enableElevation, lightStatusBarColor, option);
         startingIntent.putExtra(EXTRA_SURVEY_ID, surveyId);
         startingIntent.putExtra(EXTRA_SEARCH_ID, searchId);
         context.startActivity(startingIntent);
@@ -124,7 +127,7 @@ public class SurveysActivity extends Activity {
                                              HashMap<String, String> dataPoints, String language,
                                              String title, int toolbarColor, int backButtonColor,
                                              int titleColor, int statusBarColor, boolean enableElevation,
-                                             boolean lightStatusBarColor) {
+                                             boolean lightStatusBarColor, WallOption option) {
         Intent intent = new Intent(context, SurveysActivity.class);
         intent.putExtra(EXTRA_STAGING_MODE, stagingMode);
         intent.putExtra(EXTRA_CLIENT_ID, clientId);
@@ -144,6 +147,7 @@ public class SurveysActivity extends Activity {
         if (!TextUtils.isEmpty(language)) {
             intent.putExtra(EXTRA_LANGUAGE, language);
         }
+        intent.putExtra(EXTRA_WALL_OPTION, option);
 
         return intent;
     }
@@ -177,6 +181,12 @@ public class SurveysActivity extends Activity {
         searchId = intent.getStringExtra(EXTRA_SEARCH_ID);
 
         configurationUrl = String.format("%s/configuration", stagingMode ? STAGING_DOMAIN : DOMAIN);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            wallOption = intent.getSerializableExtra(EXTRA_WALL_OPTION, WallOption.class);
+        } else {
+            wallOption = (WallOption) intent.getSerializableExtra(EXTRA_WALL_OPTION);
+        }
 
         if (intent.hasExtra(EXTRA_LANGUAGE)) {
             language = intent.getStringExtra(EXTRA_LANGUAGE);
@@ -326,7 +336,7 @@ public class SurveysActivity extends Activity {
 
     private String getConfigurationCommand() throws IOException {
         Configuration configuration = new Configuration(clientId, clientSecret, appUserId, deviceId,
-                surveyId, searchId, sessionUid, dataPoints, language);
+                surveyId, searchId, sessionUid, dataPoints, language, wallOption);
         return String.format("javascript:setConfiguration(%s);", configuration.toJson());
     }
 
