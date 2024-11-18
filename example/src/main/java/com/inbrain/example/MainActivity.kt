@@ -12,7 +12,6 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.inbrain.sdk.InBrain
-import com.inbrain.sdk.InBrain.WallOption
 import com.inbrain.sdk.callback.GetRewardsCallback
 import com.inbrain.sdk.callback.InBrainCallback
 import com.inbrain.sdk.callback.StartSurveysCallback
@@ -23,6 +22,7 @@ import com.inbrain.sdk.model.Reward
 import com.inbrain.sdk.model.Survey
 import com.inbrain.sdk.model.SurveyCategory
 import com.inbrain.sdk.model.SurveyFilter
+import com.inbrain.sdk.model.WallOption
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
