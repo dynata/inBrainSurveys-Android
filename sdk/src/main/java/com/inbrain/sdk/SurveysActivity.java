@@ -218,12 +218,10 @@ public class SurveysActivity extends Activity {
             setStatusBarColor(color);
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            if (intent.hasExtra(EXTRA_ENABLE_ELEVATION)) {
-                boolean enableElevation = intent.getBooleanExtra(EXTRA_ENABLE_ELEVATION, false);
-                if (enableElevation) {
-                    findViewById(R.id.toolbar).setElevation(getResources().getDimension(R.dimen.elevation));
-                }
+        if (intent.hasExtra(EXTRA_ENABLE_ELEVATION)) {
+            boolean enableElevation = intent.getBooleanExtra(EXTRA_ENABLE_ELEVATION, false);
+            if (enableElevation) {
+                findViewById(R.id.toolbar).setElevation(getResources().getDimension(R.dimen.elevation));
             }
         }
 
@@ -335,7 +333,7 @@ public class SurveysActivity extends Activity {
             Window window = getWindow();
             WindowCompat.setDecorFitsSystemWindows(window, false);
             window.getDecorView().getRootView().setBackgroundColor(color);
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        } else {
             getWindow().setStatusBarColor(color);
         }
     }

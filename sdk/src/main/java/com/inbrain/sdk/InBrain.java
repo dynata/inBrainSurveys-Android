@@ -398,13 +398,7 @@ public class InBrain {
                 locale = context.getResources().getConfiguration().locale;
             }
             if (locale != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    language = locale.toLanguageTag().toLowerCase();
-                } else {
-                    String lang = locale.getLanguage();
-                    String country = locale.getCountry().toLowerCase();
-                    language = lang + "-" + country;
-                }
+                language = locale.toLanguageTag().toLowerCase();
                 if (BuildConfig.DEBUG)
                     Log.d(LOG_TAG, "lang=" + language);
             }

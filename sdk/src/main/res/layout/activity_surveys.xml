@@ -11,8 +11,7 @@
         android:layout_height="wrap_content"
         android:background="@color/azure"
         android:gravity="center_vertical"
-        tools:ignore="UseCompoundDrawables"
-        tools:targetApi="lollipop">
+        tools:ignore="UseCompoundDrawables">
 
         <ImageView
             android:id="@+id/back_image"
