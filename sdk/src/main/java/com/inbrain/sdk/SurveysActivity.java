@@ -34,6 +34,8 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.core.view.WindowCompat;
+
 import com.inbrain.sdk.model.Configuration;
 import com.inbrain.sdk.model.InBrainSurveyReward;
 import com.inbrain.sdk.model.WallOption;
@@ -329,7 +331,11 @@ public class SurveysActivity extends Activity {
     }
 
     private void setStatusBarColor(int color) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            Window window = getWindow();
+            WindowCompat.setDecorFitsSystemWindows(window, false);
+            window.getDecorView().getRootView().setBackgroundColor(color);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setStatusBarColor(color);
         }
     }
