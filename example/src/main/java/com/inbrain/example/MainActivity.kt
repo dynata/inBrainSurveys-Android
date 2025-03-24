@@ -152,7 +152,7 @@ class MainActivity : AppCompatActivity() {
      * Open the Survey Wall
      */
     private fun openSurveyWall() {
-        InBrain.getInstance().openWall(this, WallOption.ALL, object : StartSurveysCallback {
+        InBrain.getInstance().openWall(this, WallOption.SURVEYS, object : StartSurveysCallback {
             override fun onSuccess() {
                 Log.d(LOG_TAG, "Survey Wall Display Successfully")
             }
