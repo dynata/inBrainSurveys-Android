@@ -313,7 +313,7 @@ public class InBrain {
      */
     @Deprecated
     public void showNativeSurvey(Context context, Survey survey, final StartSurveysCallback callback) {
-        showNativeSurvey(context, survey, true, callback);
+        showNativeSurvey(context, survey, false, callback);
     }
 
     /**
@@ -322,7 +322,7 @@ public class InBrain {
      */
     @Deprecated
     public void showNativeSurveyWith(Context context, String surveyId, String searchId, final StartSurveysCallback callback) {
-        showNativeSurveyWith(context, surveyId, searchId, true, callback);
+        showNativeSurveyWith(context, surveyId, searchId, false, callback);
     }
 
     // MARK: - Private -

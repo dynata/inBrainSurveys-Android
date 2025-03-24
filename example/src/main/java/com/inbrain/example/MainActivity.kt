@@ -219,7 +219,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showNativeSurvey(survey: Survey) {
-        InBrain.getInstance().showNativeSurvey(this, survey, true, object : StartSurveysCallback {
+        InBrain.getInstance().showNativeSurvey(this, survey, false, object : StartSurveysCallback {
             override fun onSuccess() {
                 Log.d(LOG_TAG, "Successfully started InBrain")
             }
