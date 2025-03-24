@@ -618,14 +618,6 @@ internal class APIExecutor(
         for (callback in callbacksList) {
             if (callback != null) {
                 handler.post { callback.surveysClosed(byWebView, rewards) }
-
-                //deprecated functions support
-                @Suppress("DEPRECATION")
-                if (byWebView) {
-                    handler.post { callback.surveysClosedFromPage() }
-                } else {
-                    handler.post { callback.surveysClosed() }
-                }
             }
         }
     }
