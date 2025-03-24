@@ -304,7 +304,7 @@ public class InBrain {
      */
     @Deprecated
     public void showSurveys(Context context, final StartSurveysCallback callback) {
-        openWall(context, WallOption.ALL, callback);
+        openWall(context, WallOption.SURVEYS, callback);
     }
 
     /**
