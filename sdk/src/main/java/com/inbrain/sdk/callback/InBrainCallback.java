@@ -35,17 +35,4 @@ public interface InBrainCallback {
         return false;
     }
 
-    //region -DEPRECATED---------------
-    /**
-     * @deprecated(forRemoval=true) Use {@link #surveysClosed(boolean, List)}} instead.
-     */
-    @Deprecated
-    default void surveysClosed() {}
-
-    /**
-     * @deprecated(forRemoval=true) Use {@link #surveysClosed(boolean, List)} instead.
-     */
-    @Deprecated
-    default void surveysClosedFromPage() {}
-    //endregion
 }

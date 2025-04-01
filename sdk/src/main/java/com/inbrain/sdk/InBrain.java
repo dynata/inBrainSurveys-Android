@@ -276,55 +276,6 @@ public class InBrain {
         apiExecutor.onClosed(byWebView, rewards);
     }
 
-
-    // MARK: - Deprecated -
-
-    /**
-     * @deprecated(forRemoval=true) This method has been deprecated.
-     * Please build a habit to set sessionID and dataOptions separately using {@link #setSessionId(String)} and {@link #setDataOptions(HashMap)}
-     */
-    @Deprecated
-    public void setInBrainValuesFor(String sessionID, HashMap<String, String> dataOptions) {
-        this.sessionUid = sessionID;
-        this.dataOptions = dataOptions;
-    }
-
-    /**
-     * @deprecated(forRemoval=true) This method has been deprecated.
-     */
-    @Deprecated
-    public void setLanguage(String language) {
-        this.language = language;
-        this.langManuallySet = true;
-    }
-
-    /**
-     * @deprecated(forRemoval=true) This method has been deprecated.
-     * Please use {@link #openWall(Context, WallOption, StartSurveysCallback)} instead.
-     */
-    @Deprecated
-    public void showSurveys(Context context, final StartSurveysCallback callback) {
-        openWall(context, WallOption.ALL, callback);
-    }
-
-    /**
-     * @deprecated(forRemoval=true) This method has been deprecated.
-     * Please use {@link #showNativeSurvey(Context, Survey, boolean, StartSurveysCallback)} instead.
-     */
-    @Deprecated
-    public void showNativeSurvey(Context context, Survey survey, final StartSurveysCallback callback) {
-        showNativeSurvey(context, survey, true, callback);
-    }
-
-    /**
-     * @deprecated(forRemoval=true) This method has been deprecated.
-     * Please use {@link #showNativeSurveyWith(Context, String, String, boolean, StartSurveysCallback)} instead.
-     */
-    @Deprecated
-    public void showNativeSurveyWith(Context context, String surveyId, String searchId, final StartSurveysCallback callback) {
-        showNativeSurveyWith(context, surveyId, searchId, true, callback);
-    }
-
     // MARK: - Private -
 
     private InBrain() {
