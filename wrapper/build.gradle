@@ -1,0 +1,85 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'maven-publish'
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.15.0'
+    implementation 'androidx.webkit:webkit:1.12.1'
+}
+
+// Find the aar file
+def aarFiles = file("../libs").listFiles().findAll { it.name.endsWith(".aar") }
+if (aarFiles.isEmpty()) {
+    throw new GradleException("No .aar files found in ../libs")
+}
+if (aarFiles.size() > 1) {
+    throw new GradleException("Multiple .aar files found in ../libs: ${aarFiles*.name}")
+}
+
+def aarFile = aarFiles[0]
+
+def sdkVersion = "3.0.2"
+
+android {
+    compileSdk 35
+
+    defaultConfig {
+        minSdk 21
+        targetSdk 35
+        versionCode 35
+        versionName sdkVersion
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    publishing {
+        singleVariant("release") {}
+    }
+    namespace 'com.inbrain.wrapper'
+    buildFeatures {
+        buildConfig true
+    }
+}
+
+def releaseAar = file("$projectDir/build/outputs/aar/wrapper-release.aar")
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                groupId 'com.github.inbrainai'
+                artifactId 'sdk-android'
+                version = sdkVersion
+
+                from components.release
+                artifact(aarFile) {
+                    builtBy tasks.named("replaceReleaseAar")
+                    extension = 'qwe'
+                    classifier = ''
+                }
+            }
+        }
+    }
+}
+
+tasks.register("replaceReleaseAar") {
+    dependsOn tasks.named("assembleRelease")
+    doLast {
+        copy {
+            from aarFile
+            into releaseAar.parentFile
+            rename { releaseAar.name }
+        }
+    }
+}
