@@ -1,4 +1,7 @@
 include ':wrapper'
+include ':example'
+
 project(':wrapper').projectDir = file('wrapper')
+project(':example').projectDir = file('example')
 
 rootProject.name = 'sdk-android'

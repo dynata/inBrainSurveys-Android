@@ -1,8 +1,6 @@
-.gradle/
-/local.properties
-/.idea/
 .DS_Store
-/build
-
+.gradle/
 .idea/
-wrapper/build
+/local.properties
+
+*/build
