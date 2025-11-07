@@ -1,0 +1,8 @@
+jdk:
+  - openjdk17
+before_install:
+  - sed -i "/include ':example'/d" settings.gradle
+  - sed -i "/project(':example')/d" settings.gradle
+install:
+  - ./gradlew clean :wrapper:assemble :wrapper:publishToMavenLocal -xtest -xlint
+
