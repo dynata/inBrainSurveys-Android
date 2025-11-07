@@ -5,6 +5,7 @@ apply plugin: 'maven-publish'
 dependencies {
     implementation 'androidx.core:core-ktx:1.15.0'
     implementation 'androidx.webkit:webkit:1.12.1'
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1"
 }
 
 // Find the aar file
@@ -18,10 +19,10 @@ if (aarFiles.size() > 1) {
 
 def aarFile = aarFiles[0]
 
-def sdkVersion = "3.0.2"
+def sdkVersion = "3.1.0"
 
 android {
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         minSdk 21
