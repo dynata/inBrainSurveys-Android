@@ -19,7 +19,7 @@ if (aarFiles.size() > 1) {
 
 def aarFile = aarFiles[0]
 
-def sdkVersion = "3.1.0"
+def sdkVersion = "3.1.1"
 
 android {
     compileSdk 36
