@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#008577</color>
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#01A5ED</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    <color name="main_color">#00A4EC</color>
+    <color name="colorAccent">@color/main_color</color>
+    <color name="home_button">#ED7D31</color>
+    <color name="points_blue">#1B63FF</color>
+    <color name="currency_orange">#DE8245</color>
+    <color name="native_green">#92D050</color>
+    <color name="text_primary">#1C1C1E</color>
+    <color name="text_secondary">#99000000</color>
+    <color name="text_light_gray">#FFAAAAAA</color>
+    <color name="card_background">#FFFFFFFF</color>
+    <color name="screen_background">#FFFFFFFF</color>
 </resources>

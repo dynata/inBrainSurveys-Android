@@ -1,75 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginBottom="100dp"
-    android:orientation="vertical"
-    tools:context="com.inbrain.example.MainActivity">
+    android:background="@color/screen_background"
+    tools:context=".MainActivity">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="100dp"
-        android:orientation="horizontal"
-        tools:ignore="RtlCompat">
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:overScrollMode="never">
 
-        <CheckBox
-            android:id="@+id/chbSessionId"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/use_session_id" />
-
-        <EditText
-            android:id="@+id/edtSessionId"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="24dp"
-            android:hint="eg. daily-survey"
-            android:importantForAutofill="no"
-            android:inputType="text"
-            tools:ignore="HardcodedText" />
-    </LinearLayout>
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
 
-    <Button
-        android:id="@+id/btnOpenSurveyWall"
+            <TextView
+                android:id="@+id/titleLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="48dp"
+                android:text="@string/example_app_title"
+                android:textColor="@color/text_primary"
+                android:textSize="32sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/heroImage"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="24dp"
+                android:adjustViewBounds="true"
+                android:contentDescription="@null"
+                android:scaleType="fitCenter"
+                android:src="@drawable/floating_women" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnOpenSurveyWall"
+                style="@style/Widget.InBrain.HomeButton"
+                android:layout_marginTop="20dp"
+                android:text="@string/open_survey_wall" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnNativeSurveys"
+                style="@style/Widget.InBrain.HomeButton"
+                android:layout_marginTop="12dp"
+                android:text="@string/native_surveys" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnNativeOffers"
+                style="@style/Widget.InBrain.HomeButton"
+                android:layout_marginTop="12dp"
+                android:text="@string/native_offers" />
+
+            <TextView
+                android:id="@+id/pointsLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:textColor="@color/points_blue"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:text="Total Points: 0" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/logoImage"
+                android:layout_width="160dp"
+                android:layout_height="48dp"
+                android:layout_marginTop="24dp"
+                android:adjustViewBounds="true"
+                android:contentDescription="@null"
+                android:scaleType="fitCenter"
+                android:src="@drawable/inbrain_logo" />
+        </LinearLayout>
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/currencySaleLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="20dp"
-        android:text="@string/open_survey_wall"
-        tools:ignore="RtlCompat" />
-
-    <Button
-        android:id="@+id/btnFetchCurrencySale"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="20dp"
-        android:text="@string/fetch_currency_sale"
-        tools:ignore="RtlCompat" />
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="40dp">
-
-        <Button
-            android:id="@+id/btnShowNativeSurveys"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:text="@string/show_native_surveys" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerNativeSurveys"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:requiresFadingEdge="horizontal"
-            android:visibility="gone"
-            tools:visibility="visible" />
-    </RelativeLayout>
-
-</LinearLayout>
+        android:layout_gravity="top|end"
+        android:layout_marginTop="40dp"
+        android:layout_marginEnd="12dp"
+        android:alpha="0"
+        android:background="@drawable/bg_currency_sale"
+        android:paddingStart="10dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="6dp"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:visibility="invisible"
+        tools:alpha="1"
+        tools:text="  2x Earnings "
+        tools:visibility="visible" />
+</FrameLayout>

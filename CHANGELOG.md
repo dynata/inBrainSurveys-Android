@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and `InBrainSurveys` adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.1.2](https://github.com/dynata/inBrainsurveys-android/releases/tag/3.1.2) - 2026-08-11
+
+### Fixed
+
+- Error `missing session` 
+
 ## [3.1.1](https://github.com/dynata/inBrainsurveys-android/releases/tag/3.1.1) - 2026-06-12
 
 ### Fixed
