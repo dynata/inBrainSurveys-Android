@@ -21,6 +21,7 @@ import com.inbrain.sdk.callback.StartSurveysCallback
 import com.inbrain.sdk.config.StatusBarConfig
 import com.inbrain.sdk.config.ToolBarConfig
 import com.inbrain.sdk.model.CurrencySale
+import com.inbrain.sdk.model.CurrencySaleType
 import com.inbrain.sdk.model.Reward
 import com.inbrain.sdk.model.WallOption
 
@@ -92,7 +93,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkForCurrencySale() {
-        InBrain.getInstance().getCurrencySale(GetCurrencySaleCallback { sale ->
+        InBrain.getInstance().getCurrencySale(CurrencySaleType.SURVEYS, GetCurrencySaleCallback { sale ->
             showCurrencySale(sale)
         })
     }

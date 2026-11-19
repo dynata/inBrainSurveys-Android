@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and `InBrainSurveys` adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.2.0](https://github.com/dynata/inBrainsurveys-android/releases/tag/3.2.0) - 2026-11-19
+
+### Added
+- **Native Offers:**
+    - `InBrainOfferBannerAd` - class representing an offer banner ad (`header`, `buttonText`, `description`)
+    - New `InBrainNativeOffer` fields: `bannerAd`, `status`, `isCompleted`, `platforms`
+    - New `InBrainOfferGoal` field: `isPending`
+- **Currency Sale:**
+    - `CurrencySaleType` - enum to specify the currency sale type (`SURVEYS` or `OFFERS`)
+    - `getCurrencySale(CurrencySaleType, GetCurrencySaleCallback)` method to `InBrain` for fetching Surveys or Offers currency sale
+
+### Deprecated
+- `getCurrencySale(GetCurrencySaleCallback)` - use `getCurrencySale(CurrencySaleType, GetCurrencySaleCallback)` instead
+
 ## [3.1.3](https://github.com/dynata/inBrainsurveys-android/releases/tag/3.1.3) - 2026-09-01
 
 ### Changed
